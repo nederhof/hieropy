@@ -1,0 +1,27 @@
+[project]
+name = "hieropy"
+version = "0.1.0"
+description = "Processing of ancient Egyptian hieroglyphic text"
+readme = "README.md"
+authors = [{ name = "Mark-Jan Nederhof", email = "markjan.nederhof@googlemail.com" }]
+license-files = ["LICENSE"]
+requires-python = ">= 3.9"
+dependencies = [
+	"numpy",
+	"pdf2image",
+	"Pillow",
+	"ply",
+	"reportlab",
+	"rtree",
+	"shapely",
+	"svgwrite",
+	"tkhtmlview",
+	"tkinterweb"
+]
+
+[project.urls]
+"Source code" = "https://github.com/nederhof/hieropy"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
