@@ -4,7 +4,6 @@ Python package to manipulate encodings of ancient Egyptian hieroglyphic text.
 
 ## Install
 
-DOES NOT YET WORK
 ```bash
 pip3 install hieropy
 ```
@@ -36,7 +35,7 @@ UniEditor(text=database_entry, save=save, cancel=cancel)
 print('Database entry is now', *[hex(ord(ch)) for ch in database_entry])
 ```
 
-Convert encoding into image (raster graphics, or PDF, or SVG)
+Convert encoding to image (raster graphics, or PDF, or SVG):
 ```python
 from hieropy import UniParser, Options
 
@@ -61,16 +60,16 @@ with open('testimage3.svg', 'w', encoding='utf-8') as f:
     f.write(printed3.get_svg())
 ```
 
-## Install from GitHub
+## Install code from GitHub and run it
 
-Download the files.
+Download the ZIP file, unpack it.
 
 The first time, run in this directory:
 ```bash
 python3 -m venv .venv
 ```
 
-Each time after that:
+To run a Python script `mycode.py` do:
 ```bash
 source .venv/bin/activate
 pip3 install -e .
@@ -79,6 +78,6 @@ deactivate
 ```
 
 ## Changelog
-**v0.1.0**
+**v0.1.2**
 
-First release.
+First full release.

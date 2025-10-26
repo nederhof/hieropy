@@ -1,1 +1,2 @@
 exclude **/uniparsetab.py
+recursive-include hieropy/resources *
