@@ -48,13 +48,6 @@ options1 = Options()
 printed1 = fragment.print(options1)
 printed1.get_pil().save('testimage1.png')
 
-# Conversion to PDF may require poppler to be installed.
-# On macOS install it with:
-# brew install poppler
-# On Windows one of the following may work:
-# (1) choco install poppler
-# (2) scoop install poppler
-# (3) conda install -c conda-forge poppler
 options2 = Options(direction='hrl', fontsize=30, imagetype='pdf')
 printed2 = fragment.print(options2)
 printed2.get_pil().save('testimage2a.png')
@@ -85,6 +78,7 @@ deactivate
 ```
 
 ## Changelog
+**v0.1.3**
+Removed need for Poppler to be installed.
 **v0.1.2**
-
 First full release.

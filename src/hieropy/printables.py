@@ -11,7 +11,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.graphics import renderPDF, renderPM
 from reportlab.lib.colors import Color
-from pdf2image import convert_from_bytes
+from pypdfium2 import PdfDocument
 from shapely.geometry import box, Polygon, MultiPolygon
 from shapely.ops import unary_union
 
@@ -88,7 +88,7 @@ def measure_glyph_pdf(ch, fontsize, x_scale, y_scale, rotate, mirror):
 	c.rotate(-rotate)
 	c.drawString(-width/2, -height/2, ch)
 	c.save()
-	im = convert_from_bytes(buffer.getvalue(), dpi=72)[0].convert('L')
+	im = PdfDocument(buffer).get_page(0).render().to_pil().convert('L')
 	bw = im.point(lambda x: 0 if x == 255 else 255, '1')
 	bbox = bw.getbbox()
 	x = bbox[0] - margin_hor
@@ -520,8 +520,7 @@ class PrintedPdf(PrintedAny):
 
 	def get_pil(self):
 		self.complete()
-		pdf_bytes = self.buffer.getvalue()
-		return convert_from_bytes(pdf_bytes, dpi=72)[0]
+		return PdfDocument(self.buffer).get_page(0).render().to_pil()
 
 	def get_pdf(self):
 		self.complete()
