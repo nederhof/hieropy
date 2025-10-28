@@ -48,6 +48,8 @@ options1 = Options()
 printed1 = fragment.print(options1)
 printed1.get_pil().save('testimage1.png')
 
+# On macOS the following requires poppler, which can be installed with:
+# brew install poppler
 options2 = Options(direction='hrl', fontsize=30, imagetype='pdf')
 printed2 = fragment.print(options2)
 printed2.get_pil().save('testimage2a.png')
