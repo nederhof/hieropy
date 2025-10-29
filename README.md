@@ -62,23 +62,31 @@ with open('testimage3.svg', 'w', encoding='utf-8') as f:
 
 ## Install code from GitHub and run it
 
-Download the ZIP file, unpack it.
+Download the ZIP file, unpack it and go to the main directory.
 
-The first time, run in this directory:
+One time only, run in this directory:
 ```bash
 python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -e .
+deactivate
 ```
 
-To run a Python script `mycode.py` do:
+Thereafter, to run Python scripts `mycode1.py` and `mycode2.py`:
 ```bash
 source .venv/bin/activate
-pip3 install -e .
-python3 mycode.py
+python mycode1.py
+python mycode2.py
 deactivate
 ```
 
 ## Changelog
-**v0.1.3**
-Removed need for Poppler to be installed.
-**v0.1.2**
-First full release.
+
+### 0.1.3
+
+* Removed need for Poppler to be installed.
+
+### 0.1.2
+
+* First full release.
