@@ -5,12 +5,12 @@ Python package to manipulate encodings of ancient Egyptian hieroglyphic text.
 ## Install
 
 ```bash
-pip3 install hieropy
+pip install hieropy
 ```
 
 ## Use in Python code
 
-Run editor:
+Run Unicode editor for hieroglyphic encoding:
 ```python
 from hieropy import UniEditor
 
@@ -64,6 +64,8 @@ with open('testimage3.svg', 'w', encoding='utf-8') as f:
 
 Download the ZIP file, unpack it and go to the main directory.
 
+### Linux/macOS
+
 One time only, run in this directory:
 ```bash
 python3 -m venv .venv
@@ -79,6 +81,14 @@ source .venv/bin/activate
 python mycode1.py
 python mycode2.py
 deactivate
+```
+
+### Windows CMD
+
+As above, but the first two lines should then probably be:
+```bash
+python -m venv myenv
+myenv\Scripts\activate
 ```
 
 ## Changelog
