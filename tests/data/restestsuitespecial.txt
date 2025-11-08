@@ -1,0 +1,13 @@
+[vrl,size=.9]A1
+[vrl,size=.99]A1
+A1-[]![red]B1-[]![red]B1
+D1*Z7:Z4-(D1*Z7):Z4
+n:n:n - n:n:[sep=0]n - n:n:[sep=0,fix]n
+(A1*B1):(Z1*Z1*Z1)
+insert[x=0.5,y=0.5,fix,sep=0.3](oval(),A1)-insert[x=0.6,y=0.6,fix,sep=0.3](oval(),A1)
+insert[x=0.8,y=0.8,fix](empty,A1)-insert[fix](empty[height=2]:oval(),A1)-insert[fix,x=.3,y=.4](empty[width=2,height=2]:oval(),A1)
+insert[t,x=0.9,sep=0](zA,x)-insert[t,x=0.6,sep=0](zA,x)-insert[t,x=0.4,sep=0.0](zA,x)
+insert[s,sep=0.0](.*w,t)-insert[e,sep=0.0](w*.,t)
+[hrl](A1*B1):(Z1*Z1*Z1)
+A1 - ![shade] B1 - ![red] C1 - D1[black,noshade] - E1 - ![noshade] F1 - ![black] G1
+(![red]A1*B1)![red]:C1
