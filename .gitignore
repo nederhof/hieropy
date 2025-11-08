@@ -209,3 +209,4 @@ __marimo__/
 # Specific for hieropy
 **/parser.out
 **/uniparsetab.py
+**/resparsetab.py

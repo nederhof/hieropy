@@ -60,6 +60,11 @@ with open('testimage3.svg', 'w', encoding='utf-8') as f:
     f.write(printed3.get_svg())
 ```
 
+Output SVG files include Unicode characters and still require the NewGardiner font to be displayed.
+Depending on the platform,
+there are various tools to turn characters in SVG files into outlines, so that the files can be
+displayed without needing the font.
+
 ## Install code from GitHub and run it
 
 Download the ZIP file, unpack it and go to the main directory.

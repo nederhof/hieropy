@@ -19,9 +19,9 @@ class Group:
 	def fit(self, options, w, h):
 		size = self.size(options)
 		f = 1.0
-		if w < math.inf and size[0] > 0:
+		if w < math.inf and 0 < size[0]:
 			f = min(f, w / size[0])
-		if h < math.inf and size[1] > 0:
+		if h < math.inf and 0 < size[1]:
 			f = min(f, h / size[1])
 		self.resize(f)
 	def copy(self):
