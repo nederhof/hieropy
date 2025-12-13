@@ -1,0 +1,7 @@
+A1[red]-B1[red]-C1[black]-D1[red] [('𓀀𓁐','red'),('𓁚','black'),('𓁶','red')]
+A1[red]-B1[red]:C1[black]-D1[red] [('𓀀','red'),('𓁐𓐰𓁚','black'),('𓁶','red')]
+A1[red]-![red]B1-C1[black]-D1 [('𓀀𓁐','red'),('𓁚','black'),('𓁶','red')]
+A1[red]![red]-cartouche(B1) [('𓀀𓍹𓐼𓁐𓐽𓍺','red')]
+A1[red]![red]-cartouche(B1['black']) [('𓀀','red'),('𓍹𓐼𓁐𓐽𓍺','black')]
+![yellow]insert[te](w,t) [('𓅱𓐴𓏏','yellow')]
+![blue]modify(stack[te](a,b*b))-empty-empty[shade] [('𓐷𓃀𓐱𓃀𓐸𓐶𓂝','blue'),('𓑁𓑃︀','black')]

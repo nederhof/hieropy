@@ -3,7 +3,7 @@ import math
 
 from .options import *
 from .uniconstants import *
-from .uninames import char_to_name, char_to_name_bracket
+from .uninames import char_to_name, char_to_name_cap
 from .uniprops import allowed_rotations, rotation_adjustment, \
 	char_to_insertions, char_to_places, InsertionAdjust, \
 	char_to_overlay_ligature, overlay_to_ligature
@@ -54,8 +54,7 @@ class Fragment(Group):
 		if options.h():
 			for g in self.groups:
 				g.fit(options, math.inf, options.linesize)
-			hmargin = 0 if options.separated else options.hmargin
-			x0 = hmargin
+			x0 = options.hmargin
 			x = x0 + options.sep / 2
 			y0 = options.vmargin
 			y1 = y0 + options.sep / 2
@@ -66,50 +65,67 @@ class Fragment(Group):
 				if i < len(self.groups)-1 or options.separated:
 					x2 = x1 + options.sep / 2
 				else:
-					x2 = hmargin + self.size(options)[0] + options.sep
+					x2 = options.hmargin + self.size(options)[0] + options.sep
 				group.format(options, x0, x, x1, x2, y0, y1, y2, y3)
-				if not options.separated:
+				if options.separated:
+					x0 = 0
+					x = options.sep / 2
+				else:
 					x0 = x2
 					x = x1 + options.sep
 		else:
 			for g in self.groups:
 				g.fit(options, options.linesize, math.inf)
-			vmargin = 0 if options.separated else options.vmargin
 			x0 = options.hmargin
 			x1 = x0 + options.sep / 2
 			x2 = x1 + options.linesize
 			x3 = x2 + options.sep / 2
-			y0 = vmargin
+			y0 = options.vmargin
+			print(y0)
 			y = y0 + options.sep / 2
 			for i, group in enumerate(self.groups):
 				y1 = y + group.size(options)[1]
 				if i < len(self.groups)-1 or options.separated:
 					y2 = y1 + options.sep / 2
 				else:
-					y2 = vmargin + self.size(options)[1] + options.sep
+					y2 = options.vmargin + self.size(options)[1] + options.sep
 				group.format(options, x0, x1, x2, x3, y0, y, y1, y2)
-				if not options.separated:
+				if options.separated:
+					y0 = 0
+					y = options.sep / 2
+				else:
 					y0 = y2
 					y = y1 + options.sep
 	def print(self, options):
 		self.format(options)
+		size = self.size(options)
 		if options.separated:
 			printeds = []
 			w_accum = 0
 			h_accum = 0
-			for g in self.groups:
-				size = g.size(options)
-				width = max(options.linesize, size_sub[0]) if options.v() else size[0]
-				height = max(options.linesize, size_sub[1]) if options.h() else size[1]
-				width_sep = width + options.sep
-				height_sep = height + options.sep
+			for i, g in enumerate(self.groups):
+				sub_size = g.size(options)
+				if options.h():
+					width = sub_size[0] + options.sep
+					if i == 0:
+						width += options.hmargin
+					if i == len(self.groups) - 1:
+						width += options.hmargin
+					height = size[1] + options.sep + 2 * options.vmargin
+				if options.v():
+					width = size[0] + options.sep + 2 * options.hmargin
+					height = sub_size[1] + options.sep
+					if i == 0:
+						height += options.vmargin
+					if i == len(self.groups) - 1:
+						height += options.vmargin
 				match options.imagetype:
 					case 'pdf':
-						printed = PrintedPdf(width_sep, height_sep, w_accum, h_accum, options)
+						printed = PrintedPdf(width, height, w_accum, h_accum, options)
 					case 'svg':
-						printed = PrintedSvg(width_sep, height_sep, w_accum, h_accum, options)
+						printed = PrintedSvg(width, height, w_accum, h_accum, options)
 					case _:
-						printed = PrintedPil(width_sep, height_sep, w_accum, h_accum, options)
+						printed = PrintedPil(width, height, w_accum, h_accum, options)
 				g.print(options, printed)
 				printeds.append(printed)
 				if options.h():
@@ -118,7 +134,6 @@ class Fragment(Group):
 					h_accum += printed.height()
 			return printeds
 		else:
-			size = self.size(options)
 			width = size[0] + options.sep + 2 * options.hmargin
 			height = size[1] + options.sep + 2 * options.vmargin
 			match options.imagetype:
@@ -317,7 +332,7 @@ class Horizontal(Group):
 
 class Enclosure(Group):
 	# typ: 'plain' or 'walled'
-	# groups: list of Vertical/Horizontal/Enclosure/Basic/Overlay/Literal/Singleton/Blank/Lost
+	# groups: list of Vertical/Horizontal/Enclosure/Basic/Overlay/Literal/Blank/Lost
 	# delim_open: character/None
 	# damage_open: 0 -- 15
 	# delim_close: character/None
@@ -334,9 +349,9 @@ class Enclosure(Group):
 		params = []
 		name = 'walled' if self.typ == 'walled' else 'boxed'
 		if self.delim_open is not None:
-			params.append('open=' + char_to_name_bracket(self.delim_open))
+			params.append('open=' + char_to_name_cap(self.delim_open))
 		if self.delim_close is not None:
-			params.append('close=' + char_to_name_bracket(self.delim_close))
+			params.append('close=' + char_to_name_cap(self.delim_close))
 		params_str = ('[' + ','.join(params) + ']') if len(params) > 0 else ''
 		content = '-'.join([repr(g) for g in self.groups])
 		return name + params_str + '(' + content + ')'
@@ -927,7 +942,7 @@ class Overlay(Group):
 		return transformation.get(Overlay, Overlay)(lits1, lits2)
 	def allowed_places(self):
 		lig, _ = overlay_to_ligature(self.lits1, self.lits2)
-		return char_to_places(lig, 0, False) if lig else OVERLAY_INSERTION_PLACES
+		return char_to_places(lig.ch, 0, False) if lig else OVERLAY_INSERTION_PLACES
 	def choose_alt_glyph(self, places):
 		if self.lig:
 			for ins in char_to_insertions(self.lig.ch):
@@ -937,6 +952,7 @@ class Overlay(Group):
 						self.alt = char_to_overlay_ligature(ins.ch)
 					self.adjustments = ins.places
 					return
+		self.adjustments = {}
 	def init_scale(self):
 		super().init_scale()
 		for g in self.lits1:
@@ -1081,6 +1097,7 @@ class Literal(Group):
 					self.alt = ins.ch
 				self.adjustments = ins.places
 				return
+		self.adjustments = {}
 	def size(self, options):
 		size = em_size_of(self.alt, options, 1, 1, self.rotation(), self.mirror)
 		w = self.scale * size[0]
@@ -1092,15 +1109,13 @@ class Literal(Group):
 		rot = self.rotation_coarse()
 		if rot in allowed_rotations(self.ch):
 			return rot + rotation_adjustment(self.ch, rot)
-		if rot:
-			self.log_rotation = 'Unknown rotation ' + str(rot) + ' degrees for ' + self.ch
 		return rot
 	def format(self, options, x0, x1, x2, x3, y0, y1, y2, y3):
 		size = self.size(options)
 		buf_x = ((x2-x1) - size[0]) / 2
 		buf_y = ((y2-y1) - size[1]) / 2
 		self.x = x1 + buf_x
-		self.y = y1 + (((y2-y1) - size.h) if options.align == 'bottom' else buf_y)
+		self.y = y1 + (((y2-y1) - size[1]) if options.align == 'bottom' else buf_y)
 		self.w = size[0]
 		self.h = size[1]
 		x_shade = self.x + self.w / 2
@@ -1120,10 +1135,6 @@ class Literal(Group):
 			printed.add_hidden(MIRROR)
 		if self.damage:
 			printed.add_hidden(num_to_damage(self.damage))
-		if hasattr(self, 'log_insertion'):
-			printed.add_log(self.log_insertion)
-		if hasattr(self, 'log_rotation'):
-			printed.add_log(self.log_rotation)
 
 class Singleton(Group):
 	# ch: character
@@ -1137,7 +1148,7 @@ class Singleton(Group):
 		if self.damage > 0:
 			params.append(str(self.damage))
 		params_str = ('[' + ','.join(params) + ']') if len(params) > 0 else ''
-		return char_to_name_bracket(self.ch) + params_str
+		return char_to_name_cap(self.ch) + params_str
 	def __str__(self):
 		return self.ch + num_to_damage(self.damage)
 	def map(self, transformation):
@@ -1291,3 +1302,14 @@ class BracketClose(Group):
 		self.h = h
 	def print(self, options, printed):
 		printed.add_sign(self.ch, self.h, self.x_scale, 1, 0, False, self, extra=True, bracket=True)
+
+def is_group(group, outer=False, hor=False):
+	match group:
+		case Vertical() | Horizontal() | Enclosure() | Basic() | Overlay() | Literal() | Blank() | Lost():
+			return True
+		case Singleton():
+			return outer
+		case BracketOpen() | BracketClose():
+			return hor
+		case _:
+			return False

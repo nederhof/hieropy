@@ -9,6 +9,9 @@ POINT_INFO_FILE = 'pointinfo.csv'
 POINT_ROTATIONS_FILE = 'pointrotations.csv'
 INSERTIONS_FILE = 'insertions.json'
 LIGATURES_FILE = 'ligatures.json'
+CIRCULAR_FILE = 'circular.csv'
+LR_SYMMETRIC_FILE = 'lrsymmetric.csv'
+TB_SYMMETRIC_FILE = 'tbsymmetric.csv'
 
 _translit_to_chars = None
 _keyword_to_chars = None
@@ -17,6 +20,9 @@ _char_to_rotations = None
 _char_to_insertions = None
 _char_to_overlay_ligature = None
 _char_to_overlay_ligatures = None
+_circular = None
+_lr_symmetric = None
+_tb_symmetric = None
 
 def translit_to_chars(t):
 	if _translit_to_chars is None:
@@ -268,3 +274,29 @@ def cache_ligatures():
 			if not alt:
 				_char_to_overlay_ligatures[hor[0].ch].append(ligature)
 				_char_to_overlay_ligatures[ver[0].ch].append(ligature)
+
+def circular_chars():
+	global _circular
+	if _circular is None:
+		_circular = char_set_from(CIRCULAR_FILE)
+	return _circular
+
+def lr_symmetric_chars():
+	global _lr_symmetric
+	if _lr_symmetric is None:
+		_lr_symmetric = char_set_from(LR_SYMMETRIC_FILE)
+	return _lr_symmetric
+
+def tb_symmetric_chars():
+	global _tb_symmetric
+	if _tb_symmetric is None:
+		_tb_symmetric = char_set_from(TB_SYMMETRIC_FILE)
+	return _tb_symmetric
+
+def char_set_from(filename):
+	charset = set() 
+	with resources.files('hieropy.resources').joinpath(filename).open('r') as f:
+		reader = csv.reader(f, delimiter=' ')
+		for row in reader:
+			charset.add(chr(int(row[0],16)))
+	return charset

@@ -93,7 +93,9 @@ class Fragment(Group):
 	def propagate(self):
 		self.globs = self.sw.update(Globals(self.direction, self.size))
 		if self.hiero:
-			self.hiero.propagate(self.globs)
+			self.final_globs = self.hiero.propagate(self.globs)
+		else:
+			self.final_globs = self.globs
 
 class Hiero(Group):
 	def __init__(self, group):
@@ -115,7 +117,7 @@ class Hiero(Group):
 		globs = self.groups[0].propagate(globs)
 		for op, sw, group in zip(self.ops, self.sws, self.groups[1:]):
 			globs = op.propagate(globs)
-			globs = sw.propagate(globs)
+			globs = sw.update(globs)
 			globs = group.propagate(globs)
 		return globs
 	
@@ -139,7 +141,7 @@ class VerGroup(Group):
 		globs = self.groups[0].propagate(globs)
 		for op, sw, group in zip(self.ops, self.sws, self.groups[1:]):
 			globs = op.propagate(globs)
-			globs = sw.propagate(globs)
+			globs = sw.update(globs)
 			globs = group.propagate(globs)
 		return globs
 
@@ -176,7 +178,7 @@ class HorGroup(Group):
 		globs = self.groups[0].propagate(globs)
 		for op, sw, group in zip(self.ops, self.sws, self.groups[1:]):
 			globs = op.propagate(globs)
-			globs = sw.propagate(globs)
+			globs = sw.update(globs)
 			globs = group.propagate(globs)
 		return globs
 
@@ -312,6 +314,10 @@ class Namedglyph(Group):
 		for note in self.notes:
 			globs = note.propagate(globs)
 		return self.sw.update(globs)
+	def mirrored(self):
+		return self.mirror if self.mirror is not None else self.globs.mirror
+	def colored(self):
+		return self.color if self.color is not None else self.globs.color
 
 class Emptyglyph(Group):
 	def __init__(self, arg_list, note, sw):
@@ -452,6 +458,10 @@ class Box(Group):
 		for note in self.notes:
 			globs = note.propagate(globs)
 		return self.sw2.update(globs)
+	def mirrored(self):
+		return self.mirror if self.mirror is not None else self.globs.mirror
+	def colored(self):
+		return self.color if self.color is not None else self.globs.color
 
 class Stack(Group):
 	def __init__(self, arg_list, sw1, group1, sw2, group2, sw3):
@@ -538,6 +548,9 @@ class Insert(Group):
 		globs = self.sw2.update(globs)													   
 		globs = self.group2.propagate(globs)												 
 		return self.sw3.update(globs)
+	def position(self):
+		return ( 0 if self.place.endswith('s') else 1 if self.place.endswith('e') else self.x,
+				0 if self.place.startswith('t') else 1 if self.place.startswith('b') else self.y)
 
 class Modify(Group):
 	def __init__(self, arg_list, sw1, group, sw2):
@@ -705,9 +718,6 @@ class Switch(Group):
 		if self.mirror is not None:
 			copy.mirror = self.mirror
 		return copy
-	def propagate(self, globs):
-		self.globs = globs
-		return globs
 
 class Arg:
 	def __init__(self, lhs, rhs=None):

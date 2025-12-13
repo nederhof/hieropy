@@ -3,7 +3,7 @@ import re
 import importlib.resources as resources
 from collections import defaultdict
 
-from .uniconstants import OPENING_CHARS, CLOSING_CHARS, PLACEHOLDER
+from .uniconstants import CAP_CHARS, PLACEHOLDER
 
 NAME_POINT_FILE = 'namepoint.csv'
 NAME_POINT_EXT_FILE = 'namepointext.csv'
@@ -17,7 +17,8 @@ UNI_CATEGORIES = ['A','B','C','D','E','F','G','H','I', \
 
 _name_to_char = None
 _char_to_name = None
-_char_to_name_bracket = None
+_name_to_char_cap = None
+_char_to_name_cap = None
 _cat_to_chars = None
 _cat_to_chars_ext = None
 _mnemonic_to_name = None
@@ -36,10 +37,15 @@ def char_to_name(ch):
 		cache_name_and_char()
 	return _char_to_name.get(ch, '')
 
-def char_to_name_bracket(ch):
-	if _char_to_name_bracket is None:
+def name_to_char_cap(name):
+	if _name_to_char_cap is None:
 		cache_name_and_char()
-	return _char_to_name_bracket[ch]
+	return _name_to_char_cap.get(name)
+
+def char_to_name_cap(ch):
+	if _char_to_name_cap is None:
+		cache_name_and_char()
+	return _char_to_name_cap[ch]
 
 def is_extended_char(ch):
 	if _extended_chars is None:
@@ -104,7 +110,8 @@ def name_to_cat(name):
 def cache_name_and_char():
 	global _name_to_char
 	global _char_to_name
-	global _char_to_name_bracket
+	global _name_to_char_cap
+	global _char_to_name_cap
 	global _extended_chars
 	global _cat_to_chars
 	global _cat_to_chars_ext
@@ -125,15 +132,17 @@ def cache_name_and_char():
 				else:
 					_cat_to_chars_ext[cat].append(p)
 					_extended_chars.add(p)
+	_name_to_char_cap = {}
 	_char_to_name = {p: n for (n, p) in _name_to_char.items()}
-	_char_to_name_bracket = {}
-	for p in OPENING_CHARS + CLOSING_CHARS:
+	_char_to_name_cap = {}
+	for p in CAP_CHARS:
 		n = _char_to_name[p]
 		c = name_to_cat(n)
 		_cat_to_chars[c].remove(p)
 		del _name_to_char[n]
 		del _char_to_name[p]
-		_char_to_name_bracket[p] = n
+		_name_to_char_cap[n] = p
+		_char_to_name_cap[p] = n
 
 def cache_mnemonic():
 	global _mnemonic_to_name

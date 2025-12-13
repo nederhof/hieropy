@@ -134,6 +134,20 @@ def mirror_place(pl):
 		case 'be': return 'bs'
 		case _: return pl
 
+def mirror_rotate(r):
+	match r % 360:
+		case 90: return 270
+		case 180: return 180
+		case 270: return 90
+		case 45: return 315
+		case 135: return 225
+		case 225: return 135
+		case 315: return 45
+		case _: return 0
+
+def quarter_mirror_rotate(r):
+	return (mirror_rotate(r - 90) + 90) % 360
+
 class Rectangle:
 	def __init__(self, x, y, w, h):
 		self.x = x

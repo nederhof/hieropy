@@ -6,7 +6,7 @@ import svgwrite
 import importlib.resources as resources
 from PIL import Image, ImageFont, ImageDraw, ImageColor, ImageOps
 from reportlab.pdfgen import canvas
-from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase import pdfmetrics, pdfdoc
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.graphics import renderPDF, renderPM
@@ -374,10 +374,12 @@ class Shadings:
 		self.intercept_to_lines = defaultdict(list)
 
 	def add_diagonal(self, x_min, y_min, x_max):
-		intercept = y_min + self.h_accum - self.x_min - self.w_accum if self.options.imagetype == 'pdf' \
+		intercept_accum = y_min + self.h_accum - x_min - self.w_accum if self.options.imagetype == 'pdf' \
 				else y_min + self.h_accum + x_min + self.w_accum
-		if intercept % self.options.shadedist:
+		if intercept_accum % self.options.shadedist:
 			return
+		intercept = y_min + - x_min if self.options.imagetype == 'pdf' \
+				else y_min + x_min
 		intervals = self.intercept_to_lines[intercept]
 		intervals.append((x_min, x_max))
 		intervals.sort(key=lambda pair: pair[0])
@@ -423,14 +425,14 @@ class Shadings:
 					for x in range(w):
 						self.add_diagonal(x_min + x, y_max, min(x_min + h + x, x_max))
 
-	def print(self, print_rectangles, print_line):
-		if self.rectangles:
-			print_rectangles(self.rectangles)
+	def segments(self):
+		lines = []
 		for y, xs in self.intercept_to_lines.items():
 			for (x_min, x_max) in xs:
 				y_min = y + x_min if self.options.imagetype == 'pdf' else y - x_min
 				y_max = y + x_max if self.options.imagetype == 'pdf' else y - x_max
-				print_line(x_min, y_min, x_max, y_max)
+				lines.append((x_min, y_min, x_max, y_max))
+		return lines
 
 class PrintedAny:
 	def __init__(self, w, h, w_accum, h_accum, mirrored, options):
@@ -464,19 +466,14 @@ class PrintedAny:
 	def add_hidden(self, s):
 		pass
 
-	def add_log(self, message):
-		self.options.log(message)
-
 class PrintedPdf(PrintedAny):
 	def __init__(self, w, h, w_accum, h_accum, options):
 		super().__init__(w, h, w_accum, h_accum, options.rl(), options)
 		self.buffer = io.BytesIO()
 		self.canvas = canvas.Canvas(self.buffer, pagesize=(self.width(), self.height()))
-		if options.transparent:
-			self.canvas.setFillColor(Color(0, 0, 0, alpha=0))
-		else:
+		if not options.transparent:
 			self.canvas.setFillColor('white')
-		self.canvas.rect(0, 0, self.width(), self.height(), fill=1, stroke=0)
+			self.canvas.rect(0, 0, self.width(), self.height(), fill=1, stroke=0)
 
 	def complete(self):
 		if self.is_complete:
@@ -485,7 +482,9 @@ class PrintedPdf(PrintedAny):
 		self.canvas.setLineWidth(self.options.shadethickness)
 		self.canvas.setFillColor(self.options.shadecolor)
 		self.canvas.setFillAlpha(self.options.shadealpha / 255)
-		def print_rectangles(rectangles):
+		self.canvas.setStrokeAlpha(self.options.shadealpha / 255)
+		rectangles = self.shadings.rectangles
+		if rectangles:
 			boxes = [box(*rect) for rect in rectangles]
 			merged = unary_union(boxes)
 			minx = min(r[0] for r in rectangles)
@@ -512,15 +511,16 @@ class PrintedPdf(PrintedAny):
 						path.lineTo(x, y)
 					path.close()
 				self.canvas.drawPath(path, fill=1, stroke=0)
-		def print_line(x_min, y_min, x_max, y_max):
+		for x_min, y_min, x_max, y_max in self.shadings.segments():
 			self.canvas.line(x_min, y_min, x_max, y_max)
-		self.shadings.print(print_rectangles, print_line)
 		self.canvas.save()
 		self.is_complete = True
 
 	def get_pil(self):
 		self.complete()
-		return PdfDocument(self.buffer).get_page(0).render().to_pil()
+		page = PdfDocument(self.buffer).get_page(0)
+		bitmap = page.render(fill_color=(255, 255, 255, 0)) if self.options.transparent else page.render()
+		return bitmap.to_pil()
 
 	def get_pdf(self):
 		self.complete()
@@ -560,12 +560,15 @@ class PrintedSvg(PrintedAny):
 	def __init__(self, w, h, w_accum, h_accum, options):
 		super().__init__(w, h, w_accum, h_accum, options.rl(), options)
 		self.draw = svgwrite.Drawing(size=(self.width(), self.height()))
+		if not options.transparent:
+			self.draw.add(self.draw.rect(insert=(0, 0), size=(self.width(), self.height()), fill='white'))
 
 	def complete(self):
 		if self.is_complete:
 			return
 		opacity = self.options.shadealpha / 255
-		def print_rectangles(rectangles):
+		rectangles = self.shadings.rectangles
+		if rectangles:
 			boxes = [box(x_min, y_min, x_max, y_max) for x_min, y_min, x_max, y_max in rectangles]
 			merged = unary_union(boxes)
 			if isinstance(merged, Polygon):
@@ -578,10 +581,9 @@ class PrintedSvg(PrintedAny):
 				points = list(geom.exterior.coords)
 				self.draw.add(self.draw.polygon(points=points, fill=self.options.shadecolor, \
 					fill_opacity=opacity, stroke_width=0))
-		def print_line(x_min, y_min, x_max, y_max):
+		for x_min, y_min, x_max, y_max in self.shadings.segments():
 			self.draw.add(self.draw.line(start=(x_min, y_min), end=(x_max, y_max),
 				stroke=self.options.shadecolor, stroke_width=self.options.shadethickness, opacity=opacity))
-		self.shadings.print(print_rectangles, print_line)
 		self.is_complete = True
 
 	def get_svg(self):
@@ -627,7 +629,7 @@ class PrintedPil(PrintedAny):
 		super().__init__(w, h, w_accum, h_accum, options.rl(), options)
 		dim = self.width(), self.height()
 		if options.transparent:
-			self.im = Image.new('RGBA', dim, 'white')
+			self.im = Image.new('RGBA', dim, (0, 0, 0, 0))
 		else:
 			self.im = Image.new('RGB', dim, 'white')
 		self.draw = ImageDraw.Draw(self.im)
@@ -635,16 +637,17 @@ class PrintedPil(PrintedAny):
 	def complete(self):
 		if self.is_complete:
 			return
-		def print_rectangles(rects):
+		rectangles = self.shadings.rectangles
+		lines = self.shadings.segments()
+		if rectangles or lines:
 			mask = Image.new('L', (self.width(), self.height()), 'black')
 			mask_draw = ImageDraw.Draw(mask)
-			for x_min, y_min, x_max, y_max in rects:
+			for x_min, y_min, x_max, y_max in rectangles:
 				mask_draw.rectangle([x_min, y_min, x_max, y_max], fill=self.options.shadealpha)
+			for x_min, y_min, x_max, y_max in lines:
+				mask_draw.line((x_min, y_min, x_max, y_max), fill=self.options.shadealpha, width=self.options.shadethickness)
 			shade = Image.new('RGBA', (self.width(), self.height()), self.options.shadecolor)
 			self.im.paste(shade, (0, 0), mask)
-		def print_line(x_min, y_min, x_max, y_max):
-			self.draw.line((x_min, y_min, x_max, y_max), fill=self.options.shadecolor, width=self.options.shadethickness)
-		self.shadings.print(print_rectangles, print_line)
 		self.is_complete = True
 
 	def get_pil(self):

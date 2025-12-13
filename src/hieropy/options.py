@@ -1,21 +1,17 @@
-def ignore_message(message):
-	pass
-
 # imagetype: 'pil', 'pdf', 'svg'
 # shadealpha: number between 0 and 255
 # shadepattern: 'diagonal' or 'uniform'
 class Options:
-	def __init__(self, direction='hlr', linesize=1, fontsize=22, sep=0.08, hmargin=0.04, vmargin=0.04, \
-				separated=False, imagetype='pil', transparent=False, signcolor='black', bracketcolor='red', \
+	def __init__(self, direction='hlr', linesize=1.0, fontsize=22, sep=0.08, hmargin=0.04, vmargin=0.04, \
+				imagetype='pil', transparent=False, signcolor='black', bracketcolor='red', \
 				shadecolor='gray', shadealpha=128, shadepattern='uniform', shadedist=5, shadethickness=1, \
-				align='middle', standalone=False, log=ignore_message):
+				align='middle', separated=False):
 		self.direction = direction
 		self.linesize = linesize
 		self.fontsize = fontsize
 		self.sep = sep
 		self.hmargin = hmargin
 		self.vmargin = vmargin
-		self.separated = separated
 		self.imagetype = imagetype
 		self.transparent = transparent
 		self.signcolor = signcolor
@@ -26,8 +22,7 @@ class Options:
 		self.shadedist = shadedist
 		self.shadethickness = shadethickness
 		self.align = align
-		self.standalone = standalone
-		self.log = log
+		self.separated = separated
 
 	def h(self):
 		return self.direction in ['hlr', 'hrl']
@@ -46,4 +41,3 @@ class MeasureOptions(Options):
 		self.sep = options.sep
 		self.transparent = False
 		self.align = options.align
-		self.log = ignore_message

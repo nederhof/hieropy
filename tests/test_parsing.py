@@ -1,7 +1,7 @@
 import unittest
 
 from hieropy import UniParser, ResParser
-from hieropy.unitransform import chars_from
+from hieropy.unistats import chars_from
 from hieropy.options import Options
 
 @unittest.skip('Skipping tests to save time')
@@ -17,7 +17,7 @@ class TestUniParsing(unittest.TestCase):
 
 	def test_unchanging_testsuite(self):
 		myparser = UniParser()
-		with open('tests/data/unitestsuite.txt', 'r') as f:
+		with open('tests/resources/unitestsuite.txt', 'r') as f:
 			lines = f.readlines()
 		for line in lines:
 			line = line.strip()
@@ -27,7 +27,7 @@ class TestUniParsing(unittest.TestCase):
 
 	def test_unchanging_testsuite_with_copy(self):
 		myparser = UniParser()
-		with open('tests/data/unitestsuite.txt', 'r') as f:
+		with open('tests/resources/unitestsuite.txt', 'r') as f:
 			lines = f.readlines()
 		for line in lines:
 			line = line.strip()
@@ -43,7 +43,7 @@ class TestUniParsing(unittest.TestCase):
 		options_pdf = Options(imagetype='pdf')
 		options_svg = Options(imagetype='svg')
 		options_pil = Options(imagetype='pdf')
-		with open('tests/data/unitestsuite.txt', 'r') as f:
+		with open('tests/resources/unitestsuite.txt', 'r') as f:
 			lines = f.readlines()
 		for line in lines:
 			line = line.strip()
@@ -79,7 +79,7 @@ class TestResParsing(unittest.TestCase):
 
 	def test_normalized_equal(self):
 		myparser = ResParser()
-		with open('tests/data/restestsuitenormalized.txt', 'r') as f:
+		with open('tests/resources/restestsuitenormalized.txt', 'r') as f:
 			lines = f.readlines()
 		for line in lines:
 			line = line.strip()
@@ -90,7 +90,7 @@ class TestResParsing(unittest.TestCase):
 	@unittest.skip('Skipping (verbose) test')
 	def test_normalization(self):
 		myparser = ResParser()
-		with open('tests/data/restestsuitespecial.txt', 'r') as f:
+		with open('tests/resources/restestsuitespecial.txt', 'r') as f:
 			lines = f.readlines()
 		for line in lines:
 			line = line.strip()
