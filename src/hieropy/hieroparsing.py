@@ -1,8 +1,10 @@
 from . import unisyntax
 from . import ressyntax
+from . import mdcsyntax
 
 unilexer, uniparser = unisyntax.build_parser()
 reslexer, resparser = ressyntax.build_parser()
+mdclexer, mdcparser = mdcsyntax.build_parser()
 
 class Parser:
 	def __init__(self):
@@ -33,3 +35,8 @@ class ResParser(Parser):
 		self.lexer = reslexer
 		self.parser = resparser
 
+class MdcParser(Parser):
+	def __init__(self):
+		super().__init__()
+		self.lexer = mdclexer
+		self.parser = mdcparser

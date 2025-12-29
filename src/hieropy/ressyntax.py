@@ -3,7 +3,7 @@ from ply.lex import TOKEN
 import ply.yacc as yacc
 
 from .resstructure import Fragment, Hiero, VerGroup, VerSubgroup, HorGroup, HorSubgroup, \
-	Namedglyph, Emptyglyph, Box, Stack, Insert, Modify, Note, Switch, Arg
+	Op, Namedglyph, Emptyglyph, Box, Stack, Insert, Modify, Note, Switch, Arg
 
 tokens = (
 	'EMPTY',
@@ -30,11 +30,6 @@ tokens = (
 	'EQUALS',
 	'WHITESPACE',
 )
-
-t_EMPTY		= 'empty'
-t_STACK		= 'stack'
-t_INSERT	= 'insert'
-t_MODIFY	= 'modify'
 
 def t_GLYPH_NAME(t):
 	r'([A-IK-Z]|NL|NU|Aa)[1-9][0-9]{0,2}[a-z]{0,2}'
@@ -72,10 +67,8 @@ t_EQUALS		= '='
 t_WHITESPACE	= '[ \\t\\n\\r\\f]'
 
 def t_error(t):
-	t.lexer.lex_errors = "Illegal character '%s'" % t.value[0]
+	t.lexer.lex_errors = f'Illegal character {t.value[0]!r}'
 	t.lexer.skip(1)
-
-lexer = lex.lex()
 
 # fragment
 def p_fragment(p):
@@ -101,23 +94,23 @@ def p_opt_hieroglyphic1(p):
 	p[0] = None
 def p_opt_hieroglyphic2(p):
 	'opt_hieroglyphic : hieroglyphic'
-	p[0] = p[1]
+	p[0] = Hiero(*p[1])
 
 # hieroglyphic
 def p_hieroglyphic1(p):
 	'hieroglyphic : top_group'
-	p[0] = Hiero(p[1])
+	p[0] = ([p[1]], [], [])
 def p_hieroglyphic2(p):
 	'hieroglyphic : hieroglyphic MINUS opt_arg_bracket_list ws top_group'
-	p[0] = p[1].add_group(p[3], p[4], p[5])
+	p[0] = (p[1][0] + [p[5]], p[1][1] + [Op(p[3], False)], p[1][2] + [p[4]])
 
 # top_group
 def p_top_group1(p):
 	'top_group : ver_group'
-	p[0] = p[1]
+	p[0] = VerGroup(*p[1])
 def p_top_group2(p):
 	'top_group : hor_group'
-	p[0] = p[1]
+	p[0] = HorGroup(*p[1])
 def p_top_group3(p):
 	'top_group : basic_group'
 	p[0] = p[1]
@@ -125,18 +118,18 @@ def p_top_group3(p):
 # ver_group
 def p_ver_group1(p):
 	'ver_group : ver_subgroup COLON opt_arg_bracket_list ws ver_subgroup'
-	p[0] = VerGroup(p[1], p[3], p[4], p[5])
+	p[0] = ([p[1], p[5]], [Op(p[3], True)], [p[4]])
 def p_ver_group2(p):
 	'ver_group : ver_group COLON opt_arg_bracket_list ws ver_subgroup'
-	p[0] = p[1].add_group(p[3], p[4], p[5])
+	p[0] = (p[1][0] + [p[5]], p[1][1] + [Op(p[3], False)], p[1][2] + [p[4]])
 
 # ver_subgroup
 def p_ver_subgroup1(p):
 	'ver_subgroup : hor_group'
-	p[0] = VerSubgroup(Switch([]), p[1], Switch([]))
+	p[0] = VerSubgroup(Switch([]), HorGroup(*p[1]), Switch([]))
 def p_ver_subgroup2(p):
 	'ver_subgroup : OPEN ws hor_group CLOSE ws'
-	p[0] = VerSubgroup(p[2], p[3], p[5])
+	p[0] = VerSubgroup(p[2], HorGroup(*p[3]), p[5])
 def p_ver_subgroup3(p):
 	'ver_subgroup : basic_group'
 	p[0] = VerSubgroup(Switch([]), p[1], Switch([]))
@@ -144,15 +137,15 @@ def p_ver_subgroup3(p):
 # hor_group
 def p_hor_group1(p):
 	'hor_group : hor_subgroup ASTERISK opt_arg_bracket_list ws hor_subgroup'
-	p[0] = HorGroup(p[1], p[3], p[4], p[5])
+	p[0] = ([p[1], p[5]], [Op(p[3], True)], [p[4]])
 def p_hor_group2(p):
 	'hor_group : hor_group ASTERISK opt_arg_bracket_list ws hor_subgroup'
-	p[0] = p[1].add_group(p[3], p[4], p[5])
+	p[0] = (p[1][0] + [p[5]], p[1][1] + [Op(p[3], False)], p[1][2] + [p[4]])
 
 # hor_subgroup
 def p_hor_subgroup1(p):
 	'hor_subgroup : OPEN ws ver_group CLOSE ws'
-	p[0] = HorSubgroup(p[2], p[3], p[5])
+	p[0] = HorSubgroup(p[2], VerGroup(*p[3]), p[5])
 def p_hor_subgroup2(p):
 	'hor_subgroup : basic_group'
 	p[0] = HorSubgroup(Switch([]), p[1], Switch([]))

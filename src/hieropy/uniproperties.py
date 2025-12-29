@@ -43,7 +43,7 @@ def keyword_to_chars(t):
 def cache_translit():
 	global _translit_to_chars
 	_translit_to_chars = defaultdict(list)
-	with resources.files('hieropy.resources').joinpath(TRANSLIT_POINTS_FILE).open('r') as f:
+	with resources.files('hieropy.resources').joinpath(TRANSLIT_POINTS_FILE).open('r', encoding='utf-8') as f:
 		reader = csv.reader(f)
 		for row in reader:
 			translit = row[0]
@@ -71,7 +71,7 @@ def char_to_info(ch):
 def cache_info():
 	global _char_to_info
 	_char_to_info = {}
-	with resources.files('hieropy.resources').joinpath(POINT_INFO_FILE).open('r') as f:
+	with resources.files('hieropy.resources').joinpath(POINT_INFO_FILE).open('r', encoding='utf-8') as f:
 		reader = csv.reader(f, delimiter='$')
 		for row in reader:
 			point = row[0]

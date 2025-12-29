@@ -82,13 +82,9 @@ def t_ENCLOSURE_CLOSING(t):
 t_DELIMITER = OPENING_CHAR + '|' + CLOSING_CHAR
 t_DAMAGED = DAMAGED_CHAR
 
-# errors = {'message': None}
-
 def t_error(t):
-	t.lexer.lex_errors = "Illegal character '%s'" % t.value[0]
+	t.lexer.lex_errors = f'Illegal character {t.value[0]!r}'
 	t.lexer.skip(1)
-
-lexer = lex.lex(reflags=re.UNICODE)
 
 # fragment
 def p_fragment(p):
@@ -576,7 +572,7 @@ lexer = None
 
 def build_parser():
 	global lexer
-	lexer = lex.lex()
+	lexer = lex.lex(reflags=re.UNICODE)
 	lexer.lex_errors = None
 	lexer.yacc_errors = None
 	parser = yacc.yacc(tabmodule='uniparsetab', write_tables=True, debug=False)

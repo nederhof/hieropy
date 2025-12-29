@@ -6,7 +6,7 @@ from .options import Options
 from .uniconstants import VER, HOR, OVERLAY, OPEN_BOX, CLOSE_BOX, OPENING_PLAIN_CHARS, PLACEHOLDER, \
 		OPEN_BRACKETS, CLOSE_BRACKETS, INSERTION_PLACES, num_to_rotate, place_to_char
 from .uninames import char_to_name
-from .uniprops import char_to_places
+from .uniproperties import char_to_places
 from .unistructure import Vertical, Horizontal, Enclosure, Basic, Overlay, Literal, Singleton,\
 		Blank, Lost, BracketOpen, BracketClose
 from .treedrawing import TkTrees
@@ -1289,11 +1289,8 @@ class BasicNode(Node):
 		return self.group.places()
 	@staticmethod
 	def initial(core, group):
-		place = 'ts'
-		if isinstance(core, Literal):
-			places = char_to_places(core.ch, core.rotation_coarse(), False)
-			if len(places) > 0:
-				place = places[0]
+		places = core.allowed_places()
+		place = places[0] if len(places) > 0 else 'ts'
 		insertions = {}
 		insertions[place] = group
 		return Basic(core, insertions)

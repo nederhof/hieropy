@@ -1,0 +1,152 @@
+bs A1
+bs A14
+ts A17
+A17 be
+ts A17 be
+ts A18
+A18 be
+ts A18 be
+bs A28
+ts A272
+A272 be
+ts A272 be
+D17 te
+t D28
+D36 t
+t D36
+t D40
+D44 t
+D52 b
+ts D54
+bs D58
+E1 te
+E6 te
+E9 te
+E10 te
+E11 te
+E15 b
+E23 te
+ts F4
+F5 te
+F29 bs be
+F20 b
+F30 b
+F39 b
+F40 b
+bs G1
+G1 te
+bs G1 te
+bs G2
+G2 te
+bs G2 te
+bs G4
+G4 te
+bs G4 te
+bs G5
+G5 te
+bs G5 te
+bs G6
+bs G9
+G9 te
+bs G9 te
+bs G14
+G14 te
+bs G14 te
+bs G15
+bs G17
+G17 te
+bs G17 te
+G17A te
+bs G18
+G20 te
+bs G21
+G21 te
+bs G21 te
+bs G22
+G22 te
+bs G22 te
+bs G23
+G23 te
+bs G23 te
+bs G24
+bs G25
+G25 te
+G25 te be
+bs G25 te
+G26 bs be
+bs G26A
+G26A te
+bs G26A te
+bs G29
+G29 te
+bs G29 te
+bs G30
+G30 te
+bs G30 te
+bs G31
+G31 te
+bs G31 te
+bs G32
+G32 te
+bs G32 te
+bs G33
+G33 te
+bs G33 te
+bs G34
+G34 te
+bs G34 te
+bs G35
+G35 te
+bs G35 te
+bs G36
+G36 te
+bs G36 te
+bs G37
+G37 te
+bs G37 te
+bs G38
+G38 te
+bs G38 te
+bs G39
+G39 te
+bs G39 te
+bs G41
+bs G42
+G42 te
+bs G42 te
+bs G43
+G43 te
+bs G43 te
+bs G44
+G44 te
+bs G44 te
+bs G47
+G47 te
+bs G47 te
+G53 te
+bs I1
+G248 be
+I1 bs
+I8 bs
+I10 bs
+I10A bs
+I11 bs
+M27 bs be
+O1 m
+O38 be
+O44 bs be
+P5 bs be
+bs R8
+R8 bs
+bs R8A
+S38 be
+T5 te
+ts U1
+ts U2
+U9 b
+U10 b
+U19 te
+U21 te
+b V22
+V22 b
+W54 be

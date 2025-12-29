@@ -4,7 +4,7 @@ import math
 from .options import *
 from .uniconstants import *
 from .uninames import char_to_name, char_to_name_cap
-from .uniprops import allowed_rotations, rotation_adjustment, \
+from .uniproperties import allowed_rotations, rotation_adjustment, \
 	char_to_insertions, char_to_places, InsertionAdjust, \
 	char_to_overlay_ligature, overlay_to_ligature
 from .printables import PlaneRestricted, PlaneExtended, OrthogonalHull, \
@@ -25,13 +25,14 @@ class Group:
 			f = min(f, h / size[1])
 		self.resize(f)
 	def copy(self):
-		self.map({ })
+		self.map({})
 
 class Fragment(Group):
 	# groups: list of Vertical/Horizontal/Enclosure/Basic/Overlay/Literal/Singleton/Blank/Lost
-	def __init__(self, groups):
+	def __init__(self, groups, color=None):
 		super().__init__()
 		self.groups = groups
+		self.color = color
 	def __repr__(self):
 		return '-'.join([repr(g) for g in self.groups])
 	def __str__(self):
@@ -81,7 +82,6 @@ class Fragment(Group):
 			x2 = x1 + options.linesize
 			x3 = x2 + options.sep / 2
 			y0 = options.vmargin
-			print(y0)
 			y = y0 + options.sep / 2
 			for i, group in enumerate(self.groups):
 				y1 = y + group.size(options)[1]
@@ -1024,19 +1024,29 @@ class Overlay(Group):
 		self.h = size[1]
 		self.areas = []
 		for i, s in enumerate(self.alt.horizontal):
-			damage = self.lits2[i].damage if self.swap else self.lits1[i].damage 
+			lit = self.lits2[i] if self.swap else self.lits1[i]
+			damage = lit.damage
 			x_min = x0 if i == 0 else self.x + s.x * self.w
 			x_mid = self.x + (s.x + s.w / 2) * self.w
 			x_max = x3 if i == len(self.alt.horizontal)-1 else self.x + (s.x + s.w) * self.w
 			y_mid = self.y + (s.y + s.h / 2) * self.h
 			self.areas.extend(damage_areas(damage, x_min, x_mid, x_max, y0, y_mid, y3))
+			lit.x = self.x + s.x * self.w
+			lit.y = self.y + s.y * self.h
+			lit.w = s.w * self.w
+			lit.h = s.h * self.h
 		for i, s in enumerate(self.alt.vertical):
-			damage = self.lits1[i].damage if self.swap else self.lits2[i].damage
+			lit = self.lits1[i] if self.swap else self.lits2[i]
+			damage = lit.damage
 			x_mid = self.x + (s.x + s.w / 2) * self.w
 			y_min = y0 if i == 0 else self.y + s.y * self.h
 			y_mid = self.y + (s.y + s.h / 2) * self.h
 			y_max = y3 if i == len(self.alt.vertical)-1 else self.y + (s.y + s.h) * self.h
 			self.areas.extend(damage_areas(damage, x0, x_mid, x3, y_min, y_mid, y_max))
+			lit.x = self.x + s.x * self.w
+			lit.y = self.y + s.y * self.h
+			lit.w = s.w * self.w
+			lit.h = s.h * self.h
 	def print(self, options, printed):
 		if self.alt:
 			self.print_ligature(options, printed)
@@ -1302,14 +1312,3 @@ class BracketClose(Group):
 		self.h = h
 	def print(self, options, printed):
 		printed.add_sign(self.ch, self.h, self.x_scale, 1, 0, False, self, extra=True, bracket=True)
-
-def is_group(group, outer=False, hor=False):
-	match group:
-		case Vertical() | Horizontal() | Enclosure() | Basic() | Overlay() | Literal() | Blank() | Lost():
-			return True
-		case Singleton():
-			return outer
-		case BracketOpen() | BracketClose():
-			return hor
-		case _:
-			return False

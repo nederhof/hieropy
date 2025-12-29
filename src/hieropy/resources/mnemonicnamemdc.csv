@@ -5,6 +5,22 @@
 # The mnemonic sxt is assumed to stand for M20 as on p. 43 and p. 49, not T26 as on p. 45.
 # Included from pp. 47-50 are the mnemonics mHy->F37B, nn->M22B, nTrw->R8A, Hwi->Z12,
 # which were listed without Gardiner names back then, but excluded is qnbt, whose glyph is compositional.
+# The mnemonic id was made to stand for N42 as in JSesh, rather than N41.
+# The mnemonic M was made to stand for Aa15 as in JSesh, rather than Aa13.
+# Added from JSesh are: 
+# R->D153,
+# aAv->O29v, 
+# qrs->Q6 (next to qrsw->Q6), 
+# K->S56,
+# St->V1 and Snt->V1 (next to 100->V1),
+# nst->W11 (next to nzt->W11),
+# 1->Z1,
+# wnm->Z11 (next to imi->Z11),
+# `->Ff1.
+# Not included here are the mnemonics 2, 3, 4, 5, 20, 30, 40, 50, 200, 300, 400, 500,
+# which do not seem to have an equivalent Gardiner name in JSesh.
+# From the mnemonics mentioned above, JSesh 7.9 (September 2025) does not recognize
+# mHy, Hwi, qnbt, nzt, and further it does not recognize pq and Ss.
 mSa,A12
 xr,A15
 Xrd,A17
@@ -49,6 +65,7 @@ b,D58
 ab,D59
 wab,D60
 sAH,D61
+R,D153
 zzmt,E6
 zAb,E17
 mAi,E22
@@ -81,7 +98,7 @@ sd,F33
 ib,F34
 nfr,F35
 zmA,F36
-mHy,F37a
+mHy,F37B
 imAx,F39
 Aw,F40
 spr,F42
@@ -154,7 +171,7 @@ i,M17
 ii,M18
 sxt,M20
 sm,M21
-nn,M22a
+nn,M22B
 sw,M23
 rsw,M24
 Sma,M26
@@ -187,10 +204,10 @@ xa,N28
 q,N29
 iAt,N30
 n,N35
-mw,N35a
+mw,N35A
 S,N37
 Sm,N40
-id,N41
+id,N42
 pr,O1
 h,O4
 Hwt,O6
@@ -201,6 +218,7 @@ zH,O22
 txn,O25
 iwn,O28
 aA,O29
+aAv,O29v
 zxnt,O30
 z,O34
 zb,O35
@@ -220,6 +238,7 @@ st,Q1
 wz,Q2
 p,Q3
 qrsw,Q6
+qrs,Q6
 xAwt,R1
 xAt,R1
 Htp,R4
@@ -227,7 +246,7 @@ kAp,R5
 kp,R5
 snTr,R7
 nTr,R8
-nTrw,R8a
+nTrw,R8A
 bd,R9
 dd,R11
 Dd,R11
@@ -272,6 +291,7 @@ sxm,S42
 md,S43
 Ams,S44
 nxxw,S45
+K,S56
 HD,T3
 HDD,T6
 pd,T9
@@ -318,6 +338,8 @@ xsf,U34
 Hm,U36
 mxAt,U38
 100,V1
+St,V1
+Snt,V1
 sTA,V2
 sTAw,V3
 wA,V4
@@ -348,6 +370,7 @@ Hb,W3
 Xnm,W9
 iab,W10
 nzt,W11
+nst,W11
 g,W11
 Hz,W14
 xnt,W17
@@ -364,9 +387,11 @@ zS,Y3
 mn,Y5
 ibA,Y6
 zSSt,Y8
+1,Z1
 y,Z4
 W,Z7
 imi,Z11
+wnm,Z11
 Hwi,Z12
 x,Aa1
 Hp,Aa5
@@ -374,10 +399,11 @@ qn,Aa8
 mAa,Aa11
 im,Aa13
 gs,Aa13
-M,Aa13
+M,Aa15
 sA,Aa17
 apr,Aa20
 wDa,Aa21
 nD,Aa27
 qd,Aa28
 Xkr,Aa30
+`,Ff1

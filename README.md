@@ -67,7 +67,7 @@ Options for rendering:
 | Name | Default | Values | Purpose |
 | ---- | ------- | ------ | ------- |
 | direction | 'hlr' | 'hlr', 'hrl', 'vlr', 'vrl' | text direction |
-| fontsize | 22 | int | font size, determining EM |
+| fontsize | 22 | int (pixels) | font size, determining EM |
 | linesize | 1.0 | float (EM) | size of line |
 | sep | 0.08 | float (EM) | separation between signs (in EM) |
 | hmargin | 0.04 | float (EM) | horizontal margin around hieroglyphic |
@@ -90,7 +90,7 @@ With `imagetype='pdf'`, the created object can be saved as PDF or as raster grap
 
 Created SVG files include Unicode characters and still require the NewGardiner font to be displayed. Depending on the platform, there are various tools to turn characters in SVG files into outlines, so that the resulting files can be displayed without needing the font.
 
-With `separated=True`, the `print` method returns a *list* of objects, one for each top-level group in reading order (starting with the rightmost group in the case of `direction='hrl'`).  The `separated` option is meant for applications where some other protocol determines line breaks. The images can be concatenated without space in between, and any (diagonal) shading will line up, as if it were one image. The appearance will then be optimal with `imagetype=pil`, while there may be visual artefacts in the case of PDF and SVG.
+With `separated=True`, the `print` method returns a *list* of objects, one for each top-level group in reading order (starting with the rightmost group in the case of `direction='hrl'`). The `separated` option is meant for applications where some other protocol determines line breaks. The images can be concatenated without space in between, and any (diagonal) shading will line up, as if it were one image. The appearance will then be optimal with `imagetype=pil`, while there may be visual artefacts in the case of PDF and SVG.
 
 ## Normalization
 
@@ -131,7 +131,7 @@ Types of normalization:
 
 Legacy characters in the `excepts` list will not be normalized. See further the [list of legacy characters and their types](https://nederhof.github.io/newgardiner/legacy.html).
 
-Normalization with `types=['rotation']` will among other things remove unnecessary mirroring for signs that are symmetric, and may correct rotation for signs for which variation sequences for rotations have been registered.  If no appropriate rotation has been registered for a sign, it will leave the existing rotation unaffected however.  One can check for unregistered rotations in a fragment by checking whether the `errors` field of an object created with `UniNormalizer(types=['rotation'])`is the empty list after applying its `normalize` method on that fragment.
+Normalization with `types=['rotation']` will among other things remove unnecessary mirroring for signs that are symmetric, and may correct rotation for signs for which variation sequences for rotations have been registered. If no appropriate rotation has been registered for a sign, it will leave the existing rotation unaffected however. One can check for unregistered rotations in a fragment by checking whether the `errors` field of an object created with `UniNormalizer(types=['rotation'])`is the empty list after applying its `normalize` method on that fragment.
 
 ## Conversion from RES to Unicode
 
@@ -147,9 +147,41 @@ res_fragment = parser.parse('A1[red]-B1:Z2[blue]')
 converter = ResUniConverter()
 uni_fragment = converter.convert_fragment(res_fragment)
 print(str(uni_fragment))
-for uni_fragment_part, color in converter.convert_fragment_by_predominant_color(res_fragment):
-    print(str(uni_fragment_part), color)
+for uni_fragment_part in converter.convert_fragment_by_predominant_color(res_fragment):
+    print(str(uni_fragment_part), uni_fragment_part.color)
 print(converter.errors)
+```
+
+## Conversion from Manuel de Codage (MdC) to Unicode
+
+The Manuel de Codage is not so much a single encoding scheme for hieroglyphic text, but rather a family of encoding schemes, implemented by different tools from 1984 onward, many of which added various features, without ever formally documenting their syntax or intended semantics. Moreover, typical MdC implementations allow absolute positioning and scaling, which are beyond the power of Unicode control characters. For these reasons, conversion from arbitrary MdC encodings to Unicode can never be guaranteed to be correctness-preserving. The best one can hope for is to approximate the intentions of an original encoding, and report a list of potential problems. In any case, manual checking and correction of output remain necessary.
+
+The conversion implemented here has been tested on a large number of encodings that were created using [JSesh](https://jsesh.qenherkhopeshef.org/), which is the most widely known modern implementation of the MdC, but no doubt one may find other legacy MdC files for which this conversion leaves to be desired.
+
+The input to conversion is a string, possibly containing line breaks:
+```python
+from hieropy import MdcUniConverter
+
+converter = MdcUniConverter()
+uni_fragments = converter.convert('t{{20,655,88}}**w{{278,0,100}}**t{{782,37,76}}\n nfr##v/')
+for fragment in uni_fragments:
+    print(str(fragment))
+print(converter.errors)
+```
+
+By default, only a list of hieroglyphic fragments are output and color is ignored, but one may also tell the converter to keep any non-hieroglyphic text (`text=True`) as well as any line numbers (`numbers=True`), and to break fragments where there is a change of (predominant) color between consecutive top-level groups (`colors=True`):
+```python
+from hieropy import MdcUniConverter
+from hieropy.unistructure import Fragment
+import hieropy.mdcstructure as mdc
+
+converter = MdcUniConverter(text=True, numbers=True, colors=True)
+parts = converter.convert('++JSesh_Info 1.0 +s\n+iTyped by J. Doe+s-!\n|5-A1*B1#23-$r-m!')
+for part in parts:
+    match part:
+        case mdc.LineNumber(): print(f'({part}): ')
+        case mdc.Text(): print(f'"{part}"')
+        case Fragment(): print(f'[{part.color}] {part}')
 ```
 
 ## From GitHub sources
@@ -180,12 +212,16 @@ deactivate
 ### Run in Windows CMD
 
 As above, but the first two lines should then be:
-```bash
+```cmd
 python -m venv venv
 venv\Scripts\activate
 ```
 
 ## Changelog
+
+### 0.1.5 (to be released)
+
+* Added MdC conversion.
 
 ### 0.1.4
 

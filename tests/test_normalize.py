@@ -2,9 +2,9 @@ import unittest
 import csv
 
 from hieropy import UniParser
-from hieropy.uninormalize import UniNormalizer
+from hieropy.uninormalization import UniNormalizer
 from hieropy.uniconstants import num_to_rotate
-from hieropy.uniprops import allowed_rotations, char_to_places
+from hieropy.uniproperties import allowed_rotations, char_to_places
 from hieropy.unistats import transforms_from, char_insertions_from
 
 class TestNorm(unittest.TestCase):

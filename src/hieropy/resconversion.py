@@ -2,14 +2,14 @@ from collections import Counter
 from itertools import groupby
 
 from .unistructure import Fragment, Vertical, Horizontal, Enclosure, Basic, \
-	Overlay, Literal, Singleton, Blank, Lost, BracketOpen, BracketClose, \
-	is_group
+	Overlay, Literal, Singleton, Blank, Lost, BracketOpen, BracketClose
 from .resstructure import VerGroup, VerSubgroup, HorGroup, HorSubgroup, \
 	Namedglyph, Emptyglyph, Box, Stack, Insert, Modify
 from .uniconstants import *
 from .uninames import name_to_char, name_to_char_cap, mnemonic_to_name
-from .uniprops import InsertionAdjust
-from .uninormalize import make_vertical, make_horizontal
+from .uniproperties import InsertionAdjust
+from .uninormalization import is_group, make_vertical, make_horizontal
+from .unitransform import damage_group, start_corners, end_corners
 
 class ResUniConverter:
 	def __init__(self):
@@ -25,7 +25,7 @@ class ResUniConverter:
 			return Fragment(self.convert_groups(fragment.hiero.groups, True))
 
 	def convert_fragment_by_predominant_color(self, fragment):
-		return [(Fragment(self.convert_groups(groups, True)), color) for
+		return [Fragment(self.convert_groups(groups, True), color=color) for
 				(groups, color) in self.partition_by_predominant_color(fragment)]
 
 	def convert_groups(self, groups, outer):
@@ -217,9 +217,9 @@ class ResUniConverter:
 				else:
 					delim_open = '\U00013258'
 					delim_close = '\U0001325C'
-		ts, bs, te, be = res_group_shading_to_corners(group)
-		shade_open = corners_to_uni_shade(ts, bs, ts, bs)
-		shade_close = corners_to_uni_shade(te, be, te, be)
+		corners = res_group_shading_to_corners(group)
+		shade_open = corners_to_num(start_corners(corners))
+		shade_close = corners_to_num(end_corners(corners))
 		return Enclosure(typ, groups, delim_open, shade_open, delim_close, shade_close)
 
 	def convert_stack(self, group):
@@ -265,10 +265,7 @@ class ResUniConverter:
 			return group1
 
 	def convert_modify(self, group):
-		ts, bs, te, be = res_group_shading_to_corners(group)
-		if ts or bs or te or be:
-			self.report('Cannot convert shading in ' + str(group))
-		return self.convert_group(group.group)
+		return damage_group(self.convert_group(group.group), res_group_shading_to_corners(group))
 
 	def partition_by_predominant_color(self, fragment):
 		if fragment.hiero is None:
@@ -328,7 +325,7 @@ class ResUniConverter:
 
 	def color_to_freq_box(self, group):
 		return Counter([group.colored()]) + \
-			(0 if group.hiero is None else self.color_to_freq_hiero(group.hiero))
+			(Counter() if group.hiero is None else self.color_to_freq_hiero(group.hiero))
 
 	def color_to_freq_stack(self, group):
 		return self.color_to_freq_group(group.group1) + self.color_to_freq_group(group.group2)
@@ -352,8 +349,7 @@ def namedglyph_to_vs(glyph):
 	return rotate_to_num(360 - rounded) if glyph.mirrored() else rotate_to_num(rounded)
 
 def shading_res_to_uni(group):
-	ts, bs, te, be = res_group_shading_to_corners(group)
-	return corners_to_uni_shade(ts, bs, te, be)
+	return corners_to_num(res_group_shading_to_corners(group))
 
 def res_group_shading_to_corners(group):
 	ts = False
@@ -382,7 +378,7 @@ def res_group_shading_to_corners(group):
 		bs = True
 		te = True
 		be = True
-	return ts, bs, te, be
+	return { 'ts': ts, 'bs': bs, 'te': te, 'be': be }
 
 def res_pattern_to_square(patt):
 	x_low = 0
@@ -400,9 +396,6 @@ def res_pattern_to_square(patt):
 			case 'b':
 				y_low = y_low + (y_high - y_low) / 2
 	return x_low, x_high, y_low, y_high
-
-def corners_to_uni_shade(ts, bs, te, be):
-	return (1 if ts else 0) | (2 if bs else 0) | (4 if te else 0) | (8 if be else 0)
 
 def allowed_insertions(group):
 	if isinstance(group, Literal):

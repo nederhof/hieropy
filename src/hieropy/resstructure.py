@@ -98,15 +98,10 @@ class Fragment(Group):
 			self.final_globs = self.globs
 
 class Hiero(Group):
-	def __init__(self, group):
-		self.groups = [group]
-		self.ops = []
-		self.sws = []
-	def add_group(self, arg_list, sw, group):
-		self.ops.append(Op(arg_list, False))
-		self.sws.append(sw)
-		self.groups.append(group)
-		return self
+	def __init__(self, groups, ops, sws):
+		self.groups = groups
+		self.ops = ops
+		self.sws = sws
 	def __str__(self):
 		s = str(self.groups[0])
 		for i in range(len(self.ops)):
@@ -122,15 +117,10 @@ class Hiero(Group):
 		return globs
 	
 class VerGroup(Group):
-	def __init__(self, group1, arg_list, sw, group2):
-		self.groups = [group1, group2]
-		self.ops = [Op(arg_list, True)]
-		self.sws = [sw]
-	def add_group(self, arg_list, sw, group):
-		self.ops.append(Op(arg_list, False))
-		self.sws.append(sw)
-		self.groups.append(group)
-		return self
+	def __init__(self, groups, ops, sws):
+		self.groups = groups
+		self.ops = ops
+		self.sws = sws
 	def __str__(self):
 		s = str(self.groups[0])
 		for i in range(len(self.ops)):
@@ -159,15 +149,10 @@ class VerSubgroup(Group):
 		return self.sw2.update(globs)
 
 class HorGroup(Group):
-	def __init__(self, group1, arg_list, sw, group2):
-		self.groups = [group1, group2]
-		self.ops = [Op(arg_list, True)]
-		self.sws = [sw]
-	def add_group(self, arg_list, sw, group):
-		self.ops.append(Op(arg_list, False))
-		self.sws.append(sw)
-		self.groups.append(group)
-		return self
+	def __init__(self, groups, ops, sws):
+		self.groups = groups
+		self.ops = ops
+		self.sws = sws
 	def __str__(self):
 		s = str(self.groups[0])
 		for i in range(len(self.ops)):

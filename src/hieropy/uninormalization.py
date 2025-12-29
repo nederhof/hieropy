@@ -2,12 +2,37 @@ import csv
 import importlib.resources as resources
 
 from .uniconstants import num_to_rotate, rotate_to_num, mirror_place, mirror_rotate, quarter_mirror_rotate
-from .uniprops import circular_chars, lr_symmetric_chars, tb_symmetric_chars
+from .uniproperties import circular_chars, lr_symmetric_chars, tb_symmetric_chars
 from .unistructure import *
 from .hieroparsing import UniParser
 
 LEGACY_FILE = 'legacy.csv'
 LEGACY_TYPES = ['aspect', 'repetition', 'transform', 'variant', 'overlay', 'insertion', 'tabular']
+
+def is_group(group, outer=False, hor=False):
+	match group:
+		case Vertical() | Horizontal() | Enclosure() | Basic() | Overlay() | Literal() | Blank() | Lost():
+			return True
+		case Singleton():
+			return outer
+		case BracketOpen() | BracketClose():
+			return hor
+		case _:
+			return False
+
+def is_horizontal(groups):
+	if len(groups) < 2:
+		return False
+	for i in range(len(groups)):
+		if isinstance(groups[i], BracketOpen):
+			if i == len(groups)-1 or isinstance(groups[i+1], (BracketOpen, BracketClose)):
+				return False
+		elif isinstance(groups[i], BracketClose):
+			if i == 0 or isinstance(groups[i-1], (BracketOpen, BracketClose)):
+				return False
+		elif not is_group(groups[i], hor=True):
+			return False
+	return True
 
 def mirrored_group(group):
 	if isinstance(group, Literal):
@@ -67,7 +92,7 @@ class UniNormalizer:
 
 	def read_legacy(self):
 		self.type_to_char_to_alt = {typ: {} for typ in LEGACY_TYPES}
-		with resources.files('hieropy.resources').joinpath(LEGACY_FILE).open('r') as f:
+		with resources.files('hieropy.resources').joinpath(LEGACY_FILE).open('r', encoding='utf-8') as f:
 			reader = csv.reader(f)
 			for point, typ, alt in reader:
 				ch =  chr(int(point,16))

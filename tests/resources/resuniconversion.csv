@@ -51,3 +51,15 @@ insert[bs](stack(w,a),t) 𓅱𓐶𓂝𓐳𓏏
 insert(stack(b*b,z),t) 𓐷𓃀𓐱𓃀𓐸𓐶𓊃𓐹𓏏
 insert[te](stack(b,z),t) 𓃀𓐶𓊃𓐴𓏏
 insert[bs](A135h,t) 𓔟𓐳𓏏
+modify[shade](A1) 𓀀𓑕
+modify[te](A1) 𓀀𓑊
+modify[te](A1*B1:C1*D1) 𓀀𓐱𓁐𓑕𓐰𓁚𓐱𓁶
+modify[shade](empty) 𓑃︀
+modify[shade](empty[width=0.5,height=0.5]) 𓑄︀
+modify[shade](empty[shade]) 𓑃︀
+modify[te](A1*B1*C1) 𓀀𓐱𓁐𓑊𓐱𓁚𓑋
+modify[te](stack(A1,B1)) 𓀀𓑊𓐶𓁐
+modify[te](stack(A1*B1*C1,D1)) 𓐷𓀀𓐱𓁐𓑊𓐱𓁚𓑋𓐸𓐶𓁶
+modify[bs](insert[te](w,t)) 𓅱𓑈𓐴𓏏
+modify[bs](cartouche()) 𓍹𓐼𓐽𓍺
+modify[bs](cartouche(A1)) 𓍹𓐼𓀀𓑈𓐽𓍺

@@ -69,6 +69,15 @@ def damage_to_num(s):
 def num_to_damage(n):
 	return chr(DAMAGE_BASE + n) if n > 0 else ''
 
+def corners_to_num(corners):
+	return (1 if corners['ts'] else 0) | \
+		(2 if corners['bs'] else 0) | \
+		(4 if corners['te'] else 0) | \
+		(8 if corners['be'] else 0)
+
+def num_to_corners(n):
+	return { 'ts': bool(n & 1), 'bs': bool(n & 2), 'te': bool(n & 4), 'be': bool(n & 8) }
+
 def num_to_rotate(n):
 	match n:
 		case 1: return 90
@@ -112,6 +121,47 @@ def rotate_char(ch):
 		case '\U0001342F': return '\uE472' 
 		case _: return None
 
+def rotate_place(pl, rot):
+	match pl:
+		case 'ts': 
+			match rot:
+				case 90: return 'te'
+				case 270: return 'bs'
+				case _: return 'be'
+		case 'bs':
+			match rot:
+				case 90: return 'ts'
+				case 270: return 'be'
+				case _: return 'te'
+		case 'te':
+			match rot:
+				case 90: return 'be'
+				case 270: return 'ts'
+				case _: return 'bs'
+		case 'be':
+			match rot:
+				case 90: return 'bs'
+				case 270: return 'te'
+				case _: return 'ts'
+		case 't': 
+			return 'b' if rot == 180 else pl
+		case 'b': 
+			return 't' if rot == 180 else pl
+		case _: return pl
+
+def rotate_corners(corners, rot):
+	match rot:
+		case 90:
+			return { 'ts': corners['bs'], 'bs': corners['be'], 'te': corners['ts'], 'be': corners['te'] }
+		case 270:
+			return { 'ts': corners['te'], 'bs': corners['ts'], 'te': corners['be'], 'be': corners['bs'] }
+		case _:
+			return { 'ts': corners['be'], 'bs': corners['te'], 'te': corners['bs'], 'be': corners['ts'] }
+
+def rotate_damage(num, rot):
+	corners = rotate_corners(num_to_corners(num), rot)
+	return corners_to_num(corners)
+
 def place_to_char(pl):
 	return INSERTION_CHARS[INSERTION_PLACES.index(pl)]
 
@@ -145,6 +195,26 @@ def mirror_rotate(r):
 		case 315: return 45
 		case _: return 0
 
+def mirror_bracket(ch):
+	match ch:
+		case '[': return ']'
+		case '{': return '}'
+		case '⟨': return '⟩'
+		case '⟦': return '⟧'
+		case '⸢': return '⸣'
+		case ']': return '['
+		case '}': return '{'
+		case '⟩': return '⟨'
+		case '⟧': return '⟦'
+		case '⸣': return '⸢'
+
+def mirror_corners(corners):
+	return { 'ts': corners['te'], 'bs': corners['be'], 'te': corners['ts'], 'be': corners['bs'] }
+
+def mirror_damage(num):
+	corners = mirror_corners(num_to_corners(num))
+	return corners_to_num(corners)
+
 def quarter_mirror_rotate(r):
 	return (mirror_rotate(r - 90) + 90) % 360
 
@@ -171,3 +241,4 @@ def damage_areas(damage, x0, x1, x2, y0, y1, y2):
 	if damage & 8:
 		areas.append(Rectangle(x1, y1, x2-x1, y2-y1))
 	return areas
+

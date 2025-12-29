@@ -10,7 +10,7 @@ import importlib.resources as resources
 from .uniconstants import HIERO_FONT_FILENAME
 from .uninames import UNI_CATEGORIES, cat_to_chars, cat_to_chars_ext, char_to_name, name_to_char, name_to_mnemonics, \
 		is_extended_char, tall_chars, broad_chars, narrow_chars
-from .uniprops import translit_to_chars, keyword_to_chars, char_to_info
+from .uniproperties import translit_to_chars, keyword_to_chars, char_to_info
 from .translit import ascii_to_unicode_ch
 
 MARGIN = 10

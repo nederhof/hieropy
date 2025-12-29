@@ -9,7 +9,7 @@ from .uniconstants import OPEN_BOX, CLOSE_BOX, OPEN_WALLED, CLOSE_WALLED, \
 		CAP_CHARS, OPEN_BRACKETS, CLOSE_BRACKETS, PLACEHOLDER, INSERTION_PLACES, \
 		rotate_to_num, num_to_rotate, HIERO_FONT_FILENAME
 from .uninames import name_to_char, mnemonic_to_name
-from .uniprops import allowed_rotations
+from .uniproperties import allowed_rotations
 from .hieroparsing import UniParser
 from .edithistory import History
 from .editpreview import Preview

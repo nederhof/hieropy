@@ -152,6 +152,8 @@ def cache_mnemonic():
 	with resources.files('hieropy.resources').joinpath(MNEMONIC_NAME_FILE).open('r') as f:
 		reader = csv.reader(f)
 		for row in reader:
+			if row[0][0] == '#':
+				continue
 			mnem = row[0]
 			name = row[1]
 			_mnemonic_to_name[mnem] = name
