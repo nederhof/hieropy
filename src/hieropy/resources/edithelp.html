@@ -5,14 +5,14 @@
 </head>
 <body>
 
-<h1>Unicode hieroglyphic Editor</h1>
+<h1>Unicode hieroglyphic editor</h1>
 
 <h2>Introductory examples</h2>
 
 Groups are generally constructed from the bottom up, and from left to right
 (or right to left, depending on the text direction).
 One can use a combination of mouse clicks and keyboard input.
-Starting with an empty encoding, after pressing <b>Clear</b>, an example is:
+Starting with an empty encoding, after clicking on <b>Clear</b>, an example is:
 <ol>
 <li> Type <b>l</b> (the lower-case letter 'ell') or click on <b>literal</b>, and type <tt>sw</tt> into the text field
 <li> Type <b>-</b> (hyphen) or click on <b>append</b>
@@ -34,7 +34,7 @@ Next we want to move the ideogram marker (Z1) to the bottom right corner:
 <li> Select <b>be</b> to indicate the place of insertion, or alternatively
 press <tt>c</tt> until the place of insertion becomes <b>be</b>
 </ol>
-One can also enter an existing Unicode sequence into the text panel and press
+One can also enter an existing Unicode sequence into the text panel and click on
 <b>Parse</b>.
 
 <h2>Structure of the page</h2>
@@ -52,7 +52,7 @@ The panel for changing the text direction
 is located in the top-left or top-right corner of the page, immediately next
 to the preview panel.
 One may select the desired text direction
-by pressing one of the four relevant buttons (hlr, hrl, vlr, vrl).
+by clicking on one of the four relevant buttons (hlr, hrl, vlr, vrl).
 The direction affects the view but not the encoding 
 itself.
 
@@ -71,8 +71,7 @@ The focus is the target of edit operations.
 In the tree panel, the focus is indicated by a thick blue boundary
 around a node, as opposed to a thin gray boundary.
 In the preview panel, the top-most group containing the current focus is
-indicated by blue lines. The current focus can also be 
-between two groups.
+indicated by blue lines. The current focus can also be between two groups.
 <p>
 Top-level groups are separated by nodes labeled '<b>-</b>'. These are not part
 of the encoding, but serve to make certain structural changes.
@@ -92,10 +91,10 @@ Only those buttons are shown that are relevant to the current focus.
 
 The text panel contains the Unicode fragment. This fragment is updated every time
 an edit is made, for example through the buttons in the control panel.
-Alternatively, one can edit the text panel and press
+Alternatively, one can edit the text panel and click on
 <b>Parse</b>, which updates the preview and tree panels.
-By pressing <b>Clear</b>, one obtains an empty fragment.
-By pressing <b>Copy</b>, the encoding is copied to the clipboard, if you wish
+By clicking on <b>Clear</b>, one obtains an empty fragment.
+By clicking on <b>Copy</b>, the encoding is copied to the clipboard, if you wish
 to include the encoding in another document.
 <p>
 Only if hieroglyphic fonts are installed in the operating system does
@@ -160,29 +159,28 @@ mirrored, and '<b>r</b>' chooses the next rotation.
 For insertions, '<b>c</b>' selects the next available place,
 for lost signs, '<b>x</b>' toggles the expansion, etc.
 <p>
-The above keyboard shortcuts will work if the browser's focus is 
+The above keyboard shortcuts will work if the focus is 
 on the tree panel, which is indicated by a blue border around the tree panel.
 <p>
-If the browser's focus is on the text field of a literal, it can be transferred to the tree panel
-by pressing Enter. Conversely, if the browser's focus is on the 
-tree panel, and the editor's focus is on a literal, then the browser's focus
+If the focus is on the text field of a literal, it can be transferred to the tree panel
+by pressing Enter. Conversely, if the focus is on the 
+tree panel, and the focus is on a literal, then the focus
 can be transferred to the name field by pressing the space bar.
 <p>
 The name of a sign can be entered as a 'Gardiner name', or for some signs as a
 'mnemonic', as for example <tt>sw</tt> in place of <tt>M23</tt>.
 After typing the name of a sign, typing <tt>-</tt> (hyphen) is the same as
-pressing <b>append</b>; similarly one may type <tt>*</tt>, <tt>:</tt>,
+clicking on <b>append</b>; similarly one may type <tt>*</tt>, <tt>:</tt>,
 <tt>+</tt>, <tt>;</tt>.
 
 <h2>Sign chooser</h2>
 
 The following is relevant when the editor's focus is on a sign (literal).
 <p>
-The menu of signs is activated by clicking <b>menu</b>, or by entering
-'<b>u</b>' when the browser's focus is on the tree panel, or
-by entering '<b>u</b>' into an otherwise empty name field.
+The menu of signs is activated by clicking on <b>menu</b> or 
+by pressing the space bar when the focus is in the name field.
 <p>
-By clicking the tabs at the top of the window, one may view categories of
+By clicking on the tabs at the top of the window, one may view categories of
 signs according to Gardiner's sign list. Three extra tabs show collections
 of signs according to shape.
 One may navigate through the tabs using the four arrow keys. A sign is selected by clicking on it.
@@ -196,10 +194,10 @@ After entering the first letter (or the first two letters for 'NL', 'NU',
 One may then type the remaining digits, and possibly more letters, 
 and press <b>Enter</b> to select the sign.
 Typed characters can be erased by pressing <b>Backspace</b>;
-this is not needed for switching between categories however:
-by pressing '<b>a</b>', then then '<b>b</b>', 
+this is not needed for switching between categories however.
+For example, by pressing '<b>a</b>' and then '<b>b</b>', 
 one switches from category 'A' directly to category 'B'.
-By pressing <b>Esc</b>, or by clicking on the upper right corner of the menu, 
+By pressing <b>Esc</b>, or by clicking on <b>Close</b>,
 one exits the sign chooser without having selected a sign.
 <p>
 Information on signs can be obtained by selecting <b>info</b> and moving the 

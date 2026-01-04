@@ -72,6 +72,14 @@ class TestMdcConv(unittest.TestCase):
 				gold = [hex(ord(x)) for x in gold_str]
 				self.assertEqual(mach_str, gold_str, msg=f'Line {line_no}\n{mach}\n{gold}')
 
+	def test_errors(self):
+		with open('tests/resources/mdcuniconversionerror.txt', 'r') as f:
+			lines = f.readlines()
+		for line_no, line in enumerate(lines, start=1):
+			mdc_str = line.strip()
+			mach_str, n_error = self.convert_mdc_uni(mdc_str)
+			self.assertGreaterEqual(n_error, 1, msg=f'Line {line_no}')
+
 	@unittest.skip("Skipping this test until real directory is added")
 	def test_bulk(self):
 		d = '/replace by directory of .hie or .gly files'
@@ -89,11 +97,3 @@ class TestMdcConv(unittest.TestCase):
 							case mdc.Text(): print(f'"{part}"')
 							case uni.Fragment(): print(f'[{part.color}] {part}')
 					print(converter.errors)
-
-	def test_errors(self):
-		with open('tests/resources/mdcuniconversionerror.txt', 'r') as f:
-			lines = f.readlines()
-		for line_no, line in enumerate(lines, start=1):
-			mdc_str = line.strip()
-			mach_str, n_error = self.convert_mdc_uni(mdc_str)
-			self.assertGreaterEqual(n_error, 1, msg=f'Line {line_no}')

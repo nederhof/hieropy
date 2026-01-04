@@ -32,6 +32,16 @@ def name_to_char(name):
 		cache_name_and_char()
 	return _name_to_char.get(name)
 
+def name_to_char_insensitive(name):
+	if re.match(r'^[a-ik-z][0-9]', name):
+		return name_to_char(name[0].upper() + name[1:])
+	elif re.match(r'^(nl|nu)[0-9]', name):
+		return name_to_char(name[0:2].upper() + name[2:])
+	elif re.match(r'^aa[0-9]', name):
+		return name_to_char('Aa' + name[2:])
+	else:
+		return name_to_char(name)
+
 def char_to_name(ch):
 	if _char_to_name is None:
 		cache_name_and_char()
@@ -61,6 +71,9 @@ def cat_to_chars_ext(cat):
 	if _cat_to_chars_ext is None:
 		cache_name_and_char()
 	return _cat_to_chars_ext[cat]
+
+def all_chars():
+	return sorted([ch for cat in UNI_CATEGORIES for ch in cat_to_chars(cat) + cat_to_chars_ext(cat)])
 
 def mnemonic_to_name(mnemonic):
 	if _mnemonic_to_name is None:

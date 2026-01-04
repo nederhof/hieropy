@@ -6,7 +6,8 @@ from itertools import product, combinations
 from .options import Options
 from .uniconstants import insertion_position, INSERTION_PLACES
 from .uniproperties import InsertionAdjust
-from .unistructure import Vertical, Horizontal, Enclosure, Basic, Overlay, Literal, BracketOpen, BracketClose
+from .unistructure import Fragment, Vertical, Horizontal, Enclosure, Basic, Overlay, \
+		Literal, BracketOpen, BracketClose
 from .uninormalization import is_group, is_horizontal, make_horizontal, make_vertical
 
 options = Options()
@@ -186,8 +187,33 @@ class BoundingBox:
 			box2.y < box1.y + box1.h and box1.y < box2.y + box2.h
 
 class SpatialParser:
-	def __init__(self):
-		pass
+	def __init__(self, direction='hlr'):
+		self.direction = direction
+
+	def h(self):
+		return self.direction in ['hlr', 'hrl']
+
+	def lr(self):
+		return self.direction in ['hlr', 'vlr']
+
+	def best_fragment(self, tokens):
+		chunks = self.split(tokens, ParseParams())
+		groups = []
+		for chunk in chunks:
+			group = self.best_top_group_exhaustive(chunk)
+			if group:
+				groups.append(group)
+		return Fragment(groups)
+
+	def best_top_group_exhaustive(self, tokens):
+		parse = None
+		for slack in [0.1, 0.2, 0.3, 0.4, 0.5]:
+			parse = self.best_top_group(tokens, ParseParams(slack=slack))
+			if parse:
+				break
+		if not parse:
+			parse = self.best_top_group(tokens, ParseParams(exhaustive=True))
+		return parse
 
 	def best_top_group(self, tokens, params=None):
 		if params is None:
@@ -337,6 +363,46 @@ class SpatialParser:
 					insertions[place] = subparse
 				parses.append(GroupAndTokens.basic(core, insertions))
 		return parses
+
+	def split(self, tokens, params):
+		if self.h():
+			return self.split_horizontal(tokens, params)
+		else:
+			return self.split_vertical(tokens, params)
+
+	def split_vertical(self, tokens, params):
+		tokens = sorted(tokens, key=lambda t: t.y + t.h / 2)
+		chunks = []
+		while len(tokens) > 0:
+			top_tokens = [tokens[0]]
+			bottom_tokens = tokens[1:]
+			while len(bottom_tokens) > 0:
+				t_box = BoundingBox(top_tokens)
+				b_box = BoundingBox(bottom_tokens)
+				overlap = params.slack * max(t_box.margin_b, b_box.margin_t)
+				if t_box.y + t_box.h - overlap < b_box.y:
+					break
+				top_tokens.append(bottom_tokens.pop(0))
+			chunks.append(top_tokens)
+			tokens = bottom_tokens
+		return chunks
+
+	def split_horizontal(self, tokens, params):
+		tokens = sorted(tokens, key=lambda t: t.x + t.w / 2)
+		chunks = []
+		while len(tokens) > 0:
+			left_tokens = [tokens[0]]
+			right_tokens = tokens[1:]
+			while len(right_tokens) > 0:
+				l_box = BoundingBox(left_tokens)
+				r_box = BoundingBox(right_tokens)
+				overlap = params.slack * max(l_box.margin_r, r_box.margin_l)
+				if l_box.x + l_box.w - overlap < r_box.x:
+					break
+				left_tokens.append(right_tokens.pop(0))
+			chunks.append(left_tokens)
+			tokens = right_tokens
+		return chunks if self.lr() else reversed(chunks)
 
 def split_from_top(tokens, params):
 	tokens = sorted(tokens, key=lambda t: t.y + t.h / 2)

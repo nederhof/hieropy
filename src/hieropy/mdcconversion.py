@@ -317,16 +317,11 @@ class MdcUniConverter:
 		if len(tokens) == 0:
 			return None
 		parser = SpatialParser()
-		parse = None
-		for slack in [0.1, 0.2, 0.3, 0.4, 0.5]:
-			if not parse:
-				parse = parser.best_top_group(tokens, ParseParams(slack=slack))
-		if not parse:
-			parse = parser.best_top_group(tokens, ParseParams(exhaustive=True))
+		parse = parser.best_top_group_exhaustive(tokens)
 		if not parse:
 			tokens_pruned = [t for t in tokens if not isinstance(t.group, (uni.BracketOpen, uni.BracketClose))]
 			if len(tokens_pruned) > 0 and len(tokens_pruned) < len(tokens):
-				parse = parser.best_top_group(tokens_pruned, ParseParams(exhaustive=True))
+				parse = parser.best_top_group_exhaustive(tokens_pruned)
 				if parse:
 					self.report('Ignored brackets in absolute group')
 		if not parse:

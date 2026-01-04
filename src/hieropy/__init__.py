@@ -4,5 +4,6 @@ from .unieditor import UniEditor
 from .uninormalization import UniNormalizer
 from .resconversion import ResUniConverter
 from .mdcconversion import MdcUniConverter
+from .ocr import ImageUniConverter
 
-__version__ = '0.1.4'
+__version__ = '0.1.5'

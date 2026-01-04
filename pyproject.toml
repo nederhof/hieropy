@@ -1,6 +1,6 @@
 [project]
 name = "hieropy"
-version = "0.1.4"
+version = "0.1.5"
 description = "Processing of ancient Egyptian hieroglyphic text"
 readme = "README.md"
 authors = [{ name = "Mark-Jan Nederhof", email = "markjan.nederhof@googlemail.com" }]
@@ -13,6 +13,7 @@ dependencies = [
 	"pypdfium2==5.0.0",
 	"reportlab",
 	"rtree",
+	"scipy",
 	"shapely",
 	"svgwrite",
 	"tkhtmlview",

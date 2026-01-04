@@ -154,7 +154,7 @@ print(converter.errors)
 
 ## Conversion from Manuel de Codage (MdC) to Unicode
 
-The Manuel de Codage is not so much a single encoding scheme for hieroglyphic text, but rather a family of encoding schemes, implemented by different tools from 1984 onward, many of which added various features, without ever formally documenting their syntax or intended semantics. Moreover, typical MdC implementations allow absolute positioning and scaling, which are beyond the power of Unicode control characters. For these reasons, conversion from arbitrary MdC encodings to Unicode can never be guaranteed to be correctness-preserving. The best one can hope for is to approximate the intentions of an original encoding, and report a list of potential problems. In any case, manual checking and correction of output remain necessary.
+The Manuel de Codage is not so much a single encoding scheme for hieroglyphic text, but rather a family of encoding schemes, implemented by different tools from 1984 onward, many of which added various features, without ever formally documenting their syntax or intended semantics. Moreover, typical MdC implementations allow absolute positioning and scaling, which are beyond the power of Unicode control characters. For these reasons, conversion from arbitrary MdC encodings to Unicode can never be guaranteed to be correctness-preserving. The best one can do is to approximate the intentions of an original encoding, and to report a list of potential problems. In any case, manual checking and correction of output remain necessary.
 
 The conversion implemented here has been tested on a large number of encodings that were created using [JSesh](https://jsesh.qenherkhopeshef.org/), which is the most widely known modern implementation of the MdC, but no doubt one may find other legacy MdC files for which this conversion leaves to be desired.
 
@@ -183,6 +183,62 @@ for part in parts:
         case mdc.Text(): print(f'"{part}"')
         case Fragment(): print(f'[{part.color}] {part}')
 ```
+
+## OCR/HTR
+
+The implementation of image processing is at a very early stage of development, and would have low accuracy for most practical applications.
+
+The input is assumed to be an image of a single line of hieroglyphic text. The background must be entirely white (not gray) to help segmentation and be free of specks; recognition of shading/hatching and enclosures has not been implemented yet. The tool may also struggle with fonts and handwritings other than the font or handwriting it was created from. There is no language model as yet, which implies that signs that look similar will often be confused.
+
+By default, an instance of the tool is created from the NewGardiner font:
+```python
+from PIL import Image
+from hieropy import UniParser, Options, ImageUniConverter
+
+parser = UniParser()
+options = Options(fontsize=30)
+encoding_in = '𓂋𓅮𓊛𓐰𓏤𓎔𓐻𓐷𓏏𓐱𓏭𓐸𓁷𓐰𓏤𓈎𓐰𓈖𓈖𓐰𓂡𓀀𓃹𓐰𓈖𓐍𓐰𓂋𓇋𓁷𓐰𓏤𓌞𓋴𓂻'
+fragment = parser.parse(encoding_in)
+printed = fragment.print(options)
+printed.get_pil().save('ocrtest.png')
+
+converter = ImageUniConverter.from_font()
+image = Image.open('ocrtest.png')
+encoding_out = str(converter.convert_line(image))
+print(encoding_in == encoding_out)
+```
+
+Another font may be used, and an instance of the tool may be dumped and loaded, to speed up repeated application:
+```python
+from hieropy import ImageUniConverter
+
+filename = 'pickledconverter.pkl'
+converter1 = ImageUniConverter.from_font('OtherFont.ttf')
+converter1.dump(filename)
+converter2 = ImageUniConverter.load(filename)
+```
+
+An instance can also be created from a collection of cropped and labelled exemplars of signs, in a given folder
+of PNG images:
+```python
+from PIL import Image
+from hieropy import ImageUniConverter
+
+converter = ImageUniConverter.from_exemplars('sethe')
+image = Image.open('htrtest.png')
+encoding_out = str(converter.convert_line(image))
+```
+
+Here `sethe` would be a folder containing exemplars of Kurt Sethe's handwriting, with filenames like:
+```
+13000-0-100.png
+13000-1-100.png
+13014-0-100.png
+13014-1-90.png
+13191-0-30.png
+```
+
+The first number is the code point, the second distinguishes different exemplars of the same sign, and the third is the height of the exemplar relative to the height of the line it was extracted from, as percentage. For example, both exemplars of the sitting man (U+13000) took up 100% of the height of the line, while the viper (U+13191) took up only 30% of that height.
 
 ## From GitHub sources
 
@@ -219,9 +275,10 @@ venv\Scripts\activate
 
 ## Changelog
 
-### 0.1.5 (to be released)
+### 0.1.5
 
 * Added MdC conversion.
+* Added OCR/HTR.
 
 ### 0.1.4
 

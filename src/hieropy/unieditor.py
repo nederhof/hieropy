@@ -8,7 +8,7 @@ from .uniconstants import OPEN_BOX, CLOSE_BOX, OPEN_WALLED, CLOSE_WALLED, \
 		OPENING_PLAIN_CHARS, OPENING_WALLED_CHARS, CLOSING_PLAIN_CHARS, CLOSING_WALLED_CHARS, \
 		CAP_CHARS, OPEN_BRACKETS, CLOSE_BRACKETS, PLACEHOLDER, INSERTION_PLACES, \
 		rotate_to_num, num_to_rotate, HIERO_FONT_FILENAME
-from .uninames import name_to_char, mnemonic_to_name
+from .uninames import name_to_char, name_to_char_insensitive, mnemonic_to_name
 from .uniproperties import allowed_rotations
 from .hieroparsing import UniParser
 from .edithistory import History
@@ -402,7 +402,7 @@ class UniEditor():
 		self.name_value = tk.StringVar()
 		self.name_entry = tk.Entry(self.name_frame, textvariable=self.name_value, width=12, font=input_font, bd=0, highlightthickness=0)
 		self.name_entry.pack(side='left')
-		tk.Button(self.name_param, text='menu', underline=3, command=self.open_menu, font=font).pack(side='left', padx=(2,0))
+		tk.Button(self.name_param, text='menu', command=self.open_menu, font=font).pack(side='left', padx=(2,0))
 		self.name_entry.bind('<FocusIn>', lambda e: self.name_focus_in())
 		self.name_entry.bind('<FocusOut>', lambda e: self.name_focus_out())
 		self.name_entry.bind('<Return>', lambda e: self.adjust_name_on_enter())
@@ -459,12 +459,12 @@ class UniEditor():
 		elif name[-1] == ';':
 			self.tree.do_semicolon()
 			return
-		elif name_to_char(name):
-			ch = name_to_char(name)
+		elif name_to_char_insensitive(name):
+			ch = name_to_char_insensitive(name)
 		elif mnemonic_to_name(name):
 			ch = name_to_char(mnemonic_to_name(name))
-		elif name == 'u':
-			self.set_name_value('')
+		elif name.endswith(' '):
+			self.set_name_value(name[:-1])
 			self.open_menu()
 			return
 		else:
@@ -1046,7 +1046,6 @@ class UniEditor():
 						case 'i': self.tree.do_insert()
 						case 'e': self.tree.do_enclosure()
 						case 'w': self.tree.do_swap()
-						case 'u': self.do_menu()
 						case 'd': self.adjust_damage_toggle()
 						case 'm': self.adjust_mirror_toggle()
 						case 'r': self.adjust_rotate_next()
