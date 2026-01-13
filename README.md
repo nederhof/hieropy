@@ -186,9 +186,9 @@ for part in parts:
 
 ## OCR/HTR
 
-The implementation of image processing is at a very early stage of development, and would have low accuracy for most practical applications.
+The implementation of automatic text recognition is at a very early stage of development, and would have low accuracy for most practical applications.
 
-The input is assumed to be an image of a single line of hieroglyphic text. The background must be entirely white (not gray) to help segmentation and be free of specks; recognition of shading/hatching and enclosures has not been implemented yet. The tool may also struggle with fonts and handwritings other than the font or handwriting it was created from. There is no language model as yet, which implies that signs that look similar will often be confused.
+The input is assumed to be an image of a single line of hieroglyphic text. The background must be entirely white (not gray) to help segmentation and be free of specks. The tool may also struggle with fonts and handwritings other than the font or handwriting it was created from. There is no language model as yet, which implies that signs that look similar will often be confused.
 
 By default, an instance of the tool is created from the NewGardiner font:
 ```python
@@ -238,7 +238,38 @@ Here `sethe` would be a folder containing exemplars of Kurt Sethe's handwriting,
 13191-0-30.png
 ```
 
-The first number is the code point, the second distinguishes different exemplars of the same sign, and the third is the height of the exemplar relative to the height of the line it was extracted from, as percentage. For example, both exemplars of the sitting man (U+13000) took up 100% of the height of the line, while the viper (U+13191) took up only 30% of that height.
+The first number is the code point in hexadecimal, the second distinguishes different exemplars of the same sign, and the third is the height of the exemplar relative to the height of the line it was extracted from, as percentage. For example, both exemplars of the sitting man (U+13000) took up 100% of the height of the line, while the viper (U+13191) took up only 30% of that height.
+
+For exemplars of enclosures (from which enclosed groups have been erased), use these code points:
+
+| Code point | Meaning |
+| ----- | ------- |
+| 1325C | ḥwt enclosure |
+| 13282 | serekh enclosure |
+| 13287 | walled enclosure with rounded caps |
+| 13289 | walled enclosure with straight caps |
+| 1337A | cartouche |
+
+By default, the text direction is assumed to be horizontal left-to-right if the width of the input image exceeds its height, and vertical left-to-right otherwise. The text direction can also be set explicitly as one of `hlr`, `hrl`, `vlr`, `vrl`:
+```python
+from hieropy import ImageUniConverter
+from PIL import Image
+
+converter = ImageUniConverter.load('pickledconverter.pkl')
+image = Image.open('mirroredtext.png')
+encoding_out = str(converter.convert_line(image, direction='hrl'))
+```
+
+There are many ways to convey that individual signs in an inscription are damaged. Some publications use a gray or colored background (also known as shading) while others use diagonal lines or other patterns (also known as hatching) or print the damaged glyphs in gray. It would be unrealistic to expect this tool to deal with each of these possibilities. Therefore, we assume that there is an external image-processing module that (1) recognizes the shading/hatching in an image of an inscription and turns it into a list of polygons (with (0,0) being the top-left corner of the image), and (2) removes the shading/hatching from the image. The image without shading/hatching and the polygons are then input as two separate arguments:
+```python
+from hieropy import ImageUniConverter
+from PIL import Image
+
+converter = ImageUniConverter.load('pickledconverter.pkl')
+image = Image.open('cleanimage.png')
+shading = [[(0,20),(30,20),(30,40),(0,40)],[(50,60),(70,60),(70,90),(50,90)]]
+encoding_out = str(converter.convert_line(image, shading=shading))
+```
 
 ## From GitHub sources
 
@@ -274,6 +305,10 @@ venv\Scripts\activate
 ```
 
 ## Changelog
+
+### 0.1.6 (not yet released)
+
+* Improved OCR/HTR.
 
 ### 0.1.5
 

@@ -414,7 +414,12 @@ def closest_insertion_place(x0, y0, places, group):
 	best_dist = float('inf')
 	core = group.core if isinstance(group, Basic) else group
 	for place in places:
-		x1, y1 = insertion_position(place, InsertionAdjust())
+		if isinstance(core, (Literal, Overlay)):
+			core.choose_alt_glyph(places)
+			adjustments = core.adjustments.get(place, InsertionAdjust())
+			x1, y1 = insertion_position(place, adjustments)
+		else:
+			x1, y1 = insertion_position(place, InsertionAdjust())
 		dist = (x0-x1)*(x0-x1) + (y0-y1)*(y0-y1)
 		if dist < best_dist:
 			best_place = place

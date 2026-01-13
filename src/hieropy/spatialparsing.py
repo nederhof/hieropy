@@ -190,12 +190,6 @@ class SpatialParser:
 	def __init__(self, direction='hlr'):
 		self.direction = direction
 
-	def h(self):
-		return self.direction in ['hlr', 'hrl']
-
-	def lr(self):
-		return self.direction in ['hlr', 'vlr']
-
 	def best_fragment(self, tokens):
 		chunks = self.split(tokens, ParseParams())
 		groups = []
@@ -365,7 +359,7 @@ class SpatialParser:
 		return parses
 
 	def split(self, tokens, params):
-		if self.h():
+		if self.direction == 'hlr':
 			return self.split_horizontal(tokens, params)
 		else:
 			return self.split_vertical(tokens, params)
@@ -402,7 +396,7 @@ class SpatialParser:
 				left_tokens.append(right_tokens.pop(0))
 			chunks.append(left_tokens)
 			tokens = right_tokens
-		return chunks if self.lr() else reversed(chunks)
+		return chunks
 
 def split_from_top(tokens, params):
 	tokens = sorted(tokens, key=lambda t: t.y + t.h / 2)
@@ -463,8 +457,10 @@ def split_around_core(core, tokens):
 	box = BoundingBox(core.tokens)
 	place_to_pos = {}
 	place_to_tokens = defaultdict(list)
+	group.choose_alt_glyph([])
 	for place in group.allowed_places():
-		pos_x, pos_y = insertion_position(place, InsertionAdjust())
+		adjustments = group.adjustments.get(place, InsertionAdjust())
+		pos_x, pos_y = insertion_position(place, adjustments)
 		place_to_pos[place] = (box.x + pos_x * box.w, box.y + pos_y * box.h)
 	for token in tokens:
 		x_center, y_center = token.x + token.w / 2, token.y + token.h / 2

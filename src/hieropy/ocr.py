@@ -9,12 +9,21 @@ import importlib.resources as resources
 from collections import defaultdict
 from scipy.spatial import KDTree
 from PIL import Image, ImageFont, ImageDraw, ImageOps, ImageChops
+from shapely.geometry import Polygon, box
 
-from .uniconstants import HIERO_FONT_FILENAME
+from .options import Options
+from .uniconstants import HIERO_FONT_FILENAME, corners_to_num
 from .uninames import all_chars
-from .unistructure import Literal
+from .unistructure import Fragment, Enclosure, Literal, Blank
 from .ocrdata import ocr_omit
 from .spatialparsing import SpatialParser, GroupAndToken
+
+enclosure_map = { \
+	'\U0001325C': ('plain', '\U00013258', '\U0001325C'), \
+	'\U00013282': ('plain', '\U00013258', '\U00013282'), \
+	'\U00013287': ('walled', '\U00013286', '\U00013287'), \
+	'\U00013289': ('walled', '\U00013288', '\U00013289'), \
+	'\U0001337A': ('plain', '\U00013379', '\U0001337A') }
 
 class ImageUniConverter:
 	# There are arrays of equal length, an index representing one component belonging to one character:
@@ -86,9 +95,9 @@ class ImageUniConverter:
 		if not isinstance(self.ratios, np.ndarray):
 			self.ratios = np.array(self.ratios, dtype='float16')
 
-	def add_vector(self, ch, variant, part_index, vector, segment, font_size):
-		w = segment.w / font_size
-		h = segment.h / font_size
+	def add_vector(self, ch, variant, part_index, vector, segment, fontsize):
+		w = segment.w / fontsize
+		h = segment.h / fontsize
 		r = segment.w / segment.h
 		self.chars.append(ch)
 		self.char_variants.append(variant)
@@ -98,33 +107,36 @@ class ImageUniConverter:
 		self.heights.append(h)
 		self.ratios.append(r)
 
-	def add_vectors(self, ch, variant, whole_vector, parts, font_size):
+	def add_vectors(self, ch, variant, whole_vector, parts, fontsize):
 		if whole_vector is None:
 			return
 		biggest_vector, biggest_segment = parts[0]
 		if len(parts) > 1:
 			for i, (vector, segment) in enumerate(parts):
-				self.add_vector(ch, variant, i, vector, segment, font_size)
+				self.add_vector(ch, variant, i, vector, segment, fontsize)
 			self.char_wholes[(ch,variant)] = len(self.chars)
-			self.add_vector(ch, variant, -1, whole_vector, biggest_segment, font_size)
+			self.add_vector(ch, variant, -1, whole_vector, biggest_segment, fontsize)
 			if not all(biggest_segment.includes(segment) for _,segment in parts[1:]): 
 				self.char_records[(ch,variant)] = [(s.x, s.y, s.w, s.h) for (_, s) in parts]
 		else:
-			self.add_vector(ch, variant, -1, biggest_vector, biggest_segment, font_size)
+			self.add_vector(ch, variant, -1, biggest_vector, biggest_segment, fontsize)
 		
 	@staticmethod
-	def from_font(font_path=None, font_size=96, normal_size=20, threshold=160):
+	def from_font(font_path=None, fontsize=96, normal_size=20, threshold=160):
 		if font_path:
-			font = ImageFont.truetype(font_path, font_size)
+			font = ImageFont.truetype(font_path, fontsize)
 		else:
 			with resources.files('hieropy.resources').joinpath(HIERO_FONT_FILENAME).open('rb') as f:
-				font = ImageFont.truetype(f, font_size)
+				font = ImageFont.truetype(f, fontsize)
 		converter = ImageUniConverter(normal_size, threshold, [], [], [], [], [], [], [], {}, {}, None)
+		for ch, (typ, delim_open, delim_close) in enclosure_map.items():
+			for vector, parts in converter.enclosure_vectors(typ, delim_open, delim_close, fontsize):
+				converter.add_vectors(ch, 0, vector, parts, fontsize)
 		for ch in all_chars():
 			if ch in ocr_omit():
 				continue
-			whole_vector, parts = converter.char_to_vectors(font, ch, font_size)
-			converter.add_vectors(ch, 0, whole_vector, parts, font_size)
+			whole_vector, parts = converter.char_to_vectors(font, ch, fontsize)
+			converter.add_vectors(ch, 0, whole_vector, parts, fontsize)
 		converter.tree = KDTree(converter.vectors)
 		return converter
 
@@ -144,9 +156,9 @@ class ImageUniConverter:
 			image_path = os.path.join(path, filename)
 			image = Image.open(image_path)
 			_, h = image.size
-			font_size = h * 100 / height
-			whole_vector, parts = converter.image_to_vectors(image, font_size)
-			converter.add_vectors(ch, variant, whole_vector, parts, font_size)
+			fontsize = h * 100 / height
+			whole_vector, parts = converter.image_to_vectors(image, fontsize)
+			converter.add_vectors(ch, variant, whole_vector, parts, fontsize)
 		converter.tree = KDTree(converter.vectors)
 		return converter
 
@@ -163,26 +175,35 @@ class ImageUniConverter:
 			raise ValueError('Invalid ImageUniConverter file')
 		return ImageUniConverter(*[obj[field] for field in ImageUniConverter.fields])
 
-	def char_to_vectors(self, font, ch, font_size):
-		image = self.char_to_image(font, ch, font_size)
+	def char_to_vectors(self, font, ch, fontsize):
+		image = self.char_to_image(font, ch, fontsize)
 		if image:
-			return self.image_to_vectors(image, font_size)
+			return self.image_to_vectors(image, fontsize)
 		else:
 			return None, []
 
-	def image_to_vectors(self, image, font_size):
+	def enclosure_vectors(self, typ, open_ch, close_ch, fontsize):
+		vectors = []
+		for blank_dims in [[1], [1, 0.5], [1, 1]]:
+			for direction in ['hlr', 'vlr']:
+				image = self.enclosure_to_image(typ, open_ch, close_ch, blank_dims, fontsize, direction)
+				vec = self.image_to_vector(image)
+				vectors.append((vec, [(vec, Segment(image, 0, 0))]))
+		return vectors
+
+	def image_to_vectors(self, image, fontsize):
 		w, h = image.size
 		components = image_to_components(image, self.threshold)
 		components = merge_components_from_small(w, h, components, \
-				self.size_factor, self.distance_factor, font_size)
+				self.size_factor, self.distance_factor, fontsize)
 		segments = [Segment.from_component(c) for c in components] 
 		vectors = [(self.image_to_vector(s.image), s) for s in segments]
 		vectors = sorted(vectors, key=lambda v: v[1].area(), reverse=True)
 		return self.image_to_vector(image), vectors
 
-	def char_to_image(self, font, ch, font_size):
-		padding = round(font_size // 3)
-		canvas_dim = font_size + 2 * padding, font_size + 2 * padding
+	def char_to_image(self, font, ch, fontsize):
+		padding = round(fontsize // 3)
+		canvas_dim = fontsize + 2 * padding, fontsize + 2 * padding
 		canvas = Image.new('L', canvas_dim, color='white')
 		draw = ImageDraw.Draw(canvas)
 		draw.text((padding, padding), ch, font=font, fill='black')
@@ -192,23 +213,41 @@ class ImageUniConverter:
 			return None
 		return canvas.crop(bbox)
 
+	def enclosure_to_image(self, typ, open_ch, close_ch, blank_dims, fontsize, direction):
+		image = enclosure_image(typ, open_ch, close_ch, blank_dims, fontsize, direction)
+		inverted = ImageOps.invert(image)
+		bbox = inverted.getbbox()
+		if not bbox:
+			return None
+		return image.crop(bbox)
+
 	def image_to_vector(self, image):
 		resized = image.resize(self.normal_dim, resample=Image.Resampling.LANCZOS)
 		return np.asarray(resized).flatten()
 
-	def convert_line(self, image, direction=None, threshold=None, em=None):
+	def convert_line(self, image, direction=None, threshold=None, em=None, shading=None):
 		image = image.convert('L')
 		w, h = image.size
-		if direction == None:
+		if direction is None or direction not in ['hlr', 'vlr', 'hrl','vrl']:
 			direction = 'vlr' if w < h else 'hlr'
-		if threshold == None:
+		if direction in ['hrl','vrl']:
+			image = ImageOps.mirror(image)
+			normal_direction = 'hlr' if direction == 'hrl' else 'vlr'
+		else:
+			normal_direction = direction
+		if threshold is None:
 			threshold = self.threshold
-		if direction[0] == 'h':
+		if normal_direction == 'hlr':
 			componentss = image_to_components_chunked_hor(image, threshold)
 		else:
 			componentss = image_to_components_chunked_ver(image, threshold)
 		if em is None:
 			em = components_to_em([p for c in componentss for p in c])
+		if shading is None:
+			shading = []
+		if direction in ['hrl','vrl']:
+			shading = [mirrored_polygon(sh, w) for sh in shading]
+		shading = [Polygon(sh) for sh in shading]
 		componentss = [merge_components_from_small(w, h, c, \
 				self.size_factor, self.distance_factor, em) for c in componentss]
 		componentss = [self.merge_components_by_proximity(w, h, c, em) for c in componentss]
@@ -217,14 +256,13 @@ class ImageUniConverter:
 		segments, classifications = self.join_segments_by_inclusion(segments, classifications)
 		segments, classifications = self.join_segments_by_common_character(segments, classifications)
 		tokens = []
-		for j, (s, (_, indexes)) in enumerate(zip(segments, classifications)):
+		for j, (segment, (_, indexes)) in enumerate(zip(segments, classifications)):
 			next_token = None
 			for i in indexes:
 				ch = self.chars[i]
 				part = self.char_parts[i]
 				if part < 0:
-					lit = Literal(ch, 0, False, 0)
-					next_token = GroupAndToken(lit, s.x, s.y, s.w, s.h)
+					next_token = make_token(ch, segment, shading) 
 					break
 			if next_token:
 				tokens.append(next_token)
@@ -237,16 +275,16 @@ class ImageUniConverter:
 					whole = self.char_wholes[(ch,variant)]
 					vec1 = self.vectors[whole]
 					whole_height = self.heights[whole]
-					vec2 = self.image_to_vector(s.image)
+					vec2 = self.image_to_vector(segment.image)
 					if part_height == whole_height:
 						dists.append(vector_diff(vec1, vec2))
 					else:
 						dists.append(sys.maxsize)
 				best_index, best_dist = min(zip(indexes, dists), key=lambda pair: pair[1])
 				if best_dist != sys.maxsize:
-					lit = Literal(self.chars[best_index], 0, False, 0)
-					tokens.append(GroupAndToken(lit, s.x, s.y, s.w, s.h))
-		parser = SpatialParser(direction=direction)
+					ch = self.chars[best_index]
+					tokens.append(make_token(ch, segment, shading))
+		parser = SpatialParser(direction=normal_direction)
 		return parser.best_fragment(tokens)
 
 	def classify_segment(self, segment, em):
@@ -645,3 +683,65 @@ def find_near_components(w, h, components, max_extend):
 			cl2 = equiv_classes[j]
 			equiv_classes = {k: (cl1 if cl0 in [cl1, cl2] else cl0) for k,cl0 in equiv_classes.items()}
 	return [{i for i in equiv_classes.keys() if equiv_classes[i] == cl} for cl in set(equiv_classes.values())]
+
+def enclosure_image(typ, delim_open, delim_close, blank_dims, fontsize, direction):
+	options = Options(direction=direction, fontsize=fontsize)
+	groups = [Blank(dim) for dim in blank_dims]
+	fragment = Fragment([Enclosure(typ, groups, delim_open, 0, delim_close, 0)])
+	printed = fragment.print(options)
+	return printed.get_pil().convert('L')
+
+def mirrored_polygon(polygon, w):
+	return [(w-x, y) for (x,y) in polygon]
+
+def make_token(ch, segment, shadings):
+	if ch in enclosure_map:
+		if segment.w < segment.h:
+			rects = { \
+				'ts': box(segment.x, segment.y, 
+						segment.x + segment.w / 2, segment.y + segment.w / 2),
+				'te': box(segment.x + segment.w / 2, segment.y, 
+						segment.x + segment.w, segment.y + segment.w / 2),
+				'bs': box(segment.x, segment.y + segment.h - segment.w / 2, 
+						segment.x + segment.w / 2, segment.y + segment.h),
+				'be': box(segment.x + segment.w / 2, segment.y + segment.h - segment.w / 2, 
+						segment.x + segment.w, segment.y + segment.h) }
+		else:
+			rects = { \
+				'ts': box(segment.x, segment.y, 
+					segment.x + segment.h / 2, segment.y + segment.h / 2),
+				'te': box(segment.x + segment.w - segment.h / 2, segment.y, 
+					segment.x + segment.w, segment.y + segment.h / 2),
+				'bs': box(segment.x, segment.y + segment.h / 2, 
+					segment.x + segment.h / 2, segment.y + segment.h),
+				'be': box(segment.x + segment.w - segment.h / 2, segment.y + segment.h / 2, 
+					segment.x + segment.w, segment.y + segment.h) }
+	else:
+		rects = {
+			'ts': box(segment.x, segment.y, segment.x + segment.w / 2, segment.y + segment.h / 2),
+			'bs': box(segment.x, segment.y + segment.h / 2, segment.x + segment.w / 2, segment.y + segment.h),
+			'te': box(segment.x + segment.w / 2, segment.y, segment.x + segment.w, segment.y + segment.h / 2),
+			'be': box(segment.x + segment.w / 2, segment.y + segment.h / 2, segment.x + segment.w, segment.y + segment.h) }
+	places = ['ts', 'bs', 'te', 'be']
+	corners = { 'ts': 0, 'bs': 0, 'te': 0, 'be': 0 }
+	for place in places:
+		rect = rects[place]
+		for polygon in shadings:
+			intersection = polygon.intersection(rect)
+			corners[place] += intersection.area / rect.area
+	corners = { place: corners[place] >= 0.5 for place in places }
+	if ch in enclosure_map:
+		if segment.w < segment.h:
+			corners_open = { 'ts': corners['ts'], 'bs': corners['ts'], 'te': corners['te'], 'be': corners['te'] }
+			corners_close = { 'ts': corners['bs'], 'bs': corners['bs'], 'te': corners['be'], 'be': corners['be'] }
+		else:
+			corners_open = { 'ts': corners['ts'], 'bs': corners['bs'], 'te': corners['ts'], 'be': corners['bs'] }
+			corners_close = { 'ts': corners['te'], 'bs': corners['be'], 'te': corners['te'], 'be': corners['be'] }
+		num_open = corners_to_num(corners_open)
+		num_close = corners_to_num(corners_close)
+		typ, delim_open, delim_close = enclosure_map[ch]
+		group = Enclosure(typ, [], delim_open, num_open, delim_close, num_close)
+	else:
+		num = corners_to_num(corners)
+		group = Literal(ch, 0, False, num)
+	return GroupAndToken(group, segment.x, segment.y, segment.w, segment.h)
