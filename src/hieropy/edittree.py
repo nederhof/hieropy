@@ -763,7 +763,9 @@ class Tree():
 				child_num = node.child_number()
 				sibling1 = node.siblings()[child_num-1]
 				sibling2 = node.siblings()[child_num+1]
-				return sibling1.is_core() and sibling2.is_insertion()
+				return (sibling1.is_core() or \
+						isinstance(sibling1, BasicNode) and len(sibling1.places()) < len(INSERTION_PLACES)) and \
+						sibling2.is_insertion()
 			case LiteralNode():
 				return not node.used_in_overlay() and not node.used_as_core()
 			case BasicNode():
@@ -777,10 +779,14 @@ class Tree():
 		node = self.focus
 		match node:
 			case FragmentOpNode() | VerticalOpNode() | HorizontalOpNode():
-				address = node.address()
-				siblings = node.siblings()
-				index = node.child_number()
-				node.replace_op(BasicNode.initial(siblings[index-1].group, siblings[index+1].group))
+				child_num = node.child_number()
+				sibling1 = node.siblings()[child_num-1]
+				sibling2 = node.siblings()[child_num+1]
+				address = sibling1.address()
+				if sibling1.is_core():
+					node.replace_op(BasicNode.initial(sibling1.group, sibling2.group))
+				else:
+					node.replace_op(sibling1.extend(sibling2.group))
 				self.set_focus_address(address)
 			case OverlayOpNode():
 				address = node.address()
@@ -836,6 +842,7 @@ class Tree():
 		nex.group.ch = tmp
 		node.redraw_to_root()
 		nex.redraw_to_root()
+		node.set_editing()
 		self.editor.preview.update()
 
 	def can_do_delete(self):
@@ -1300,6 +1307,10 @@ class BasicNode(Node):
 		return True
 	def insert_child(self, group):
 		address = self.address() + [len(self.places()) * 2 + 2]
+		self.extend(group)
+		self.recreate()
+		self.tree.set_focus_address(address)
+	def extend(self, group):
 		place = None
 		for p in self.allowed_places():
 			if p not in self.places():
@@ -1311,8 +1322,7 @@ class BasicNode(Node):
 					place = p
 					break
 		self.group.insertions[place] = group
-		self.recreate()
-		self.tree.set_focus_address(address)
+		return self.group
 	def replace_child(self, old, group):
 		address = old.address()
 		if self.group.core == old.group:

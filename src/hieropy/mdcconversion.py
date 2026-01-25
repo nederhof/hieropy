@@ -4,7 +4,7 @@ from collections import Counter
 from .hieroparsing import UniParser, MdcParser
 import hieropy.mdcstructure as mdc
 import hieropy.unistructure as uni
-from .uniconstants import num_to_corners
+from .uniconstants import num_to_corners, PLACEHOLDER
 from .unitransform import mirror_group, rotate_group, damage_group
 from .uninormalization import is_group, is_horizontal, make_horizontal, make_vertical
 from .mdcnames import name_to_char, name_to_chars, mnemonic_to_name, name_to_zones, \
@@ -34,6 +34,12 @@ def add_close_bracket(group, bracket):
 
 def make_token_from_mdc(group, x, y, s):
 	return GroupAndToken.from_group_on_surface(group, x, y, s * 10, s * 10)
+
+def name_to_char_var(name):
+	namematch = re.fullmatch(r'US\d+([^\d].*)VAR.*', name)
+	if namematch:
+		name = namematch.group(1)
+	return name_to_char(name)
 
 class MdcUniConverter:
 	def __init__(self, text=False, numbers=False, colors=False):
@@ -343,8 +349,8 @@ class MdcUniConverter:
 			if damage:
 				converted = damage_group(converted, num_to_corners(damage))
 			return converted
-		elif name_to_char(group.name):
-			ch = name_to_char(group.name)
+		elif name_to_char_var(group.name):
+			ch = name_to_char_var(group.name)
 			vs = group.rotate_num()
 			return uni.Literal(ch, vs, mirror, damage)
 		elif mnemonic_to_name(group.name):
@@ -357,7 +363,7 @@ class MdcUniConverter:
 				self.report(f'Name {name} not found')
 				return None
 		else:
-			return None
+			return uni.Literal(PLACEHOLDER, 0, mirror, damage)
 
 	def convert_blank(self, group):
 		return uni.Lost(group.size, group.size, True) if group.shading_num() else uni.Blank(group.size)

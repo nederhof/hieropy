@@ -121,7 +121,7 @@ def t_ARROW(t):
 	return t
 
 def t_SIGN(t):
-	r'([A-Z]|Aa|Ff|NL|NU)[0-9]+[A-Za-z]*|[a-zA-Z]+|US[0-9A-Z]*|[0-9]+|"([^"]+)"|`'
+	r'(US[0-9A-Za-z]+|[A-Z]|Aa|Ff|NL|NU)[0-9]+[A-Za-z]*|[a-zA-Z]+|[0-9]+|"([^"]+)"|`'
 	return t
 
 def t_EQUALS(t):

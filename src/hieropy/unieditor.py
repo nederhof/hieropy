@@ -138,10 +138,10 @@ class UniEditor():
 		state = 'disabled' if b else 'normal'
 		self.redo_button.config(state=state)
 
-	def undo(self):
+	def undo(self, event=None):
 		self.history.undo()
 
-	def redo(self):
+	def redo(self, event=None):
 		self.history.redo()
 
 	def open_help(self):
@@ -407,7 +407,7 @@ class UniEditor():
 		self.name_entry.bind('<FocusOut>', lambda e: self.name_focus_out())
 		self.name_entry.bind('<Return>', lambda e: self.adjust_name_on_enter())
 		self.ignore_update_name = False
-		self.name_value.trace_add("write", self.adjust_name_from_value)
+		self.name_value.trace_add('write', self.adjust_name_from_value)
 
 	def display_name_panel(self, name):
 		self.name_param.pack(side='top', anchor='w', pady=(0,5))
@@ -466,6 +466,14 @@ class UniEditor():
 		elif name.endswith(' '):
 			self.set_name_value(name[:-1])
 			self.open_menu()
+			return
+		elif name.endswith('<'):
+			self.set_name_value(name[:-1])
+			self.undo()
+			return
+		elif name.endswith('>'):
+			self.set_name_value(name[:-1])
+			self.redo()
 			return
 		else:
 			return
@@ -1052,6 +1060,8 @@ class UniEditor():
 						case 'c': self.adjust_place_next()
 						case 'x': self.adjust_expand_toggle()
 						case 'z': self.adjust_size_toggle()
+						case '<': self.undo()
+						case '>': self.redo()
 			return 'break'
 		self.root.bind('<Key>', handler)
 

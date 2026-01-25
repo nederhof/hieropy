@@ -228,7 +228,7 @@ class OrthogonalHull:
 	def __init__(self, im, dist):
 		self.im = ImageOps.invert(im.convert('1').convert('L'))
 		self.dist = dist
-		self.dist_slant = round(1 / math.sqrt(2))
+		self.dist_slant = round(dist / math.sqrt(2))
 		self.w, self.h = self.im.size
 		bbox = self.im.getbbox()
 		self.x_mins = {y: self.w-1 for y in range(-dist, self.h + dist)}
