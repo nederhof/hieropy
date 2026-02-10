@@ -466,13 +466,26 @@ def split_around_core(core, tokens):
 		x_center, y_center = token.x + token.w / 2, token.y + token.h / 2
 		best_place = None
 		min_dist = sys.maxsize
-		for place in group.allowed_places():
-			dist = math.dist(place_to_pos[place], (x_center, y_center))
-			if dist < min_dist:
-				best_place = place
-				min_dist = dist
+		if is_cobra(group):
+			if y_center < 0.2:
+				best_place = 't'
+			else:
+				if x_center < 0.3 and y_center < 0.7:
+					best_place = 'bs'
+				else:
+					best_place = 'b'
+		else:
+			for place in group.allowed_places():
+				dist = math.dist(place_to_pos[place], (x_center, y_center))
+				if dist < min_dist:
+					best_place = place
+					min_dist = dist
 		place_to_tokens[best_place].append(token)
 	return place_to_tokens
+
+def is_cobra(group):
+	return isinstance(group, Literal) and \
+		group.ch in ['\U00013193', '\U00013194', '\U00013195', '\U00013D70']
 
 def crossing_tokens(token1, token2, params):
 	x1_min, x1_max = token1.x, token1.x + token1.w

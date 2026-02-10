@@ -9,6 +9,8 @@ POINT_INFO_FILE = 'pointinfo.csv'
 POINT_ROTATIONS_FILE = 'pointrotations.csv'
 INSERTIONS_FILE = 'insertions.json'
 LIGATURES_FILE = 'ligatures.json'
+TOPUP_FILE = 'topup.csv'
+BOTTOMDOWN_FILE = 'bottomdown.csv'
 CIRCULAR_FILE = 'circular.csv'
 LR_SYMMETRIC_FILE = 'lrsymmetric.csv'
 TB_SYMMETRIC_FILE = 'tbsymmetric.csv'
@@ -20,6 +22,8 @@ _char_to_rotations = None
 _char_to_insertions = None
 _char_to_overlay_ligature = None
 _char_to_overlay_ligatures = None
+_topup_chars = None
+_bottomdown_chars = None
 _circular = None
 _lr_symmetric = None
 _tb_symmetric = None
@@ -274,6 +278,18 @@ def cache_ligatures():
 			if not alt:
 				_char_to_overlay_ligatures[hor[0].ch].append(ligature)
 				_char_to_overlay_ligatures[ver[0].ch].append(ligature)
+
+def topup_chars():
+	global _topup_chars
+	if _topup_chars is None:
+		_topup_chars = char_set_from(TOPUP_FILE)
+	return  _topup_chars
+
+def bottomdown_chars():
+	global _bottomdown_chars
+	if _bottomdown_chars is None:
+		_bottomdown_chars = char_set_from(BOTTOMDOWN_FILE)
+	return  _bottomdown_chars
 
 def circular_chars():
 	global _circular

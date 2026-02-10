@@ -124,8 +124,12 @@ class TkPreview():
 		else:
 			if self.h():
 				unit = max(elem.h for elem in self.elems)
-				self.canvas.create_line(b.x + b.w + self.sep // 2, 0, 
-					b.x + b.w + self.sep // 2, 2 * self.margin + unit + 2 * self.border, **opts)
+				if self.dir == 'hrl':
+					self.canvas.create_line(b.x - self.sep // 2, 0, 
+						b.x - self.sep // 2, 2 * self.margin + unit + 2 * self.border, **opts)
+				else:
+					self.canvas.create_line(b.x + b.w + self.sep // 2, 0, 
+						b.x + b.w + self.sep // 2, 2 * self.margin + unit + 2 * self.border, **opts)
 			else:
 				unit = max(elem.w for elem in self.elems)
 				self.canvas.create_line(0, b.y + b.h + self.sep // 2, 

@@ -560,12 +560,17 @@ class PrintedSvg(PrintedAny):
 	def __init__(self, w, h, w_accum, h_accum, options):
 		super().__init__(w, h, w_accum, h_accum, options.rl(), options)
 		self.draw = svgwrite.Drawing(size=(self.width(), self.height()))
+		if self.mirrored:
+			self.spans = self.draw.text('', transform='scale(-1,1)', insert=(0,0))
+		else:
+			self.spans = self.draw.text('', insert=(0,0))
 		if not options.transparent:
 			self.draw.add(self.draw.rect(insert=(0, 0), size=(self.width(), self.height()), fill='white'))
 
 	def complete(self):
 		if self.is_complete:
 			return
+		self.draw.add(self.spans)
 		opacity = self.options.shadealpha / 255
 		rectangles = self.shadings.rectangles
 		if rectangles:
@@ -593,27 +598,39 @@ class PrintedSvg(PrintedAny):
 	def add_sign(self, ch, scale, x_scale, y_scale, rotate, mirror, rect, \
 			extra=False, bracket=False, unselectable=False, x_as=None, y_as=None):
 		x = self.mirror(rect.x, rect.w)
-		mirror = self.mirrored ^ mirror
+		mirror_any = self.mirrored ^ mirror
 		x_px = round(self.em_to_px(x))
 		y_px = round(self.em_to_px(rect.y + rect.h))
 		fontsize = math.floor(self.options.fontsize * scale)
 		fontcolor = self.color(bracket)
-		meas = corrected_measurement(ch, fontsize, x_scale, y_scale, rotate, mirror, x_as, y_as, \
+		meas = corrected_measurement(ch, fontsize, x_scale, y_scale, rotate, mirror_any, x_as, y_as, \
 			measure_glyph_pdf_memo)
 		x_trans = x_px + meas.width_scaled/2 - meas.x
 		if bracket:
 			y_trans = y_px - meas.height_scaled/2
 		else:
 			y_trans = y_px - meas.height_scaled/2 + meas.y
-		rot = f'rotate({rotate})'
-		t = f'translate({x_trans}, {y_trans}) '
-		if mirror:
-			trans=t + ' scale(-1,1) ' + rot
+		if rotate or mirror or x_scale != 1 or y_scale != 1:
+			tr = f'translate({x_trans}, {y_trans}) '
+			sc = f'scale(-{x_scale}, {y_scale}) ' if mirror_any else \
+					f'scale({x_scale}, {y_scale}) ' if x_scale != 1 or y_scale != 1 else ''
+			rot = f'rotate({rotate})' if rotate else ''
+			trans = tr + sc + rot
+			text_element = self.draw.text(ch, \
+				insert=(-meas.width/2, meas.height/2),
+				transform=trans, fill=fontcolor, font_family=HIERO_FONT_NAME, font_size=fontsize)
+			text_element['style'] = 'user-select: none;'
+			self.draw.add(text_element)
+			if not unselectable:
+				self.add_hidden(ch)
 		else:
-			trans=t + rot
-		self.draw.add(self.draw.text(ch, \
-			insert=(-meas.width/2, meas.height/2),
-			transform=trans, fill=fontcolor, font_family=HIERO_FONT_NAME, font_size=fontsize))
+			span = self.draw.tspan(ch, insert=(-meas.width/2, meas.height/2))
+			span['font-family'] = HIERO_FONT_NAME
+			span['font-size'] = fontsize
+			span['fill'] = fontcolor
+			span['dx'] = -x_trans if self.mirrored else x_trans
+			span['dy'] = y_trans
+			self.spans.add(span)
 
 	def add_shading(self, rect):
 		x = self.mirror(rect.x, rect.w)
@@ -623,6 +640,11 @@ class PrintedSvg(PrintedAny):
 		x_max = round(self.em_to_px(x+rect.w))
 		y_max = round(self.em_to_px(y+rect.h))
 		self.shadings.add_rectangle(x_min, y_min, x_max, y_max)
+
+	def add_hidden(self, ch):
+		span = self.draw.tspan(ch)
+		span['style'] = 'opacity: 0; user-select: all; color: transparent; font-size: 0;'
+		self.spans.add(span)
 
 class PrintedPil(PrintedAny):
 	def __init__(self, w, h, w_accum, h_accum, options):

@@ -42,7 +42,7 @@ class TestOcr(unittest.TestCase):
 				str(list(difflib.ndiff(target, encoding_out))))
 
 	def test_simple_example(self):
-		encoding = '𓆓𓐳𓂧𓏏𓐰𓈖𓈖𓐰𓐍𓐱𓏲𓏛𓀜𓅓𓅐𓐰𓏏𓐱𓏯𓀀𓐰𓈖𓇗𓂝𓐰𓏏𓐱𓏯𓁐𓐰𓈖𓇋𓏠𓐰𓈖𓅆𓏏𓏲𓁐'
+		encoding = '𓆓𓐻𓂧𓏏𓐰𓈖𓈖𓐰𓐍𓐱𓏲𓏛𓀜𓅓𓅐𓐰𓏏𓐱𓏯𓀀𓐰𓈖𓇗𓂝𓐰𓏏𓐱𓏯𓁐𓐰𓈖𓇋𓏠𓐰𓈖𓅆𓏏𓏲𓁐'
 		filename = 'ocrtest1.png'
 		self.do_ocr_test(encoding, filename)
 
@@ -107,7 +107,7 @@ class TestOcr(unittest.TestCase):
 
 	def test_compositional2(self):
 		encoding = '𓆖'
-		target = '𓆓𓐳𓐷𓏏𓐰𓇿𓐸'
+		target = '𓆓𓐻𓐷𓏏𓐰𓇿𓐸'
 		filename = 'ocrtest9b.png'
 		self.do_ocr_test(encoding, filename, target=target)
 

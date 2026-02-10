@@ -5,7 +5,7 @@ from .options import *
 from .uniconstants import *
 from .uninames import char_to_name, char_to_name_cap
 from .uniproperties import allowed_rotations, rotation_adjustment, \
-	char_to_insertions, char_to_places, InsertionAdjust, \
+	char_to_insertions, topup_chars, bottomdown_chars, char_to_places, InsertionAdjust, \
 	char_to_overlay_ligature, overlay_to_ligature
 from .printables import PlaneRestricted, PlaneExtended, OrthogonalHull, \
 	PrintedPdf, PrintedSvg, PrintedPil, PrintedPilWithoutExtras, \
@@ -694,22 +694,27 @@ class Basic(Group):
 			self.insertions[place].resize(f)
 	def fit(self, options, w, h):
 		meas_options = MeasureOptions(options)
-		core_im = Basic.meas_printed_im(meas_options, self.core)
-		core_w, core_h = core_im.size
-		for place in self.insertions:
-			adjustments = self.core.adjustments.get(place, InsertionAdjust())
-			pos_x, pos_y = insertion_position(place, adjustments)
-			ins_im = Basic.meas_printed_im(meas_options, self.insertions[place])
-			hull, rect_init, ins_w, ins_h = \
-					Basic.fit_inserted_hull(meas_options, core_im, core_w, core_h, ins_im, pos_x, pos_y)
-			scale = min(1, rect_init.w / ins_w, rect_init.h / ins_h)
-			rect, plane_x, plane_y, hull_x, hull_y = \
-					Basic.fit_inserted_position(pos_x, pos_y, hull, rect_init, ins_w, ins_h, scale)
-			core_plane = PlaneRestricted(core_im) if place == 'm' else PlaneExtended(core_im)
-			scale, rect = Basic.fit_grow(hull, scale, rect, plane_x, plane_y, hull_x, hull_y, core_plane)
-			ins = self.insertions[place]
-			ins.resize(scale)
-			ins.rect = (rect.x / core_w, rect.y / core_h, (rect.x + rect.w) / core_w, (rect.y + rect.h) / core_h)
+		printed = Basic.meas_printed(meas_options, self.core)
+		core_w, core_h = printed.im.size
+		for place in INSERTION_PLACES:
+			if place in self.insertions:
+				group = self.insertions[place]
+				adjustments = self.core.adjustments.get(place, InsertionAdjust())
+				pos_x, pos_y = insertion_position(place, adjustments)
+				ins = Basic.meas_printed(meas_options, group)
+				hull, rect_init, ins_w, ins_h = \
+						Basic.fit_inserted_hull(meas_options, printed.im, ins.im, pos_x, pos_y)
+				rect_init = self.modify_rect(rect_init, place)
+				scale = min(1, rect_init.w / ins_w, rect_init.h / ins_h)
+				rect, plane_x, plane_y, hull_x, hull_y = \
+						Basic.fit_inserted_position(pos_x, pos_y, hull, rect_init, ins_w, ins_h, scale)
+				core_plane = PlaneRestricted(printed.im) if place == 'm' else PlaneExtended(printed.im)
+				scale, rect = Basic.fit_grow(hull, scale, rect, plane_x, plane_y, hull_x, hull_y, core_plane)
+				group.resize(scale)
+				ins_rect = Basic.remove_margins(pos_x, pos_y, hull, scale, rect)
+				group.rect = (ins_rect.x / core_w, ins_rect.y / core_h, \
+					(ins_rect.x + ins_rect.w) / core_w, (ins_rect.y + ins_rect.h) / core_h)
+				self.add_inserted(printed, meas_options, group, place)
 		x0 = min(0, *[ins.rect[0] for ins in self.insertions.values()])
 		y0 = min(0, *[ins.rect[1] for ins in self.insertions.values()])
 		x1 = max(1, *[ins.rect[2] for ins in self.insertions.values()])
@@ -717,15 +722,25 @@ class Basic(Group):
 		self.extension = Rectangle(-x0, -y0, x1-x0, y1-y0)
 		super().fit(options, w, h)
 	@staticmethod
-	def meas_printed_im(meas_options, group):
+	def meas_printed(meas_options, group):
 		group.fit(meas_options, math.inf, math.inf)
 		w, h = group.size(meas_options)
 		group.format(meas_options, 0, 0, w, w, 0, 0, h, h)
 		printed = PrintedPilWithoutExtras(meas_options, w, h)
 		group.print(meas_options, printed)
-		return printed.im
+		return printed
+	def add_inserted(self, printed, meas_options, group, place):
+		w_core, h_core = self.core.size(meas_options)
+		rect = group.rect
+		x_min = rect[0] * w_core
+		x_max = rect[2] * w_core
+		y_min = rect[1] * h_core
+		y_max = rect[3] * h_core
+		group.format(meas_options, x_min, x_min, x_max, x_max, y_min, y_min, y_max, y_max)
+		group.print(meas_options, printed)
 	@staticmethod
-	def fit_inserted_hull(meas_options, core_im, core_w, core_h, ins_im, pos_x, pos_y):
+	def fit_inserted_hull(meas_options, core_im, ins_im, pos_x, pos_y):
+		core_w, core_h = core_im.size
 		x_init = min(core_w-1, round(pos_x * core_w))
 		y_init = min(core_h-1, round(pos_y * core_h))
 		rect_init = open_rect(core_im, x_init, y_init)
@@ -738,6 +753,14 @@ class Basic(Group):
 		ins_w = hull.w + margin_l + margin_r
 		ins_h = hull.h + margin_t + margin_b
 		return hull, rect_init, ins_w, ins_h
+	def modify_rect(self, rect, place):
+		dist = round(0.2 * rect.h)
+		if isinstance(self.core, Literal):
+			if place == 't' and self.core.ch in topup_chars():
+				return Rectangle(rect.x, rect.y - dist, rect.w, rect.h + dist)
+			if place == 'b' and self.core.ch in bottomdown_chars():
+				return Rectangle(rect.x, rect.y + dist, rect.w, rect.h + dist)
+		return rect
 	@staticmethod
 	def fit_inserted_position(pos_x, pos_y, hull, rect_init, ins_w, ins_h, scale):
 		remainder_w = rect_init.w - scale * ins_w
@@ -829,51 +852,106 @@ class Basic(Group):
 		b = sys.maxsize
 		l = -sys.maxsize
 		r = sys.maxsize
-		for x in range(-hull.dist, hull.w + hull.dist):
+		t = Basic.distances_bottommost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, t, \
+			range(round(hull_x), hull.w + hull.dist))
+		t = Basic.distances_bottommost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, t, \
+			range(round(hull_x)-1, -hull.dist-1, -1))
+		b = Basic.distances_topmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, b, \
+			range(round(hull_x), hull.w + hull.dist))
+		b = Basic.distances_topmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, b, \
+			range(round(hull_x)-1, -hull.dist-1, -1))
+		l = Basic.distances_rightmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, l, \
+			range(round(hull_y), hull.h + hull.dist))
+		l = Basic.distances_rightmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, l, \
+			range(round(hull_y)-1, -hull.dist-1, -1))
+		r = Basic.distances_leftmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, r, \
+			range(round(hull_y), hull.h + hull.dist))
+		r = Basic.distances_leftmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, r, \
+			range(round(hull_y)-1, -hull.dist-1, -1))
+		return t, b, l, r
+	@staticmethod
+	def distances_bottommost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, t, xs):
+		for x in xs:
 			x_plane = round(plane_x + (x - hull_x) * scale)
 			y_min = hull.y_mins[x]
 			if y_min <= hull_y:
 				dist_prev = (hull_y - y_min) * scale_prev
 				dist = (hull_y - y_min) * scale
-				y_plane = round(plane_y - dist)
 				y_plane_min = round(plane_y - dist)
 				y_plane_max = round(plane_y - dist_prev)
-				bottommost = plane.bottommost_dark(x_plane, y_plane_min, y_plane_max)
+				bottommost = plane.bottommost_dark(x_plane, y_plane_min, round(plane_y))
 				if bottommost is not None:
-					t = max(t, bottommost - y_plane + 1)
+					if bottommost < y_plane_max+1:
+						t = max(t, bottommost - y_plane_min + 1)
+					else:
+						break
+		return t
+	@staticmethod
+	def distances_topmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, b, xs):
+		for x in xs:
+			x_plane = round(plane_x + (x - hull_x) * scale)
 			y_max = hull.y_maxs[x]
 			if y_max >= hull_y:
 				dist_prev = (y_max - hull_y) * scale_prev
 				dist = (y_max - hull_y) * scale
-				y_plane = round(plane_y + dist)
 				y_plane_min = round(plane_y + dist_prev)
 				y_plane_max = round(plane_y + dist)
-				topmost = plane.topmost_dark(x_plane, y_plane_min, y_plane_max)
+				topmost = plane.topmost_dark(x_plane, round(plane_y), y_plane_max)
 				if topmost is not None:
-					b = min(b, topmost - y_plane - 1)
-		for y in range(-hull.dist, hull.h + hull.dist):
+					if topmost > y_plane_min-1:
+						b = min(b, topmost - y_plane_max - 1)
+					else:
+						break
+		return b
+	@staticmethod
+	def distances_rightmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, l, ys):
+		for y in ys:
 			y_plane = round(plane_y + (y - hull_y) * scale)
 			x_min = hull.x_mins[y]
 			if x_min <= hull_x:
 				dist_prev = (hull_x - x_min) * scale_prev
 				dist = (hull_x - x_min) * scale
-				x_plane = round(plane_x - dist)
 				x_plane_min = round(plane_x - dist)
 				x_plane_max = round(plane_x - dist_prev)
-				rightmost = plane.rightmost_dark(x_plane_min, x_plane_max, y_plane)
+				rightmost = plane.rightmost_dark(x_plane_min, round(plane_x), y_plane)
 				if rightmost is not None:
-					l = max(l, rightmost - x_plane + 1)
+					if rightmost < x_plane_max+1:
+						l = max(l, rightmost - x_plane_min + 1)
+					else:
+						break
+		return l
+	@staticmethod
+	def distances_leftmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, r, ys):
+		for y in ys:
+			y_plane = round(plane_y + (y - hull_y) * scale)
 			x_max = hull.x_maxs[y]
 			if x_max >= hull_x:
 				dist_prev = (x_max - hull_x) * scale_prev
 				dist = (x_max - hull_x) * scale
-				x_plane = round(plane_x + dist)
 				x_plane_min = round(plane_x + dist_prev)
 				x_plane_max = round(plane_x + dist)
-				leftmost = plane.leftmost_dark(x_plane_min, x_plane_max, y_plane)
+				leftmost = plane.leftmost_dark(round(plane_x), x_plane_max, y_plane)
 				if leftmost is not None:
-					r = min(r, leftmost - x_plane - 1)
-		return t, b, l, r
+					if leftmost > x_plane_min-1:
+						r = min(r, leftmost - x_plane_max - 1)
+					else:
+						break
+		return r
+	@staticmethod
+	def remove_margins(pos_x, pos_y, hull, scale, rect):
+		w = hull.w * scale
+		h = hull.h * scale
+		remain_w = rect.w - w
+		remain_h = rect.h - h
+		match pos_x:
+			case 0: x = rect.x
+			case 1: x = rect.x + remain_w
+			case _: x = rect.x + remain_w / 2
+		match pos_y:
+			case 0: y = rect.y
+			case 1: y = rect.y + remain_h
+			case _: y = rect.y + remain_h / 2
+		return Rectangle(x, y, w, h)
 	def format(self, options, x0, x1, x2, x3, y0, y1, y2, y3):
 		w_full, h_full = self.size(options)
 		w_core, h_core = self.core.size(options)
@@ -1125,7 +1203,7 @@ class Literal(Group):
 		buf_x = ((x2-x1) - size[0]) / 2
 		buf_y = ((y2-y1) - size[1]) / 2
 		self.x = x1 + buf_x
-		self.y = y1 + (((y2-y1) - size[1]) if options.align == 'bottom' else buf_y)
+		self.y = y2 - size[1] if options.align == 'bottom' else y1 + buf_y 
 		self.w = size[0]
 		self.h = size[1]
 		x_shade = self.x + self.w / 2
