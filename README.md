@@ -306,9 +306,10 @@ venv\Scripts\activate
 
 ## Changelog
 
-### 0.1.6 (not yet released)
+### 0.1.6
 
 * Improved OCR/HTR.
+* Output SVG images are selectable.
 
 ### 0.1.5
 

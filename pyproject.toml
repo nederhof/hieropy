@@ -1,6 +1,6 @@
 [project]
 name = "hieropy"
-version = "0.1.5"
+version = "0.1.6"
 description = "Processing of ancient Egyptian hieroglyphic text"
 readme = "README.md"
 authors = [{ name = "Mark-Jan Nederhof", email = "markjan.nederhof@googlemail.com" }]
