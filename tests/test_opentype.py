@@ -1,6 +1,7 @@
 import unittest
 from hieropy import UniParser, UniFontBuilder, UniExtractor
 
+# @unittest.skip("Skipping tests that do file IO")
 class TestOpentype(unittest.TestCase):
 
 	def test_extract(self):
@@ -68,7 +69,8 @@ class TestOpentype(unittest.TestCase):
 		for e in encodings_vrl:
 			builder_vrl.add(parser.parse(e))
 		fragment = parser.parse('\U00013000\U00013455\U00013050')
-		builder_hlr.add_mapping('abc', fragment)
+		builder_hlr.add_mapping('x', fragment)
+		builder_hlr.add_mapping('yyy', fragment)
 		builder_hrl.add_mapping('abc', fragment)
 		builder_vlr.add_mapping('abc', fragment)
 		builder_vrl.add_mapping('abc', fragment)

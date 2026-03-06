@@ -344,6 +344,12 @@ builder_hlr.make_font('fonthlr.ttf')
 builder_vrl.make_font('fontvrl.ttf')
 ```
 
+One may also add a custom mapping from an arbitrary string of characters to a hieroglyphic fragment, with application always guided by longest match from left to right:
+```python
+builder.add_mapping('=j', '\U00013000')
+builder.add_mapping('\U00013000\U00013050', '\U00013000\U00013455\U00013050')
+```
+
 Hieroglyphic can also be extracted from a string, from a plain text file, or from an XML document, the latter optionally filtered by an attribute name and value of relevant enclosing elements:
 ```python
 encodings1 = UniExtractor().extract('\U00013000plain\U00013001text\U00013050')

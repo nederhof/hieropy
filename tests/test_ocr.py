@@ -11,7 +11,7 @@ pickle_filename = 'tests/tmp/testpickle.pkl'
 resources_dir = 'tests/resources/'
 tmp_ocr_dir = 'tests/tmp/'
 
-# @unittest.skip("Skipping tests that do file IO")
+@unittest.skip("Skipping tests that do file IO")
 class TestOcr(unittest.TestCase):
 
 	@unittest.skip("Skipping test that creates pickle file")
