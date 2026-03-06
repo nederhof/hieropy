@@ -12,10 +12,11 @@ from reportlab.graphics.shapes import Drawing, Rect
 from reportlab.graphics import renderPDF, renderPM
 from reportlab.lib.colors import Color
 from pypdfium2 import PdfDocument
-from shapely.geometry import box, Polygon, MultiPolygon
+from shapely.geometry import box, Polygon, MultiPolygon, LinearRing
 from shapely.ops import unary_union
 
 from .uniconstants import *
+from .unittf import rotate_affine, scale_affine, mirror_affine, translate_affine, id_affine, chain_affines
 
 REFERENCE_GLYPH = '\U00013000'
 MEASURE_SIZE = 150
@@ -434,6 +435,31 @@ class Shadings:
 				lines.append((x_min, y_min, x_max, y_max))
 		return lines
 
+	@staticmethod
+	def orient(path, ccw):
+		coords = path.coords
+		ring = LinearRing(coords)
+		if ring.is_ccw ^ ccw:
+			coords = reversed(coords)
+		return list(coords)[:-1]
+
+	def polygons(self):
+		polys = []
+		if self.rectangles:
+			boxes = [box(x_min, y_min, x_max, y_max) for x_min, y_min, x_max, y_max in self.rectangles]
+			merged = unary_union(boxes)
+			if isinstance(merged, Polygon):
+				geoms = [merged]
+			elif isinstance(merged, MultiPolygon):
+				geoms = merged.geoms
+			else:
+				geoms = []
+			for geom in geoms:
+				exterior = Shadings.orient(geom.exterior, False) 
+				gaps = [Shadings.orient(interior, True) for interior in geom.interiors]
+				polys.append((exterior, gaps))
+		return polys
+
 class PrintedAny:
 	def __init__(self, w, h, w_accum, h_accum, mirrored, options):
 		self.options = options
@@ -567,25 +593,19 @@ class PrintedSvg(PrintedAny):
 		if not options.transparent:
 			self.draw.add(self.draw.rect(insert=(0, 0), size=(self.width(), self.height()), fill='white'))
 
+	@staticmethod
+	def points_to_path(points):
+		return ' '.join([f'M {points[0][0]},{points[0][1]}'] + [f'L {x},{y}' for x, y in list(points)[1:]] + ['Z'])
+
 	def complete(self):
 		if self.is_complete:
 			return
 		self.draw.add(self.spans)
 		opacity = self.options.shadealpha / 255
-		rectangles = self.shadings.rectangles
-		if rectangles:
-			boxes = [box(x_min, y_min, x_max, y_max) for x_min, y_min, x_max, y_max in rectangles]
-			merged = unary_union(boxes)
-			if isinstance(merged, Polygon):
-				geoms = [merged]
-			elif isinstance(merged, MultiPolygon):
-				geoms = merged.geoms
-			else:
-				geoms = []
-			for geom in geoms:
-				points = list(geom.exterior.coords)
-				self.draw.add(self.draw.polygon(points=points, fill=self.options.shadecolor, \
-					fill_opacity=opacity, stroke_width=0))
+		for exterior, gaps in self.shadings.polygons():
+			d = PrintedSvg.points_to_path(exterior) + ' '.join([PrintedSvg.points_to_path(gap) for gap in gaps])
+			self.draw.add(self.draw.path(d=d, fill=self.options.shadecolor, \
+				fill_opacity=opacity, fill_rule='evenodd', stroke_width=0))
 		for x_min, y_min, x_max, y_max in self.shadings.segments():
 			self.draw.add(self.draw.line(start=(x_min, y_min), end=(x_max, y_max),
 				stroke=self.options.shadecolor, stroke_width=self.options.shadethickness, opacity=opacity))
@@ -610,7 +630,7 @@ class PrintedSvg(PrintedAny):
 			y_trans = y_px - meas.height_scaled/2
 		else:
 			y_trans = y_px - meas.height_scaled/2 + meas.y
-		if rotate or mirror or x_scale != 1 or y_scale != 1:
+		if rotate or mirror or x_scale != 1 or y_scale != 1 or unselectable:
 			tr = f'translate({x_trans}, {y_trans}) '
 			sc = f'scale(-{x_scale}, {y_scale}) ' if mirror_any else \
 					f'scale({x_scale}, {y_scale}) ' if x_scale != 1 or y_scale != 1 else ''
@@ -645,6 +665,47 @@ class PrintedSvg(PrintedAny):
 		span = self.draw.tspan(ch)
 		span['style'] = 'opacity: 0; user-select: all; color: transparent; font-size: 0;'
 		self.spans.add(span)
+
+class PrintedTtf(PrintedAny):
+	def __init__(self, w, h, w_accum, h_accum, options):
+		super().__init__(w, h, w_accum, h_accum, options.rl(), options)
+		self.chars = ''
+		self.glyphs = []
+
+	def add_sign(self, ch, scale, x_scale, y_scale, rotate, mirror, rect, \
+			extra=False, bracket=False, unselectable=False, x_as=None, y_as=None):
+		if not unselectable:
+			self.chars += ch
+		x = self.mirror(rect.x, rect.w)
+		mirror_any = self.mirrored ^ mirror
+		x_px = round(self.em_to_px(x))
+		y_px = round(self.em_to_px(rect.y + rect.h))
+		top_px = round(self.em_to_px(rect.y))
+		fontsize = math.floor(self.options.fontsize * scale)
+		fontcolor = self.color(bracket)
+		meas = corrected_measurement(ch, fontsize, x_scale, y_scale, rotate, mirror_any, x_as, y_as, \
+			measure_glyph_pdf_memo)
+		x_trans = x_px + meas.width_scaled/2 - meas.x
+		y_diff = 0 if bracket else meas.y
+		y_trans = (self.height() - y_px) + meas.height_scaled/2 - y_diff
+		aff = chain_affines(translate_affine(x_trans, y_trans), \
+			scale_affine((-x_scale if mirror_any else x_scale), y_scale),
+			rotate_affine(-rotate),
+			translate_affine(-meas.width/2, -meas.height/2),
+			scale_affine(scale, scale))
+		self.glyphs.append((ch, fontcolor, aff, x_px, top_px, mirror_any))
+
+	def add_shading(self, rect):
+		x = self.mirror(rect.x, rect.w)
+		y = rect.y
+		x_min = round(self.em_to_px(x))
+		y_max = round(self.height() - self.em_to_px(y))
+		x_max = round(self.em_to_px(x+rect.w))
+		y_min = round(self.height() - self.em_to_px(y+rect.h))
+		self.shadings.add_rectangle(x_min, y_min, x_max, y_max)
+
+	def add_hidden(self, ch):
+		self.chars += ch
 
 class PrintedPil(PrintedAny):
 	def __init__(self, w, h, w_accum, h_accum, options):

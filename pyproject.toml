@@ -7,17 +7,21 @@ authors = [{ name = "Mark-Jan Nederhof", email = "markjan.nederhof@googlemail.co
 license-files = ["LICENSE"]
 requires-python = ">= 3.9"
 dependencies = [
+	"fonttools",
 	"numpy",
+	"odfpy",
 	"Pillow",
 	"ply",
 	"pypdfium2==5.0.0",
+	"python-docx",
 	"reportlab",
 	"rtree",
 	"scipy",
 	"shapely",
 	"svgwrite",
 	"tkhtmlview",
-	"tkinterweb"
+	"tkinterweb",
+	"webcolors",
 ]
 
 [project.urls]

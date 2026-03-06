@@ -8,7 +8,7 @@ from .uniproperties import allowed_rotations, rotation_adjustment, \
 	char_to_insertions, topup_chars, bottomdown_chars, char_to_places, InsertionAdjust, \
 	char_to_overlay_ligature, overlay_to_ligature
 from .printables import PlaneRestricted, PlaneExtended, OrthogonalHull, \
-	PrintedPdf, PrintedSvg, PrintedPil, PrintedPilWithoutExtras, \
+	PrintedPdf, PrintedSvg, PrintedTtf, PrintedPil, PrintedPilWithoutExtras, \
 	em_size_of, open_rect
 
 class Group:
@@ -26,6 +26,9 @@ class Group:
 		self.resize(f)
 	def copy(self):
 		self.map({})
+
+def round_advance(pos, fontsize, shadedist):
+	return math.ceil(pos * fontsize / shadedist) * shadedist / fontsize
 
 class Fragment(Group):
 	# groups: list of Vertical/Horizontal/Enclosure/Basic/Overlay/Literal/Singleton/Blank/Lost
@@ -67,6 +70,9 @@ class Fragment(Group):
 					x2 = x1 + options.sep / 2
 				else:
 					x2 = options.hmargin + self.size(options)[0] + options.sep
+				if options.imagetype == 'ttf':
+					x2 = round_advance(x2, options.fontsize, options.shadedist)
+				group.separated_size = (x2-x0, y3-y0)
 				group.format(options, x0, x, x1, x2, y0, y1, y2, y3)
 				if options.separated:
 					x0 = 0
@@ -89,6 +95,9 @@ class Fragment(Group):
 					y2 = y1 + options.sep / 2
 				else:
 					y2 = options.vmargin + self.size(options)[1] + options.sep
+				if options.imagetype == 'ttf':
+					y2 = round_advance(y2, options.fontsize, options.shadedist)
+				group.separated_size = (x3-x0, y2-y0)
 				group.format(options, x0, x1, x2, x3, y0, y, y1, y2)
 				if options.separated:
 					y0 = 0
@@ -103,27 +112,15 @@ class Fragment(Group):
 			printeds = []
 			w_accum = 0
 			h_accum = 0
-			for i, g in enumerate(self.groups):
-				sub_size = g.size(options)
-				if options.h():
-					width = sub_size[0] + options.sep
-					if i == 0:
-						width += options.hmargin
-					if i == len(self.groups) - 1:
-						width += options.hmargin
-					height = size[1] + options.sep + 2 * options.vmargin
-				if options.v():
-					width = size[0] + options.sep + 2 * options.hmargin
-					height = sub_size[1] + options.sep
-					if i == 0:
-						height += options.vmargin
-					if i == len(self.groups) - 1:
-						height += options.vmargin
+			for g in self.groups:
+				width, height = g.separated_size
 				match options.imagetype:
 					case 'pdf':
 						printed = PrintedPdf(width, height, w_accum, h_accum, options)
 					case 'svg':
 						printed = PrintedSvg(width, height, w_accum, h_accum, options)
+					case 'ttf':
+						printed = PrintedTtf(width, height, w_accum, h_accum, options)
 					case _:
 						printed = PrintedPil(width, height, w_accum, h_accum, options)
 				g.print(options, printed)
@@ -141,6 +138,8 @@ class Fragment(Group):
 					printed = PrintedPdf(width, height, 0, 0, options)
 				case 'svg':
 					printed = PrintedSvg(width, height, 0, 0, options)
+				case 'ttf':
+					printed = PrintedTtf(width, height, 0, 0, options)
 				case _:
 					printed = PrintedPil(width, height, 0, 0, options)
 			printed.add_text(str(self))
@@ -1131,17 +1130,23 @@ class Overlay(Group):
 			return
 		if len(self.lits1) > 1:
 			printed.add_hidden(BEGIN_SEGMENT)
-		for g in self.lits1:
-			g.print(options, printed)
-		if len(self.lits1) > 1:
+			for i, g in enumerate(self.lits1):
+				g.print(options, printed)
+				if i < len(self.lits1)-1:
+					printed.add_hidden(HOR)
 			printed.add_hidden(END_SEGMENT)
+		else:
+			self.lits1[0].print(options, printed)
 		printed.add_hidden(OVERLAY)
 		if len(self.lits2) > 1:
 			printed.add_hidden(BEGIN_SEGMENT)
-		for g in self.lits2:
-			g.print(options, printed)
-		if len(self.lits2) > 1:
+			for i, g in enumerate(self.lits2):
+				g.print(options, printed)
+				if i < len(self.lits2)-1:
+					printed.add_hidden(VER)
 			printed.add_hidden(END_SEGMENT)
+		else:
+			self.lits2[0].print(options, printed)
 	def print_ligature(self, options, printed):
 		printed.add_hidden(str(self))
 		printed.add_sign(self.alt.ch, self.scale, 1, 1, 0, False, self, unselectable=True)

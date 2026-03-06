@@ -271,6 +271,123 @@ shading = [[(0,20),(30,20),(30,40),(0,40)],[(50,60),(70,60),(70,90),(50,90)]]
 encoding_out = str(converter.convert_line(image, shading=shading))
 ```
 
+## Fonts
+
+For a fixed collection of texts, an OpenType font can be created that renders all the hieroglyphic groups in those texts. (If the texts change, the font needs to be recreated.) If there are several text directions, a separate font needs to be created for each. Suppose we have horizontal left-to-right text (indicated by class `hlr`) and vertical right-to-left text (indicated by class `vrl`) in an HTML file `webpage.html`:
+```html
+<html>
+<head>
+<title>OpenType test</title>
+<link rel="stylesheet" type="text/css" href="opentype.css" />
+</head>
+<body>
+<span class="hlr">𓀀𓐱𓁐𓐰𓏥</span>
+<p>
+<span class="vrl">𓊨𓁹</span>
+</body>
+</html>
+```
+
+Assume here that `opentype.css` contains:
+```css
+@font-face { font-family: 'NewGardinerHlr'; src: url('fonthlr.ttf') format('opentype'); }
+@font-face { font-family: 'NewGardinerHrl'; src: url('fonthrl.ttf') format('opentype'); }
+@font-face { font-family: 'NewGardinerVlr'; src: url('fontvlr.ttf') format('opentype'); }
+@font-face { font-family: 'NewGardinerVrl'; src: url('fontvrl.ttf') format('opentype'); }
+
+.hlr {
+    font-feature-settings: 'liga';
+    font-size: 200%;
+    font-family: 'NewGardinerHlr';
+    word-break: break-all;
+}
+.hrl {
+    font-feature-settings: 'liga';
+    font-size: 200%;
+    font-family: 'NewGardinerHrl';
+    word-break: break-all;
+    direction: rtl;
+    unicode-bidi: bidi-override;
+}
+.vlr {
+    font-feature-settings: 'liga';
+    font-size: 200%;
+    font-family: 'NewGardinerVlr';
+    word-break: break-all;
+    writing-mode: vertical-lr;
+    text-orientation: upright;
+}
+.vrl {
+    font-feature-settings: 'liga';
+    font-size: 200%;
+    font-family: 'NewGardinerVrl';
+    word-break: break-all;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+}
+```
+
+First the encodings need to be extracted from the web page depending on the `classname`; if the argument `classname` is omitted, all hieroglyphic encodings occurring anywhere on the page are retrieved.  (Text that does not consist of hieroglyphs and appropriate control characters is ignored regardless of whether the `classname` argument is provided.) The extracted encodings are then parsed and added to a `UniFontBuilder`, and subsequently the required fonts are created:
+```python
+from hieropy import UniExtractor, UniParser, UniFontBuilder
+
+encodings_hlr = UniExtractor().extract_html('webpage.html', classname='hlr')
+encodings_vrl = UniExtractor().extract_html('webpage.html', classname='vrl')
+parser = UniParser()
+builder_hlr = UniFontBuilder(direction='hlr', descent=0.1)
+builder_vrl = UniFontBuilder(direction='vrl')
+for e in encodings_hlr:
+    builder_hlr.add(parser.parse(e))
+for e in encodings_hrl:
+    builder_hrl.add(parser.parse(e))
+builder_hlr.make_font('fonthlr.ttf')
+builder_vrl.make_font('fontvrl.ttf')
+```
+
+Hieroglyphic can also be extracted from a string, from a plain text file, or from an XML document, the latter optionally filtered by an attribute name and value of relevant enclosing elements:
+```python
+encodings1 = UniExtractor().extract('\U00013000plain\U00013001text\U00013050')
+encodings2 = UniExtractor().extract_file('file.txt')
+encodings3 = UniExtractor().extract_xml('file.xml')
+encodings4 = UniExtractor().extract_xml('file.xml', attribute=('direction','hlr'))
+```
+
+It is also possible to extract hieroglyphic from a `.docx` or `.odt` file. The created font, with an appropriate basename, should then be copied to a folder (depending on the operating system) where Word or LibreOffice can find it:
+```python
+encodings = UniExtractor().extract_docx('file.docx')
+# or: encodings = UniExtractor().extract_odt('file.odt')
+builder = UniFontBuilder(basename='CustomName')
+for e in encodings:
+    builder.add(parser.parse(e))
+builder.make_font('custom.ttf')
+```
+
+Options of `UniFontBuilder`:
+
+| Name | Default | Values | Purpose |
+| ---- | ------- | ------ | ------- |
+| direction | 'hlr' | 'hlr', 'hrl', 'vlr', 'vrl' | text direction |
+| linesize | 1.0 | float (EM) | size of line |
+| sep | 0.08 | float (EM) | separation between signs (in EM) |
+| signcolor | 'black' | str | name of color for signs |                                            
+| bracketcolor | 'black' | str | name of color for brackets |                                        
+| shadecolor | 'black' | str | name of color for shading |                                          
+| shadealpha | 255 | int | opacity of shading, between 0 and 255 |
+| shadepattern | 'diagonal' | 'diagonal', 'uniform' | kind of shading |
+| shadedist | 100 | int (font units) | distance between lines of shading (only for 'diagonal') |
+| shadethickness | 16 | int (font units) | thickness of lines of shading (only for 'diagonal') |
+| align | 'middle' | 'middle', 'bottom' | position of signs that are less tall than the line |
+| separated | True | bool | hieroglyphic broken up into individual top-level groups |
+| basename | 'NewGardiner' | str | basename of family name |
+| descent | 0 | float (EM) | descent below line (in EM) |
+| gap | 0.1 | float (EM) | gap between rows/columns of text (in EM) |
+
+The value of `shadethickness` would typically be a square number. If `shadepattern` is `uniform`, then
+`shadealpha` should be set to a value below 255, typically around 150. A color font is created only if needed, which is if `signcolor` has a value other than `black`, or if there are brackets or shading and `bracketcolor` or `shadecolor` have values other than `black` or if `shadealpha` has a value other than 255.
+
+The family name of the font becomes the basename followed by one 'Hlr', 'Hrl', 'Vlr', 'Vrl', 
+depending on the text direction.
+
 ## From GitHub sources
 
 ### Install
@@ -305,6 +422,10 @@ venv\Scripts\activate
 ```
 
 ## Changelog
+
+### 0.1.7
+
+* Creation of OpenType fonts.
 
 ### 0.1.6
 

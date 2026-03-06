@@ -1,0 +1,57 @@
+@font-face {
+    font-family: 'NewGardinerHlr';
+    src: url('../tmp/opentypehlr.ttf') format('opentype');
+}
+@font-face {
+    font-family: 'NewGardinerHrl';
+    src: url('../tmp/opentypehrl.ttf') format('opentype');
+}
+@font-face {
+    font-family: 'NewGardinerVlr';
+    src: url('../tmp/opentypevlr.ttf') format('opentype');
+}
+@font-face {
+    font-family: 'NewGardinerVrl';
+    src: url('../tmp/opentypevrl.ttf') format('opentype');
+}
+
+.hlr {
+    font-feature-settings: "liga";
+    font-size: 200%;
+    font-family: 'NewGardinerHlr';
+    word-break: break-all;
+}
+.hrl {
+    font-feature-settings: 'liga';
+    font-size: 200%;
+    font-family: 'NewGardinerHrl';
+    word-break: break-all;
+    direction: rtl;
+    unicode-bidi: bidi-override;
+}
+.vlr {
+    font-feature-settings: "liga";
+    font-size: 200%;
+    font-family: 'NewGardinerVlr';
+    word-break: break-all;
+	writing-mode: vertical-lr;
+	text-orientation: upright;
+	border: 2px solid #444;
+	margin: 0;
+}
+.vrl {
+    font-feature-settings: "liga";
+    font-size: 200%;
+    font-family: 'NewGardinerVrl';
+    word-break: break-all;
+	writing-mode: vertical-rl;
+	text-orientation: upright;
+	border: 2px solid #444;
+	margin: 0;
+}
+
+.container {
+	border: 2px solid #444;
+	width: 500px;
+	height: 100px;
+}
