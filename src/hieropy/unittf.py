@@ -101,15 +101,15 @@ class UniFontBuilder:
 	def __init__(self, direction='hlr', linesize=1.0, sep=0.08, 
 				signcolor='black', bracketcolor='black', shadecolor='black', shadealpha=255,
 				shadepattern='diagonal', shadedist=100, shadethickness=16,
-				align='middle', separated=True, basename=HIERO_FONT_NAME, descent=0, gap=0.1):
+				align='middle', separated=True, basename=HIERO_FONT_NAME, descent=0.0, gap=0.1):
 		self.read_src_font()
 		self.options = Options(direction=direction, linesize=linesize, fontsize=self.upm, \
-				sep=sep, hmargin=0, vmargin=0, imagetype='ttf', transparent=True, \
+				sep=sep, hmargin=0.0, vmargin=0.0, imagetype='ttf', transparent=True, \
 				signcolor=signcolor, bracketcolor=bracketcolor, shadecolor=shadecolor, shadealpha=shadealpha, \
 				shadepattern=shadepattern, shadedist=shadedist, shadethickness=shadethickness, \
 				align=align, separated=separated)
 		self.mapping_options = Options(direction=direction, linesize=linesize, fontsize=self.upm, \
-				sep=sep, hmargin=0, vmargin=0, imagetype='ttf', transparent=True, \
+				sep=sep, hmargin=0.0, vmargin=0.0, imagetype='ttf', transparent=True, \
 				signcolor=signcolor, bracketcolor=bracketcolor, shadecolor=shadecolor, shadealpha=shadealpha, \
 				shadepattern=shadepattern, shadedist=shadedist, shadethickness=shadethickness, \
 				align=align, separated=False)

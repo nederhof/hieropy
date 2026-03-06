@@ -379,13 +379,13 @@ Options of `UniFontBuilder`:
 | align | 'middle' | 'middle', 'bottom' | position of signs that are less tall than the line |
 | separated | True | bool | hieroglyphic broken up into individual top-level groups |
 | basename | 'NewGardiner' | str | basename of family name |
-| descent | 0 | float (EM) | descent below line (in EM) |
+| descent | 0.0 | float (EM) | descent below line (in EM) |
 | gap | 0.1 | float (EM) | gap between rows/columns of text (in EM) |
 
-The value of `shadethickness` would typically be a square number. If `shadepattern` is `uniform`, then
+The value of `shadethickness` would typically be a square number. If `shadepattern` is `'uniform'`, then
 `shadealpha` should be set to a value below 255, typically around 150. A color font is created only if needed, which is if `signcolor` has a value other than `black`, or if there are brackets or shading and `bracketcolor` or `shadecolor` have values other than `black` or if `shadealpha` has a value other than 255.
 
-The family name of the font becomes the basename followed by one 'Hlr', 'Hrl', 'Vlr', 'Vrl', 
+The family name of the font becomes the `basename` followed by one `'Hlr'`, `'Hrl'`, `'Vlr'`, `'Vrl'`, 
 depending on the text direction.
 
 ## From GitHub sources
