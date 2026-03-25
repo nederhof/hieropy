@@ -342,7 +342,7 @@ class SpatialParser:
 		core_box = BoundingBox(core.tokens)
 		if not any(BoundingBox.overlap(core_box, BoundingBox(token.tokens)) for token in rest):
 			return parses
-		places = core.group.allowed_places()
+		places = core.group.allowed_places(None)
 		if len(places) > 0:
 			insertion_tokens = split_around_core(core, rest)
 			subparsess = []
@@ -458,7 +458,7 @@ def split_around_core(core, tokens):
 	place_to_pos = {}
 	place_to_tokens = defaultdict(list)
 	group.choose_alt_glyph([])
-	for place in group.allowed_places():
+	for place in group.allowed_places(None):
 		adjustments = group.adjustments.get(place, InsertionAdjust())
 		pos_x, pos_y = insertion_position(place, adjustments)
 		place_to_pos[place] = (box.x + pos_x * box.w, box.y + pos_y * box.h)
@@ -475,7 +475,7 @@ def split_around_core(core, tokens):
 				else:
 					best_place = 'b'
 		else:
-			for place in group.allowed_places():
+			for place in group.allowed_places(None):
 				dist = math.dist(place_to_pos[place], (x_center, y_center))
 				if dist < min_dist:
 					best_place = place

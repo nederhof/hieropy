@@ -83,6 +83,7 @@ Options for rendering:
 | shadethickness | 1 | int (pixels) | thickness of lines of shading (only for 'diagonal') |
 | align | 'middle' | 'middle', 'bottom' | position of signs that are less tall than the line |
 | separated | False | bool | hieroglyphic broken up into individual top-level groups |
+| custom | None | CustomSignList | list of custom signs (see below) |
 
 Some values are expressed as factor of 1 EM (the unscaled height of A1, the "sitting man" sign).
 
@@ -368,6 +369,8 @@ builder.add_mapping('=j', '\U00013000')
 builder.add_mapping('\U00013000\U00013050', '\U00013000\U00013455\U00013050')
 ```
 
+To allow fallback to displaying individual characters (but then without formatting), one can add all signs to a font by also calling `builder.add_all()`; if the signs in the extended list are not needed, then `builder.add_basic()` suffices. Both methods also add default glyphs for the control characters. Fallback to displaying individual characters is convenient during creation of a document. Once the document is stable, one would create the font without `add_all` or `add_basic`.
+
 Options of `UniFontBuilder`:
 
 | Name | Default | Values | Purpose |
@@ -387,12 +390,48 @@ Options of `UniFontBuilder`:
 | basename | 'NewGardiner' | str | basename of family name |
 | descent | 0.0 | float (EM) | descent below line (in EM) |
 | gap | 0.1 | float (EM) | gap between rows/columns of text (in EM) |
+| custom | None | CustomSignList | list of custom signs (see below) |
 
-The value of `shadethickness` would typically be a square number. If `shadepattern` is `'uniform'`, then
-`shadealpha` should be set to a value below 255, typically around 150. A color font is created only if needed, which is if `signcolor` has a value other than `black`, or if there are brackets or shading and `bracketcolor` or `shadecolor` have values other than `black` or if `shadealpha` has a value other than 255.
+If `shadepattern` is `'uniform'`, then `shadealpha` should be set to a value below 255, typically around 150. A color font is created only if needed, which is if `signcolor` has a value other than `black`, or if there are brackets or shading and `bracketcolor` or `shadecolor` have values other than `black` or if `shadealpha` has a value other than 255.
 
-The family name of the font becomes the `basename` followed by one `'Hlr'`, `'Hrl'`, `'Vlr'`, `'Vrl'`, 
-depending on the text direction.
+The family name of the font becomes the `basename` followed by one `'Hlr'`, `'Hrl'`, `'Vlr'`, `'Vrl'`, depending on the text direction.
+
+## Custom signs
+
+One may wish to encode texts that contain signs that are not in Unicode, or that contain graphical variants that are not in Unicode even though other graphical variants of the same underlying grapheme are. For this purpose, one may create an additional font, with glyphs at code points in the range U+F000 — U+F8FF (part of the BMP Private Use Area).
+
+The font should have 1000 units per EM, to match the NewGardiner font.  In addition, one should construct a `CustomSignList`, with the name and path of the font, and for each character a Gardiner name that identifies it, and, optionally, a core sign that represents the underlying grapheme, which we will refer to as the **fallback sign**. One may also add mnemonics and documentation on the extra signs. 
+
+The `CustomSignList` may be passed to the editor, and it may be part of an `Option` to be passed
+to the `print` method:
+```python
+from hieropy import UniEditor, UniParser, Options, CustomSignList
+
+signs = [('\uF000', 'A800', '\U00013000'),('\uF001', 'B801', '\U00013050')]
+mnemonics = [('abd', 'A800')]
+info = [('\uF000', '<ul><li><b>Classifier</b> description</li></ul>')]
+custom = CustomSignList('MyFontName', 'path/to/font.ttf', signs, mnemonics=mnemonics, info=info)
+UniEditor(custom=custom)
+options = Options(custom=custom)
+printed = UniParser().parse('\U00013000\uF000').print(options)
+```
+
+The main purpose of a **fallback sign** is to take the place of a custom sign when text from an SVG image is selected. Hereby one may let an SVG image display a custom graphical variant, while copy-and-paste would instead produce a grapheme from the core sign list. If there is no **fallback sign**, because the custom glyph is a genuinely novel grapheme, the third value in a triple may be `None`, or one may provide a pair consisting of just the custom character and the Gardiner name.
+
+Further, a custom sign inherits its properties with regard to rotations and insertions from the **fallback sign** if it exists.
+
+A `CustomSignList` may also be passed to a `UniFontBuilder`. A snag here is that HarfBuzz (the shaping engine used in, for example, Chrome) only allows code points of glyphs to be combined with control characters for ancient Egyptian if these appear in the Unicode code charts of hieroglyphs. At best therefore, one could use the code points of non-core signs:
+```python
+from hieropy import UniFontBuilder, CustomSignList
+
+signs = [('\U00013460', 'A800', '\U00013000'),('\U0001346E', 'A800a')]
+custom = CustomSignList('MyFontName', 'path/to/font.ttf', signs)
+builder = UniFontBuilder(custom=custom)
+```
+
+A solution would be if the Unicode Consortium were to reserve a PUA for custom hieroglyphic signs needed temporarily for specialized purposes, but I do not think there is a realistic prospect of that happening. They seem to want to introduce a dedicated code point for each trivial graphical variant of each grapheme, even if it is only needed temporarily for one specialized purpose. They don't seem to realize that this would lead to many tens of thousands of code points and become unmanageable.
+
+One hack to get around this problem would be to (mis)use code points belonging to non-core hieroglyphic signs for other purposes. When restricted to private applications, this will work technically, but if an encoding is subsequently published, on its own or embedded within a PDF or Word document, there will be confusion about what the non-core code points were meant to represent.
 
 ## From GitHub sources
 
@@ -428,6 +467,11 @@ venv\Scripts\activate
 ```
 
 ## Changelog
+
+### 0.1.8 (to be released)
+
+* Custom signs.
+* Output PDF images are selectable.
 
 ### 0.1.7
 

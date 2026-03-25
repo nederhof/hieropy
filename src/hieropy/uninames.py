@@ -32,15 +32,15 @@ def name_to_char(name):
 		cache_name_and_char()
 	return _name_to_char.get(name)
 
-def name_to_char_insensitive(name):
+def name_to_name_insensitive(name):
 	if re.match(r'^[a-ik-z][0-9]', name):
-		return name_to_char(name[0].upper() + name[1:])
+		return name[0].upper() + name[1:]
 	elif re.match(r'^(nl|nu)[0-9]', name):
-		return name_to_char(name[0:2].upper() + name[2:])
+		return name[0:2].upper() + name[2:]
 	elif re.match(r'^aa[0-9]', name):
-		return name_to_char('Aa' + name[2:])
+		return 'Aa' + name[2:]
 	else:
-		return name_to_char(name)
+		return name
 
 def char_to_name(ch):
 	if _char_to_name is None:
@@ -71,6 +71,12 @@ def cat_to_chars_ext(cat):
 	if _cat_to_chars_ext is None:
 		cache_name_and_char()
 	return _cat_to_chars_ext[cat]
+
+def basic_chars():
+	return sorted([ch for cat in UNI_CATEGORIES for ch in cat_to_chars(cat)])
+
+def ext_chars():
+	return sorted([ch for cat in UNI_CATEGORIES for ch in cat_to_chars_ext(cat)])
 
 def all_chars():
 	return sorted([ch for cat in UNI_CATEGORIES for ch in cat_to_chars(cat) + cat_to_chars_ext(cat)])
@@ -119,6 +125,49 @@ def dissect_name(name):
 def name_to_cat(name):
 	cat, _, _ = dissect_name(name)
 	return cat
+
+def name_to_tuple(name):
+	cat, num, suff = dissect_name(name)
+	return UNI_CATEGORIES.index(cat), num, len(suff), suff
+
+def name_cmp(name1, name2):
+	if name_to_tuple(name1) < name_to_tuple(name2):
+		return 1
+	elif name_to_tuple(name1) > name_to_tuple(name2):
+		return -1
+	else:
+		return 0
+
+def cat_to_description(cat):
+	match cat:
+		case 'A': return 'men'
+		case 'B': return 'women'
+		case 'C': return 'anthropomorphic deities'
+		case 'D': return 'parts of the human body'
+		case 'E': return 'mammals'
+		case 'F': return 'parts of mammals'
+		case 'G': return 'birds'
+		case 'H': return 'parts of birds'
+		case 'I': return 'amphibians, reptiles'
+		case 'K': return 'fish'
+		case 'L': return 'invertebrates'
+		case 'M': return 'plants'
+		case 'N': return 'sky, earth, water'
+		case 'NL': return 'nomes of Lower Egypt'
+		case 'NU': return 'nomes of Upper Egypt'
+		case 'O': return 'buildings'
+		case 'P': return 'ships'
+		case 'Q': return 'domestic furniture'
+		case 'R': return 'temple furniture'
+		case 'S': return 'clothing'
+		case 'T': return 'warfare, hunting, slaughter'
+		case 'U': return 'agriculture, crafts'
+		case 'V': return 'ropes, fabrics, baskets'
+		case 'W': return 'vessels'
+		case 'X': return 'bread'
+		case 'Y': return 'writing, games, music'
+		case 'Z': return 'strokes, geometric shapes'
+		case _: return 'unclassified'
 
 def cache_name_and_char():
 	global _name_to_char

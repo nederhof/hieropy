@@ -42,11 +42,12 @@ PLACEHOLDER = '\uFFFD'
 
 OPEN_BRACKETS = '[{⟨⟦⸢'
 CLOSE_BRACKETS = ']}⟩⟧⸣'
+BRACKETS = OPEN_BRACKETS + CLOSE_BRACKETS
 
 VARIATION_BASE = 0xFDFF
 DAMAGE_BASE = 0x13446
 
-UNI_STRING = '[\U00013000-\U000143FA\uFFFD\uFE00-\uFE06\\[{⟨⟦⸢\\]}⟩⟧⸣]+'
+UNI_STRING = '[\U00013000-\U000143FA\uFFFD\uFE00-\uFE06\uF000-\uF8FF\\[{⟨⟦⸢\\]}⟩⟧⸣]+'
 
 INSERTION_PLACES = ['ts', 'bs', 'te', 'be', 'm', 't', 'b']
 OVERLAY_INSERTION_PLACES = ['ts', 'bs', 'te', 'be']
@@ -244,3 +245,5 @@ def damage_areas(damage, x0, x1, x2, y0, y1, y2):
 		areas.append(Rectangle(x1, y1, x2-x1, y2-y1))
 	return areas
 
+def control_characters():
+	return [chr(p) for p in range(0x13430, 0x13456)] + [chr(VARIATION_BASE + 1 + v) for v in range(7)]

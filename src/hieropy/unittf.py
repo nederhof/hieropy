@@ -1,6 +1,7 @@
 import math
 import webcolors
 import importlib.resources as resources
+from itertools import chain
 from fontTools.ttLib import TTFont
 from fontTools.fontBuilder import FontBuilder
 from fontTools.colorLib.builder import buildCOLR, buildCPAL
@@ -13,38 +14,13 @@ from fontTools.misc.timeTools import timestampNow
 from fontTools.misc.transform import Transform
 
 from .options import Options
-from .uniconstants import HIERO_FONT_NAME, HIERO_FONT_FILENAME
+from .uniconstants import HIERO_FONT_NAME, HIERO_FONT_FILENAME, CAP_CHARS, BRACKETS, PLACEHOLDER, control_characters
+from .uninames import basic_chars, ext_chars
+from .unistructure import Fragment
+from .affine import *
 
 PUA = 0xF0000
 
-def rotate_affine(angle_deg):
-	rad = math.radians(angle_deg)
-	return math.cos(rad), math.sin(rad), -math.sin(rad), math.cos(rad), 0, 0
-
-def scale_affine(sx, sy):
-	return sx, 0, 0, sy, 0, 0
-
-def mirror_affine():
-	return -1, 0, 0, 1, 0, 0
-
-def translate_affine(dx, dy):
-	return 1, 0, 0, 1, dx, dy
-
-def id_affine():
-	return translate_affine(0, 0)
-
-def multiply_affines(aff1, aff2):
-	xx1, xy1, yx1, yy1, dx1, dy1 = aff1
-	xx2, xy2, yx2, yy2, dx2, dy2 = aff2
-	return xx1*xx2 + xy1*yx2, xx1*xy2 + xy1*yy2, yx1*xx2 + yy1*yx2, yx1*xy2 + yy1*yy2, \
-			dx1*xx2 + dy1*yx2 + dx2, dx1*xy2 + dy1*yy2 + dy2
-
-def chain_affines(*affs):
-	aff_out = id_affine()
-	for aff in affs:
-		aff_out = multiply_affines(aff, aff_out)
-	return aff_out
-	
 def rectangular_glyph(upm, margin, thickness):
 	x0 = margin
 	y0 = margin
@@ -101,18 +77,21 @@ class UniFontBuilder:
 	def __init__(self, direction='hlr', linesize=1.0, sep=0.08, 
 				signcolor='black', bracketcolor='black', shadecolor='black', shadealpha=255,
 				shadepattern='diagonal', shadedist=100, shadethickness=16,
-				align='middle', separated=True, basename=HIERO_FONT_NAME, descent=0.0, gap=0.1):
+				align='middle', separated=True, basename=HIERO_FONT_NAME, descent=0.0, gap=0.1,
+				custom=None):
 		self.read_src_font()
+		self.custom = custom
+		self.read_custom_font()
 		self.options = Options(direction=direction, linesize=linesize, fontsize=self.upm, \
 				sep=sep, hmargin=0.0, vmargin=0.0, imagetype='ttf', transparent=True, \
 				signcolor=signcolor, bracketcolor=bracketcolor, shadecolor=shadecolor, shadealpha=shadealpha, \
 				shadepattern=shadepattern, shadedist=shadedist, shadethickness=shadethickness, \
-				align=align, separated=separated)
+				align=align, separated=separated, custom=custom)
 		self.mapping_options = Options(direction=direction, linesize=linesize, fontsize=self.upm, \
 				sep=sep, hmargin=0.0, vmargin=0.0, imagetype='ttf', transparent=True, \
 				signcolor=signcolor, bracketcolor=bracketcolor, shadecolor=shadecolor, shadealpha=shadealpha, \
 				shadepattern=shadepattern, shadedist=shadedist, shadethickness=shadethickness, \
-				align=align, separated=False)
+				align=align, separated=False, custom=custom)
 		self.basename = basename
 		self.descent = int(round(descent * self.upm))
 		self.ascent = int(round(self.upm * (linesize + sep - descent)))
@@ -122,12 +101,39 @@ class UniFontBuilder:
 
 	def read_src_font(self):
 		with resources.files('hieropy.resources').joinpath(HIERO_FONT_FILENAME).open('rb') as f:
-			self.src_font = TTFont(f)
-			self.src_cmap = self.src_font.getBestCmap()
-			self.src_glyf = self.src_font['glyf']
-			self.src_hmtx = self.src_font['hmtx']
-			self.src_version = round(self.src_font['head'].fontRevision, 2)
-			self.upm = self.src_font['head'].unitsPerEm
+			src_font = TTFont(f)
+			self.src_cmap = src_font.getBestCmap()
+			self.src_glyf = src_font['glyf']
+			self.src_hmtx = src_font['hmtx']
+			self.src_version = round(src_font['head'].fontRevision, 2)
+			self.upm = src_font['head'].unitsPerEm
+
+	def read_custom_font(self):
+		if self.custom:
+			with open(self.custom.fontpath, 'rb') as f:
+				self.custom_font = TTFont(f)
+				self.custom_cmap = self.custom_font.getBestCmap()
+				self.custom_glyf = self.custom_font['glyf']
+				self.custom_hmtx = self.custom_font['hmtx']
+
+	def char_to_cmap(self, ch):
+		point = ord(ch)
+		if self.custom and self.custom.char_to_name(ch):
+			return self.custom_cmap.get(point) or f'u{point:05X}'
+		else:
+			return self.src_cmap.get(point) or f'u{point:05X}'
+
+	def char_to_glyf(self, ch):
+		if self.custom and self.custom.char_to_name(ch):
+			return self.custom_glyf[self.char_to_cmap(ch)]
+		else:
+			return self.src_glyf[self.char_to_cmap(ch)]
+
+	def char_to_hmtx(self, ch):
+		if self.custom and self.custom.char_to_name(ch):
+			return self.custom_hmtx[self.char_to_cmap(ch)]
+		else:
+			return self.src_hmtx[self.char_to_cmap(ch)]
 
 	def add(self, fragment):
 		if not fragment:
@@ -138,6 +144,21 @@ class UniFontBuilder:
 				self.str_to_formatting[p.chars] = p
 		else:
 			self.str_to_formatting[printed.chars] = printed
+
+	def add_char(self, ch):
+		self.add(Fragment.from_char(ch))
+
+	def add_basic(self):
+		for ch in chain(basic_chars(), CAP_CHARS, BRACKETS, PLACEHOLDER, control_characters()):
+			self.add_char(ch)
+		if self.custom:
+			for ch in self.custom.chars():
+				self.add_char(ch)
+
+	def add_all(self):
+		self.add_basic()
+		for ch in ext_chars():
+			self.add_char(ch)
 
 	def add_mapping(self, chars, fragment):
 		self.str_to_formatting[chars] = fragment.print(self.mapping_options)
@@ -190,7 +211,7 @@ class UniFontBuilder:
 		code_to_name = {}
 		for ch in sorted(code_chars):
 			point = ord(ch)
-			name = self.src_cmap.get(point) or f'u{point:05X}'
+			name = self.char_to_cmap(ch)
 			code_to_name[ch] = name
 			glyph_order.append(name)
 			cmap[point] = name
@@ -207,11 +228,11 @@ class UniFontBuilder:
 			glyph_order.append(name)
 			cmap[point] = name
 			if reverse:
-				glyf[name] = reverse_winding_direction(self.src_glyf[self.src_cmap.get(ord(ch))], self.src_glyf)
+				glyf[name] = reverse_winding_direction(self.char_to_glyf(ch), self.src_glyf)
 			else:
-				glyf[name] = self.src_glyf[self.src_cmap.get(ord(ch))]
+				glyf[name] = self.char_to_glyf(ch)
 			glyf[name].recalcBounds(glyf)
-			hmtx[name] = self.src_hmtx[self.src_cmap.get(ord(ch))]
+			hmtx[name] = self.char_to_hmtx(ch)
 			vmtx[name] = (self.upm, 0)
 		return glyph_to_name
 

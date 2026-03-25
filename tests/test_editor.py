@@ -3,16 +3,16 @@ import time
 from unittest.mock import patch
 from random import randint
 
-from hieropy import UniEditor
+from hieropy import UniEditor, CustomSignList, UniParser, Options
 
 class TestEditor(unittest.TestCase):
 	@unittest.skip("Skipping test that opens GUI")
 	def test_editor(self):
-		myeditor = UniEditor()
+		UniEditor()
 
 	@unittest.skip("Skipping test that opens GUI")
 	def test_editor_with_callback(self):
-		myeditor = UniEditor(save=lambda x: print(x), cancel=lambda x: print(x))
+		UniEditor(save=lambda x: print(x), cancel=lambda x: print(x))
 
 	@unittest.skip("Skipping test that opens GUI")
 	@patch('tkinter.Tk.mainloop') 
@@ -60,6 +60,36 @@ class TestEditor(unittest.TestCase):
 				myeditor.root.update()
 				time.sleep(0.1)
 			myeditor.root.destroy()
+
+	# @unittest.skip("Skipping test that opens GUI")
+	def test_custom(self):
+		mnemonics = [('jjj', 'A1z')]
+		info = [('\uF000', '<ul><li><b>Det.</b> description</li></ul>')]
+		fontname = 'CustomFont'
+		fontpath = 'tests/resources/NewGardinerNonCore.ttf'
+		signs = [('\uF000', 'A800', '\U00013000'), \
+			('\U00013460', 'A801', '\U00013050'), \
+			('\U0001346E', 'B801')]
+		custom = CustomSignList(fontname, fontpath, signs, mnemonics=mnemonics, info=info)
+		encoding = ''
+		def save(e):
+			nonlocal encoding
+			encoding = e
+		UniEditor(custom=custom, save=save)
+		options1 = Options(custom=custom)
+		options2 = Options(custom=custom, imagetype='pdf')
+		options3 = Options(custom=custom, imagetype='svg')
+		parser = UniParser()
+		fragment = parser.parse(encoding)
+		printed1 = fragment.print(options1)
+		printed2 = fragment.print(options2)
+		printed3 = fragment.print(options3)
+		printed1.get_pil().save('tests/tmp/testimage1.png')
+		printed2.get_pil().save('tests/tmp/testimage2a.png')
+		with open('tests/tmp/testimage2b.pdf', 'wb') as f:
+			f.write(printed2.get_pdf())
+		with open('tests/tmp/testimage3.svg', 'w', encoding='utf-8') as f:
+			f.write(printed3.get_svg())
 
 if __name__ == '__main__':
 	unittest.main()

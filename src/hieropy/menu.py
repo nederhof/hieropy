@@ -8,9 +8,9 @@ from rtree import index
 import importlib.resources as resources
 
 from .uniconstants import HIERO_FONT_FILENAME
-from .uninames import UNI_CATEGORIES, cat_to_chars, cat_to_chars_ext, char_to_name, name_to_char, name_to_mnemonics, \
+from .uninames import UNI_CATEGORIES, cat_to_chars, cat_to_chars_ext, \
 		is_extended_char, tall_chars, broad_chars, narrow_chars
-from .uniproperties import translit_to_chars, keyword_to_chars, char_to_info
+from .uniproperties import translit_to_chars, keyword_to_chars
 from .translit import ascii_to_unicode_ch
 
 MARGIN = 10
@@ -30,7 +30,7 @@ INFO_WIDTH = 400
 INFO_HEIGHT = 400
 
 class Menu(tk.Frame):
-	def __init__(self, editor, close_self):
+	def __init__(self, editor):
 		super().__init__(editor.root, bd=4, relief='solid')
 		self.editor = editor
 		self.bg = 'white'
@@ -57,6 +57,9 @@ class Menu(tk.Frame):
 	def make_fonts(self):
 		with resources.files('hieropy.resources').joinpath(HIERO_FONT_FILENAME).open('rb') as f:
 			self.hiero_font = ImageFont.truetype(f, self.hiero_font_size)
+		if self.editor.custom:
+			with open(self.editor.custom.fontpath, 'rb') as f:
+				self.custom_font = ImageFont.truetype(f, self.hiero_font_size)
 		self.hiero_width = self.hiero_font_size
 		self.hiero_height = self.hiero_font_size
 		self.name_font = font.Font(family='Arial', size=self.name_font_size)
@@ -168,7 +171,8 @@ class Menu(tk.Frame):
 		canvas = self.kind_to_canvas[cat]
 		chars_basic = cat_to_chars(cat)
 		chars_ext = cat_to_chars_ext(cat)
-		chars = chars_basic + chars_ext
+		chars_custom = self.editor.cat_to_custom_chars(cat)
+		chars = chars_basic + chars_ext + chars_custom
 		self.update_frame(frame, canvas, cat, chars)
 
 	def update_special_frame(self, text):
@@ -188,7 +192,7 @@ class Menu(tk.Frame):
 			return
 		frame.update_idletasks()
 		w_frame = frame.winfo_width() - self.scroll.winfo_width() - 2
-		names = [char_to_name(ch) for ch in chars]
+		names = [self.editor.char_to_name(ch) for ch in chars]
 		if kind not in ['transliteration', 'keywords'] and \
 				kind in self.kind_to_block_sizes_cached:
 			sizes = self.kind_to_block_sizes_cached[kind]
@@ -227,9 +231,16 @@ class Menu(tk.Frame):
 				if i >= len(chars):
 					return
 				ch = chars[i]
-				color = 'blue' if is_extended_char(ch) else 'black'
-				self.draw_char(canvas, x + x_center, y + y_ch, ch, color)
-				canvas.create_text(x + x_center, y + y_name, text=names[i], font=self.name_font, fill=color)
+				is_custom = self.editor.is_custom_char(ch)
+				if is_extended_char(ch):
+					color = 'blue' 
+				elif is_custom:
+					color = 'green'
+				else:
+					color = 'black'
+				self.draw_char(canvas, x + x_center, y + y_ch, ch, color, is_custom)
+				text = names[i]
+				canvas.create_text(x + x_center, y + y_name, text=text, font=self.name_font, fill=color)
 				index.insert(ord(ch), (x, y, x + w, y + h))
 				id_to_rectangle[ord(ch)] = (x, y, w, h)
 				x += w + OUT_BLOCK_SEP
@@ -245,19 +256,19 @@ class Menu(tk.Frame):
 		return { 'w': w, 'h': h, 'x': x, 'y_ch': y_ch, 'y_name': y_name }
 
 	def char_size(self, ch):
-		bbox = self.hiero_font.getbbox(ch)
+		bbox = self.font_of(ch).getbbox(ch)
 		x = bbox[0]
 		y = bbox[1]
 		w = bbox[2] - bbox[0]
 		h = bbox[3] - bbox[1]
 		return x, y, w, h
 
-	def draw_char(self, canvas, x, y, ch, color):
+	def draw_char(self, canvas, x, y, ch, color, is_custom):
 		if ch not in self.ch_to_image:
 			x_diff, y_diff, w, h = self.char_size(ch)
 			img = Image.new('RGBA', (w, h), (255, 255, 255, 0))
 			draw = ImageDraw.Draw(img)
-			draw.text((-x_diff, -y_diff), ch, font=self.hiero_font, fill=color)
+			draw.text((-x_diff, -y_diff), ch, font=self.font_of(ch), fill=color)
 			self.ch_to_image[ch] = ImageTk.PhotoImage(img)
 		canvas.create_image(x, y, image=self.ch_to_image[ch])
 
@@ -408,7 +419,7 @@ class Menu(tk.Frame):
 			self.name_value.set(self.name_value.get()[:-1])
 		
 	def choose_typed_sign(self, e):
-		if name_to_char(self.name_entry.get()):
+		if self.editor.name_to_char(self.name_entry.get()):
 			self.editor.choose_sign(e, self.name_entry.get())
 
 	def adjust_translit(self, e):
@@ -503,7 +514,7 @@ class Menu(tk.Frame):
 		candidates = index.intersection((x, y, x, y))
 		num = next(candidates, None)
 		if num is not None:
-			self.editor.choose_sign(e, char_to_name(chr(num)))
+			self.editor.choose_sign(e, self.editor.char_to_name(chr(num)))
 
 	def move_handler(self, e, kind):
 		canvas = self.kind_to_canvas[kind]
@@ -556,11 +567,11 @@ class Menu(tk.Frame):
 		if ch == self.info_char:
 			return
 		self.info_char = ch
-		name = char_to_name(ch)
-		mnemonics = name_to_mnemonics(name)
+		name = self.editor.char_to_name(ch)
+		mnemonics = self.editor.name_to_mnemonics(name)
 		style = '<style> ul { margin-left: 10px; padding-left: 10px; } </style>'
 		info = f'{style}<h2>{name}</h2>'
-		info_ch = char_to_info(ch)
+		info_ch = self.editor.char_to_info(ch)
 		if info_ch:
 			info += '\n' + info_ch
 		if mnemonics:
@@ -570,3 +581,6 @@ class Menu(tk.Frame):
 	def set_info_panel(self, x, y, info_str):
 		self.info_frame.load_html(info_str)
 		self.info_panel.geometry(f'{INFO_WIDTH}x{INFO_HEIGHT}+{x + 50}+{y}')
+
+	def font_of(self, ch):
+		return self.custom_font if self.editor.is_custom_char(ch) else self.hiero_font

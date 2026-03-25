@@ -1,5 +1,6 @@
 import io
 import math
+import re
 import numpy as np
 from collections import defaultdict
 import svgwrite
@@ -16,15 +17,17 @@ from shapely.geometry import box, Polygon, MultiPolygon, LinearRing
 from shapely.ops import unary_union
 
 from .uniconstants import *
-from .unittf import rotate_affine, scale_affine, mirror_affine, translate_affine, id_affine, chain_affines
+from .affine import rotate_affine, scale_affine, mirror_affine, translate_affine, id_affine, chain_affines
 
 REFERENCE_GLYPH = '\U00013000'
 MEASURE_SIZE = 150
 
 _font_registered = False
+_custom_fonts_registered = []
 _measurements_pdf = {}
 _measurements_pil = {}
 measure_font_pil = None
+measure_custom_fonts_pil = {}
 
 SHADE_DIST = 5
 
@@ -35,12 +38,23 @@ def register_pdf_font():
 			pdfmetrics.registerFont(TTFont(HIERO_FONT_NAME, path))
 		_font_registered = True
 
+def register_custom_pdf_font(name, path):
+	if not name in _custom_fonts_registered:
+		pdfmetrics.registerFont(TTFont(name, path))
+		_custom_fonts_registered.append(name)
+
 def get_measure_font_pil():
 	global measure_font_pil
 	if not measure_font_pil:
 		with resources.files('hieropy.resources').joinpath(HIERO_FONT_FILENAME).open('rb') as f:
 			measure_font_pil = ImageFont.truetype(f, MEASURE_SIZE)
 	return measure_font_pil
+
+def get_measure_custom_font_pil(path):
+	if path not in measure_custom_fonts_pil:
+		with open(path, 'rb') as f:
+			measure_custom_fonts_pil[path] = ImageFont.truetype(f, MEASURE_SIZE)
+	return measure_custom_fonts_pil[path]
 
 class MeasuredGlyph:
 	def __init__(self, width, height, width_scaled, height_scaled, x, y, w, h):
@@ -64,9 +78,8 @@ class MeasuredGlyph:
 	def __str__(self):
 		return f'x={self.x} y={self.y} w={self.w} h={self.h}'
 
-def measure_glyph_pdf(ch, fontsize, x_scale, y_scale, rotate, mirror):
-	register_pdf_font()
-	metric_width = pdfmetrics.stringWidth(ch, HIERO_FONT_NAME, fontsize)
+def measure_glyph_pdf(ch, fontname, fontsize, x_scale, y_scale, rotate, mirror):
+	metric_width = pdfmetrics.stringWidth(ch, fontname, fontsize)
 	width = max(1, round(metric_width))
 	height = max(1, round(fontsize))
 	width_scaled = max(1, width, round(x_scale * metric_width))
@@ -83,7 +96,7 @@ def measure_glyph_pdf(ch, fontsize, x_scale, y_scale, rotate, mirror):
 	h_canvas = height_scaled + 2 * margin_ver
 	buffer = io.BytesIO()
 	c = canvas.Canvas(buffer, pagesize=(w_canvas, h_canvas))
-	c.setFont(HIERO_FONT_NAME, fontsize)
+	c.setFont(fontname, fontsize)
 	c.translate(margin_hor + width_scaled/2, margin_ver + height_scaled/2)
 	c.scale(-x_scale if mirror else x_scale, y_scale)
 	c.rotate(-rotate)
@@ -98,9 +111,11 @@ def measure_glyph_pdf(ch, fontsize, x_scale, y_scale, rotate, mirror):
 	h = bbox[3] - bbox[1]
 	return MeasuredGlyph(width, height, width_scaled, height_scaled, x, y, w, h)
 
-def measure_glyph_pil(ch, x_scale, y_scale, rotate, mirror):
-	font = get_measure_font_pil()
-	bbox = font.getbbox(ch)
+def measure_glyph_pil(ch, font, x_scale, y_scale, rotate, mirror):
+	try:
+		bbox = font.getbbox(ch)
+	except ValueError:
+		bbox = (0, 0, MEASURE_SIZE, MEASURE_SIZE)
 	y = bbox[1]
 	metric_width = bbox[2] - bbox[0]
 	metric_height = MEASURE_SIZE - y 
@@ -129,55 +144,75 @@ def measure_glyph_pil(ch, x_scale, y_scale, rotate, mirror):
 def measurementKey(ch, fontsize, x_scale, y_scale, rotate, mirror):
 	return (ch, round(fontsize, 2), round(x_scale, 2), round(y_scale, 2), rotate, mirror)
 
-def measure_glyph_pdf_memo(ch, fontsize, x_scale, y_scale, rotate, mirror):
+def measure_glyph_pdf_memo(ch, fontname, fontsize, x_scale, y_scale, rotate, mirror):
 	key = measurementKey(ch, MEASURE_SIZE, x_scale, y_scale, rotate, mirror)
 	if key in _measurements_pdf:
 		meas = _measurements_pdf[key]
 	else:
-		meas = measure_glyph_pdf(ch, MEASURE_SIZE, x_scale, y_scale, rotate, mirror)
+		meas = measure_glyph_pdf(ch, fontname, MEASURE_SIZE, x_scale, y_scale, rotate, mirror)
 		_measurements_pdf[key] = meas
 	scale = fontsize / MEASURE_SIZE
 	return meas.scaled(scale)
 
-def measure_glyph_pil_memo(ch, fontsize, x_scale, y_scale, rotate, mirror):
+def measure_glyph_pil_memo(ch, font, fontsize, x_scale, y_scale, rotate, mirror):
 	key = measurementKey(ch, MEASURE_SIZE, x_scale, y_scale, rotate, mirror)
 	if key in _measurements_pil:
 		meas = _measurements_pil[key]
 	else:
-		meas = measure_glyph_pil(ch, x_scale, y_scale, rotate, mirror)
+		meas = measure_glyph_pil(ch, font, x_scale, y_scale, rotate, mirror)
 		_measurements_pil[key] = meas
 	scale = fontsize / MEASURE_SIZE
 	return meas.scaled(scale)
 
-def corrected_measurement(ch, fontsize, x_scale, y_scale, rotate, mirror, x_as, y_as, measure_fun):
-	meas = measure_fun(ch, fontsize, x_scale, y_scale, rotate, mirror)
+def corrected_measurement(ch, fontname, fontsize, x_scale, y_scale, rotate, mirror, x_as, y_as):
+	meas = measure_glyph_pdf_memo(ch, fontname, fontsize, x_scale, y_scale, rotate, mirror)
 	if x_as:
-		meas_as = measure_fun(x_as, fontsize, 1, 1, rotate, mirror)
+		meas_as = measure_glyph_pdf_memo(x_as, fontname, fontsize, 1, 1, rotate, mirror)
 		meas.x = meas_as.x
 		meas.width = meas_as.width
 		meas.width_scaled = meas_as.width_scaled
 	elif y_as:
-		meas_as = measure_fun(y_as, fontsize, 1, 1, rotate, mirror)
+		meas_as = measure_glyph_pdf_memo(y_as, fontname, fontsize, 1, 1, rotate, mirror)
 		meas.y = meas_as.y
 		meas.h = meas_as.h
 		meas.height_scaled = meas_as.height_scaled
 	elif x_scale != 1:
-		meas_plain = measure_fun(ch, fontsize, 1, 1, rotate, mirror)
+		meas_plain = measure_glyph_pdf_memo(ch, fontname, fontsize, 1, 1, rotate, mirror)
 		meas.y = meas_plain.y
 		meas.h = meas_plain.h
 		meas.height_scaled = meas_plain.height_scaled
 	elif y_scale != 1:
-		meas_plain = measure_fun(ch, fontsize, 1, 1, rotate, mirror)
+		meas_plain = measure_glyph_pdf_memo(ch, fontname, fontsize, 1, 1, rotate, mirror)
 		meas.x = meas_plain.x
 		meas.width = meas_plain.width
 		meas.width_scaled = meas_plain.width_scaled
 	return meas
 
 def em_size_of(ch, options, x_scale, y_scale, rotate, mirror):
+	font = measure_font_pil_of(ch, options)
 	fontsize = options.fontsize
-	ref_height = measure_glyph_pil_memo(REFERENCE_GLYPH, fontsize, 1, 1, 0, False).h
-	meas = measure_glyph_pil_memo(ch, fontsize, x_scale, y_scale, rotate, mirror)
+	ref_height = measure_glyph_pil_memo(REFERENCE_GLYPH, get_measure_font_pil(), fontsize, 1, 1, 0, False).h
+	meas = measure_glyph_pil_memo(ch, font, fontsize, x_scale, y_scale, rotate, mirror)
 	return meas.w / ref_height, meas.h / ref_height
+
+def measure_font_pil_of(ch, options):
+	if options.custom and options.custom.char_to_name(ch):
+		return get_measure_custom_font_pil(options.custom.fontpath)
+	else:
+		return get_measure_font_pil()
+
+def fontname_of(ch, options):
+	if options.custom and options.custom.char_to_name(ch):
+		register_custom_pdf_font(options.custom.fontname, options.custom.fontpath)
+		return options.custom.fontname, options.custom.char_to_fallback(ch)
+	else:
+		register_pdf_font()
+		return HIERO_FONT_NAME, ch
+
+def pdf_actualtext_hex(s):
+	b = s.encode('utf-16-be')
+	b = b'\xfe\xff' + b
+	return '<' + b.hex().upper() + '>'
 
 class PlaneRestricted:
 	def __init__(self, im):
@@ -470,6 +505,7 @@ class PrintedAny:
 		self.shadings = Shadings(options, w_accum, h_accum)
 		self.mirrored = mirrored
 		self.is_complete = False
+		self.selectable_text = ''
 
 	def width(self):
 		return math.ceil(self.w_px)
@@ -558,19 +594,26 @@ class PrintedPdf(PrintedAny):
 		mirror = self.mirrored ^ mirror
 		x_px = self.em_to_px(x)
 		y_px = self.em_to_px(rect.y + rect.h)
+		fontname, _ = fontname_of(ch, self.options)
 		fontsize = self.options.fontsize * scale
 		fontcolor = self.color(bracket)
-		meas = corrected_measurement(ch, fontsize, x_scale, y_scale, rotate, mirror, x_as, y_as, \
-			measure_glyph_pdf_memo)
+		meas = corrected_measurement(ch, fontname, fontsize, x_scale, y_scale, rotate, mirror, x_as, y_as)
 		self.canvas.saveState()
-		self.canvas.setFont(HIERO_FONT_NAME, fontsize)
+		self.canvas.setFont(fontname, fontsize)
 		self.canvas.setFillColor(fontcolor)
 		y_diff = 0 if bracket else meas.y
 		self.canvas.translate(x_px + meas.width_scaled/2 - meas.x, \
 			(self.height() - y_px) + meas.height_scaled/2 - y_diff)
 		self.canvas.scale(-x_scale if mirror else x_scale, y_scale)
 		self.canvas.rotate(-rotate)
+		if self.selectable_text:
+			text = pdf_actualtext_hex(self.selectable_text)
+			self.canvas._code.append(f'/Span << /ActualText {text} >> BDC')
+			self.selectable_text = ''
+		else:
+			self.canvas._code.append(f'/Span << /ActualText () >> BDC')
 		self.canvas.drawString(-meas.width/2, -meas.height/2, ch)
+		self.canvas._code.append('EMC')
 		self.canvas.restoreState()
 		
 	def add_shading(self, rect):
@@ -621,16 +664,16 @@ class PrintedSvg(PrintedAny):
 		mirror_any = self.mirrored ^ mirror
 		x_px = round(self.em_to_px(x))
 		y_px = round(self.em_to_px(rect.y + rect.h))
+		fontname, ch_fallback = fontname_of(ch, self.options)
 		fontsize = math.floor(self.options.fontsize * scale)
 		fontcolor = self.color(bracket)
-		meas = corrected_measurement(ch, fontsize, x_scale, y_scale, rotate, mirror_any, x_as, y_as, \
-			measure_glyph_pdf_memo)
+		meas = corrected_measurement(ch, fontname, fontsize, x_scale, y_scale, rotate, mirror_any, x_as, y_as)
 		x_trans = x_px + meas.width_scaled/2 - meas.x
 		if bracket:
 			y_trans = y_px - meas.height_scaled/2
 		else:
 			y_trans = y_px - meas.height_scaled/2 + meas.y
-		if rotate or mirror or x_scale != 1 or y_scale != 1 or unselectable:
+		if rotate or mirror or x_scale != 1 or y_scale != 1 or unselectable or ch_fallback != ch:
 			tr = f'translate({x_trans}, {y_trans}) '
 			sc = f'scale(-{x_scale}, {y_scale}) ' if mirror_any else \
 					f'scale({x_scale}, {y_scale}) ' if x_scale != 1 or y_scale != 1 else ''
@@ -638,14 +681,14 @@ class PrintedSvg(PrintedAny):
 			trans = tr + sc + rot
 			text_element = self.draw.text(ch, \
 				insert=(-meas.width/2, meas.height/2),
-				transform=trans, fill=fontcolor, font_family=HIERO_FONT_NAME, font_size=fontsize)
+				transform=trans, fill=fontcolor, font_family=fontname, font_size=fontsize)
 			text_element['style'] = 'user-select: none;'
 			self.draw.add(text_element)
 			if not unselectable:
-				self.add_hidden(ch)
+				self.add_hidden(ch_fallback)
 		else:
 			span = self.draw.tspan(ch, insert=(-meas.width/2, meas.height/2))
-			span['font-family'] = HIERO_FONT_NAME
+			span['font-family'] = fontname
 			span['font-size'] = fontsize
 			span['fill'] = fontcolor
 			span['dx'] = -x_trans if self.mirrored else x_trans
@@ -674,17 +717,17 @@ class PrintedTtf(PrintedAny):
 
 	def add_sign(self, ch, scale, x_scale, y_scale, rotate, mirror, rect, \
 			extra=False, bracket=False, unselectable=False, x_as=None, y_as=None):
-		if not unselectable:
-			self.chars += ch
 		x = self.mirror(rect.x, rect.w)
 		mirror_any = self.mirrored ^ mirror
 		x_px = round(self.em_to_px(x))
 		y_px = round(self.em_to_px(rect.y + rect.h))
 		top_px = round(self.em_to_px(rect.y))
+		fontname, ch_fallback = fontname_of(ch, self.options)
+		if not unselectable:
+			self.chars += ch
 		fontsize = math.floor(self.options.fontsize * scale)
 		fontcolor = self.color(bracket)
-		meas = corrected_measurement(ch, fontsize, x_scale, y_scale, rotate, mirror_any, x_as, y_as, \
-			measure_glyph_pdf_memo)
+		meas = corrected_measurement(ch, fontname, fontsize, x_scale, y_scale, rotate, mirror_any, x_as, y_as)
 		x_trans = x_px + meas.width_scaled/2 - meas.x
 		y_diff = 0 if bracket else meas.y
 		y_trans = (self.height() - y_px) + meas.height_scaled/2 - y_diff
@@ -745,9 +788,9 @@ class PrintedPil(PrintedAny):
 		y_px = round(self.em_to_px(rect.y))
 		w_px = max(1, round(self.em_to_px(rect.w)))
 		h_px = max(1, round(self.em_to_px(rect.h)))
+		font = measure_font_pil_of(ch, self.options)
 		fontsize = math.floor(self.options.fontsize * scale)
 		fontcolor = self.color(bracket)
-		font = get_measure_font_pil()
 		bbox = font.getbbox(ch)
 		metric_width = bbox[2] - bbox[0]
 		width = max(1, metric_width)

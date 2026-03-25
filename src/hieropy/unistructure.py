@@ -6,7 +6,7 @@ from .uniconstants import *
 from .uninames import char_to_name, char_to_name_cap
 from .uniproperties import allowed_rotations, rotation_adjustment, \
 	char_to_insertions, topup_chars, bottomdown_chars, char_to_places, InsertionAdjust, \
-	char_to_overlay_ligature, overlay_to_ligature
+	char_to_overlay_ligature, overlay_to_ligature, vertical_to_ligature, horizontal_to_ligature
 from .printables import PlaneRestricted, PlaneExtended, OrthogonalHull, \
 	PrintedPdf, PrintedSvg, PrintedTtf, PrintedPil, PrintedPilWithoutExtras, \
 	em_size_of, open_rect
@@ -40,6 +40,10 @@ class Fragment(Group):
 		return '-'.join([repr(g) for g in self.groups])
 	def __str__(self):
 		return ''.join([str(g) for g in self.groups])
+	@staticmethod
+	def from_char(ch):
+		lit = Literal(ch, 0, False, 0)
+		return Fragment([lit])
 	def map(self, transformation):
 		groups = [g.map(transformation) for g in self.groups]
 		return transformation.get(Fragment, Fragment)(groups)
@@ -123,6 +127,7 @@ class Fragment(Group):
 						printed = PrintedTtf(width, height, w_accum, h_accum, options)
 					case _:
 						printed = PrintedPil(width, height, w_accum, h_accum, options)
+				printed.selectable_text += str(g)
 				g.print(options, printed)
 				printeds.append(printed)
 				if options.h():
@@ -144,6 +149,7 @@ class Fragment(Group):
 					printed = PrintedPil(width, height, 0, 0, options)
 			printed.add_text(str(self))
 			for g in self.groups:
+				printed.selectable_text += str(g)
 				g.print(options, printed)
 			return printed
 
@@ -152,6 +158,7 @@ class Vertical(Group):
 	def __init__(self, groups):
 		super().__init__()
 		self.groups = groups
+		self.alt = vertical_to_ligature(groups) if Literal.is_flat(groups) else None
 	def __repr__(self):
 		return ':'.join([repr(g) for g in self.groups])
 	def __str__(self):
@@ -164,9 +171,14 @@ class Vertical(Group):
 		for g in self.groups:
 			g.init_scale()
 	def size(self, options):
-		sizes = [g.size(options) for g in self.groups]
-		w = max(s[0] for s in sizes)
-		h = sum(s[1] for s in sizes) + self.scale * options.sep * (len(sizes)-1)
+		if self.alt:
+			size = em_size_of(self.alt.ch, options, 1, 1, 0, False)
+			w = self.scale * size[0]
+			h = self.scale * size[1]
+		else:
+			sizes = [g.size(options) for g in self.groups]
+			w = max(s[0] for s in sizes)
+			h = sum(s[1] for s in sizes) + self.scale * options.sep * (len(sizes)-1)
 		return w, h
 	def net_height(self, options):
 		return sum(Vertical.net_height_of(g, options) for g in self.groups)
@@ -179,6 +191,9 @@ class Vertical(Group):
 			Vertical.fit_proper_groups(g, options, 1, math.inf)
 		super().fit(options, w, h)
 	def format(self, options, x0, x1, x2, x3, y0, y1, y2, y3):
+		if self.alt:
+			self.format_ligature(options, x0, x1, x2, x3, y0, y1, y2, y3)
+			return
 		net_height = self.net_height(options)
 		buf = ((y2-y1) - net_height) / (len(self.groups)-1 + self.nested_vertical_spaces())
 		for i, group in enumerate(self.groups):
@@ -192,6 +207,27 @@ class Vertical(Group):
 			group.format(options, x0, x1, x2, x3, y0, y1, y4, y5)
 			y0 = y5
 			y1 = y4 + buf
+	def format_ligature(self, options, x0, x1, x2, x3, y0, y1, y2, y3):
+		size = self.size(options)
+		buf_x = ((x2-x1) - size[0]) / 2
+		buf_y = ((y2-y1) - size[1]) / 2
+		self.x = x1 + buf_x
+		self.y = y1 + (((y2-y1) - size[1]) if options.align == 'bottom' else buf_y)
+		self.w = size[0]
+		self.h = size[1]
+		self.areas = []
+		for i, s in enumerate(self.alt.groups):
+			lit = self.groups[i]
+			damage = lit.damage
+			x_mid = self.x + (s.x + s.w / 2) * self.w
+			y_min = y0 if i == 0 else self.y + s.y * self.h
+			y_mid = self.y + (s.y + s.h / 2) * self.h
+			y_max = y3 if i == len(self.alt.groups)-1 else self.y + (s.y + s.h) * self.h
+			self.areas.extend(damage_areas(damage, x0, x_mid, x3, y_min, y_mid, y_max))
+			lit.x = self.x + s.x * self.w
+			lit.y = self.y + s.y * self.h
+			lit.w = s.w * self.w
+			lit.h = s.h * self.h
 	def nested_vertical_spaces(self):
 		return sum(Vertical.nested_vertical_spaces_of(g) for g in self.groups)
 	@staticmethod
@@ -225,16 +261,23 @@ class Vertical(Group):
 			return sum(Vertical.net_height_of(g, options) for g in group.groups)
 		return group.size(options)[1]
 	def print(self, options, printed):
-		for i, group in enumerate(self.groups):
-			if i > 0:
-				printed.add_hidden(VER)
-			group.print(options, printed)
+		if self.alt:
+			printed.add_hidden(str(self))
+			printed.add_sign(self.alt.ch, self.scale, 1, 1, 0, False, self, unselectable=True)
+			for area in self.areas:
+				printed.add_shading(area)
+		else:
+			for i, group in enumerate(self.groups):
+				if i > 0:
+					printed.add_hidden(VER)
+				group.print(options, printed)
 
 class Horizontal(Group):
 	# groups: list of Vertical/Enclosure/Basic/Overlay/Literal/Blank/Lost/BracketOpen/BracketClose
 	def __init__(self, groups):
 		super().__init__()
 		self.groups = groups
+		self.alt = horizontal_to_ligature(groups) if Literal.is_flat(groups) else None
 	def __repr__(self):
 		s = ''
 		for i, group in enumerate(self.groups):
@@ -263,9 +306,14 @@ class Horizontal(Group):
 		for g in self.groups:
 			g.init_scale()
 	def size(self, options):
-		sizes = [g.size(options) for g in self.groups if not isinstance(g, (BracketOpen, BracketClose))]
-		w = sum(s[0] for s in sizes) + self.scale * options.sep * (len(sizes)-1)
-		h = max(s[1] for s in sizes)
+		if self.alt:
+			size = em_size_of(self.alt.ch, options, 1, 1, 0, False)
+			w = self.scale * size[0]
+			h = self.scale * size[1]
+		else:
+			sizes = [g.size(options) for g in self.groups if not isinstance(g, (BracketOpen, BracketClose))]
+			w = sum(s[0] for s in sizes) + self.scale * options.sep * (len(sizes)-1)
+			h = max(s[1] for s in sizes)
 		return w, h
 	def net_width(self, options):
 		return sum(g.size(options)[0] for g in self.groups \
@@ -279,6 +327,9 @@ class Horizontal(Group):
 			g.fit(options, math.inf, 1)
 		super().fit(options, w, h)
 	def format(self, options, x0, x1, x2, x3, y0, y1, y2, y3):
+		if self.alt:
+			self.format_ligature(options, x0, x1, x2, x3, y0, y1, y2, y3)
+			return
 		proper_groups = self.proper_groups()
 		if len(proper_groups) == 1:
 			first = self.groups[0]
@@ -315,19 +366,46 @@ class Horizontal(Group):
 					group.format(options, x0, x1, x4, x5, y0, y1, y2, y3)
 					x0 = x6
 					x1 = x4 + buf
+	def format_ligature(self, options, x0, x1, x2, x3, y0, y1, y2, y3):
+		size = self.size(options)
+		buf_x = ((x2-x1) - size[0]) / 2
+		buf_y = ((y2-y1) - size[1]) / 2
+		self.x = x1 + buf_x
+		self.y = y1 + (((y2-y1) - size[1]) if options.align == 'bottom' else buf_y)
+		self.w = size[0]
+		self.h = size[1]
+		self.areas = []
+		for i, s in enumerate(self.alt.groups):
+			lit = self.groups[i]
+			damage = lit.damage
+			x_min = x0 if i == 0 else self.x + s.x * self.w
+			x_mid = self.x + (s.x + s.w / 2) * self.w
+			x_max = x3 if i == len(self.alt.groups)-1 else self.x + (s.x + s.w) * self.w
+			y_mid = self.y + (s.y + s.h / 2) * self.h
+			self.areas.extend(damage_areas(damage, x_min, x_mid, x_max, y0, y_mid, y3))
+			lit.x = self.x + s.x * self.w
+			lit.y = self.y + s.y * self.h
+			lit.w = s.w * self.w
+			lit.h = s.h * self.h
 	def proper_groups(self):
 		return [g for g in self.groups if not isinstance(g, (BracketOpen, BracketClose))]
 	def print(self, options, printed):
-		for i, group in enumerate(self.groups):
-			if i > 0 and not isinstance(self.groups[i-1], BracketOpen) and \
-					not isinstance(group, BracketClose):
-				printed.add_hidden(HOR)
-			if isinstance(group, Vertical):
-				printed.add_hidden(BEGIN_SEGMENT)
-				group.print(options, printed)
-				printed.add_hidden(END_SEGMENT)
-			else:
-				group.print(options, printed)
+		if self.alt:
+			printed.add_hidden(str(self))
+			printed.add_sign(self.alt.ch, self.scale, 1, 1, 0, False, self, unselectable=True)
+			for area in self.areas:
+				printed.add_shading(area)
+		else:
+			for i, group in enumerate(self.groups):
+				if i > 0 and not isinstance(self.groups[i-1], BracketOpen) and \
+						not isinstance(group, BracketClose):
+					printed.add_hidden(HOR)
+				if isinstance(group, Vertical):
+					printed.add_hidden(BEGIN_SEGMENT)
+					group.print(options, printed)
+					printed.add_hidden(END_SEGMENT)
+				else:
+					group.print(options, printed)
 
 class Enclosure(Group):
 	# typ: 'plain' or 'walled'
@@ -547,7 +625,7 @@ class Enclosure(Group):
 				x3 = x2 + self.scale * options.sep / 2 if i < len(self.groups)-1 else \
 						x3_encl if self.delim_close is None else \
 						self.delim_close_rect.x - self.kern_close_size()
-				group.format(options, x0, x1, x2, x3, 
+				group.format(options, x0, x1, x2, x3,
 					y0_encl, y1_encl + h_buf + self.thickness(), y2_encl - h_buf - self.thickness(), y3_encl)
 				x0 = x3
 				x1 = x2 + self.scale * options.sep
@@ -1017,7 +1095,7 @@ class Overlay(Group):
 		lits1 = [lit.map(transformation) for lit in self.lits1]
 		lits2 = [lit.map(transformation) for lit in self.lits2]
 		return transformation.get(Overlay, Overlay)(lits1, lits2)
-	def allowed_places(self):
+	def allowed_places(self, custom):
 		lig, _ = overlay_to_ligature(self.lits1, self.lits2)
 		return char_to_places(lig.ch, 0, False) if lig else OVERLAY_INSERTION_PLACES
 	def choose_alt_glyph(self, places):
@@ -1178,8 +1256,9 @@ class Literal(Group):
 		return self.ch + num_to_variation(self.vs) + (MIRROR if self.mirror else '') + num_to_damage(self.damage)
 	def map(self, transformation):
 		return transformation.get(Literal, Literal)(self.ch, self.vs, self.mirror, self.damage)
-	def allowed_places(self):
-		return char_to_places(self.ch, self.rotation_coarse(), self.mirror)
+	def allowed_places(self, custom):
+		ch = custom and custom.char_to_fallback(self.ch) or self.ch
+		return char_to_places(ch, self.rotation_coarse(), self.mirror)
 	def choose_alt_glyph(self, places):
 		insertions = char_to_insertions(self.ch, self.mirror)
 		rot = self.rotation_coarse()
@@ -1192,23 +1271,24 @@ class Literal(Group):
 				return
 		self.adjustments = {}
 	def size(self, options):
-		size = em_size_of(self.alt, options, 1, 1, self.rotation(), self.mirror)
+		size = em_size_of(self.alt, options, 1, 1, self.rotation(options.custom), self.mirror)
 		w = self.scale * size[0]
 		h = self.scale * size[1]
 		return w, h
 	def rotation_coarse(self):
 		return num_to_rotate(self.vs)
-	def rotation(self):
+	def rotation(self, custom):
+		ch = custom and custom.char_to_fallback(self.ch) or self.ch
 		rot = self.rotation_coarse()
-		if rot in allowed_rotations(self.ch):
-			return rot + rotation_adjustment(self.ch, rot)
+		if rot in allowed_rotations(ch):
+			return rot + rotation_adjustment(ch, rot)
 		return rot
 	def format(self, options, x0, x1, x2, x3, y0, y1, y2, y3):
 		size = self.size(options)
 		buf_x = ((x2-x1) - size[0]) / 2
 		buf_y = ((y2-y1) - size[1]) / 2
 		self.x = x1 + buf_x
-		self.y = y2 - size[1] if options.align == 'bottom' else y1 + buf_y 
+		self.y = y2 - size[1] if options.align == 'bottom' else y1 + buf_y
 		self.w = size[0]
 		self.h = size[1]
 		x_shade = self.x + self.w / 2
@@ -1216,9 +1296,9 @@ class Literal(Group):
 		self.areas = damage_areas(self.damage, x0, x_shade, x3, y0, y_shade, y3)
 	def print(self, options, printed):
 		if self.alt == self.ch:
-			printed.add_sign(self.ch, self.scale, 1, 1, self.rotation(), self.mirror, self)
+			printed.add_sign(self.ch, self.scale, 1, 1, self.rotation(options.custom), self.mirror, self)
 		else:
-			printed.add_sign(self.alt, self.scale, 1, 1, self.rotation(), self.mirror, self, unselectable=True)
+			printed.add_sign(self.alt, self.scale, 1, 1, self.rotation(options.custom), self.mirror, self, unselectable=True)
 			printed.add_hidden(self.ch)
 		for area in self.areas:
 			printed.add_shading(area)
@@ -1228,6 +1308,9 @@ class Literal(Group):
 			printed.add_hidden(MIRROR)
 		if self.damage:
 			printed.add_hidden(num_to_damage(self.damage))
+	@staticmethod
+	def is_flat(groups):
+		return all(isinstance(g, Literal) for g in groups)
 
 class Singleton(Group):
 	# ch: character
@@ -1286,8 +1369,8 @@ class Blank(Group):
 	def map(self, transformation):
 		return transformation.get(Blank, Blank)(self.dim)
 	def size(self, options):
-		w = self.scale * self.dim 
-		h = self.scale * self.dim 
+		w = self.scale * self.dim
+		h = self.scale * self.dim
 		return w, h
 	def format(self, options, x0, x1, x2, x3, y0, y1, y2, y3):
 		pass
@@ -1302,7 +1385,7 @@ class Lost(Group):
 		self.expand = expand
 	def __repr__(self):
 		params = ['shade']
-		if self.width == 0.5 and self.height == 0.5: 
+		if self.width == 0.5 and self.height == 0.5:
 			params.append('width=0.5,height=0.5')
 		elif self.width == 0.5 and self.height == 1:
 			params.append('width=0.5,height=1')
@@ -1311,7 +1394,7 @@ class Lost(Group):
 		params_str = ('[' + ','.join(params) + ']') if len(params) > 0 else ''
 		return 'empty' + params_str
 	def __str__(self):
-		if self.width == 0.5 and self.height == 0.5: 
+		if self.width == 0.5 and self.height == 0.5:
 			s = HALF_LOST
 		elif self.width == 0.5 and self.height == 1:
 			s = TALL_LOST
@@ -1395,3 +1478,4 @@ class BracketClose(Group):
 		self.h = h
 	def print(self, options, printed):
 		printed.add_sign(self.ch, self.h, self.x_scale, 1, 0, False, self, extra=True, bracket=True)
+

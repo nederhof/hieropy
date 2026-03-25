@@ -5,7 +5,6 @@ from tkinter import font
 from .options import Options
 from .uniconstants import VER, HOR, OVERLAY, OPEN_BOX, CLOSE_BOX, OPENING_PLAIN_CHARS, PLACEHOLDER, \
 		OPEN_BRACKETS, CLOSE_BRACKETS, INSERTION_PLACES, num_to_rotate, place_to_char
-from .uninames import char_to_name
 from .uniproperties import char_to_places
 from .unistructure import Vertical, Horizontal, Enclosure, Basic, Overlay, Literal, Singleton,\
 		Blank, Lost, BracketOpen, BracketClose
@@ -57,7 +56,7 @@ class Tree():
 
 	def hiero_calc(self, text):
 		options = Options(direction=self.dir, \
-            fontsize=self.editor.get_hiero_size(), imagetype='pil')
+            fontsize=self.editor.get_hiero_size(), imagetype='pil', custom=self.editor.custom)
 		hiero_parsed = self.editor.parser.parse(text)
 		image = hiero_parsed.print(options).get_pil()
 		return image.size
@@ -67,7 +66,7 @@ class Tree():
 			node.dir = self.dir
 			node.hiero_size = self.editor.get_hiero_size()
 			options = Options(direction=node.dir, \
-				fontsize=node.hiero_size, shadepattern='uniform', imagetype='pil')
+				fontsize=node.hiero_size, shadepattern='uniform', imagetype='pil', custom=self.editor.custom)
 			hiero_parsed = self.editor.parser.parse(node.text)
 			image = hiero_parsed.print(options).get_pil()
 			node.img = ImageTk.PhotoImage(image)
@@ -1296,13 +1295,13 @@ class BasicNode(Node):
 		return self.group.places()
 	@staticmethod
 	def initial(core, group):
-		places = core.allowed_places()
+		places = core.allowed_places(None)
 		place = places[0] if len(places) > 0 else 'ts'
 		insertions = {}
 		insertions[place] = group
 		return Basic(core, insertions)
 	def allowed_places(self):
-		return self.group.core.allowed_places()
+		return self.group.core.allowed_places(self.tree.editor.custom)
 	def is_insertion(self):
 		return True
 	def insert_child(self, group):
@@ -1478,7 +1477,7 @@ class LiteralNode(Node):
 		self.create()
 	def set_editing(self):
 		super().set_editing()
-		name = char_to_name(self.group.ch)
+		name = self.tree.editor.char_to_name(self.group.ch)
 		editor = self.tree.editor
 		editor.display_name_panel(name if name else '')
 		editor.display_damage_panel(self.group.damage)

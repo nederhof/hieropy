@@ -8,8 +8,8 @@ from .uniconstants import OPEN_BOX, CLOSE_BOX, OPEN_WALLED, CLOSE_WALLED, \
 		OPENING_PLAIN_CHARS, OPENING_WALLED_CHARS, CLOSING_PLAIN_CHARS, CLOSING_WALLED_CHARS, \
 		CAP_CHARS, OPEN_BRACKETS, CLOSE_BRACKETS, PLACEHOLDER, INSERTION_PLACES, \
 		rotate_to_num, num_to_rotate, HIERO_FONT_FILENAME
-from .uninames import name_to_char, name_to_char_insensitive, mnemonic_to_name
-from .uniproperties import allowed_rotations
+from .uninames import name_to_char, char_to_name, name_to_name_insensitive, mnemonic_to_name, name_to_mnemonics
+from .uniproperties import allowed_rotations, char_to_info
 from .hieroparsing import UniParser
 from .edithistory import History
 from .editpreview import Preview
@@ -34,7 +34,9 @@ default_editor_config = {
 }
 
 class UniEditor():
-	def __init__(self, text=PLACEHOLDER, address=[0], d='hlr', save=None, cancel=None, config=default_editor_config):
+	def __init__(self, custom=None, text=PLACEHOLDER, \
+			address=[0], d='hlr', save=None, cancel=None, config=default_editor_config):
+		self.custom = custom
 		self.save_function = save
 		self.cancel_function = cancel
 		self.config = config
@@ -459,10 +461,10 @@ class UniEditor():
 		elif name[-1] == ';':
 			self.tree.do_semicolon()
 			return
-		elif name_to_char_insensitive(name):
-			ch = name_to_char_insensitive(name)
-		elif mnemonic_to_name(name):
-			ch = name_to_char(mnemonic_to_name(name))
+		elif self.name_to_char(name_to_name_insensitive(name)):
+			ch = self.name_to_char(name_to_name_insensitive(name))
+		elif self.mnemonic_to_name(name):
+			ch = self.name_to_char(self.mnemonic_to_name(name))
 		elif name.endswith(' '):
 			self.set_name_value(name[:-1])
 			self.open_menu()
@@ -859,7 +861,8 @@ class UniEditor():
 		for i in range(1, len(INSERTION_PLACES)):
 			index = (index+1) % len(INSERTION_PLACES)
 			place = INSERTION_PLACES[index]
-			if place in self.tree.focus.parent.allowed_places() and place not in self.tree.focus.parent.places():
+			if place in self.tree.focus.parent.allowed_places(self.custom) \
+						and place not in self.tree.focus.parent.places():
 				self.place_value.set(place)
 				self.adjust_place(place)
 				break
@@ -1149,7 +1152,7 @@ class UniEditor():
 		self.expand_param.pack_forget()
 
 	def create_menu(self):
-		self.menu = Menu(self, self.close_menu)
+		self.menu = Menu(self)
 		self.menu_is_open = False
 
 	def do_name_focus(self):
@@ -1174,6 +1177,27 @@ class UniEditor():
 	def do_menu(self):
 		if isinstance(self.tree.focus, LiteralNode):
 			self.open_menu()
+
+	def cat_to_custom_chars(self, cat):
+		return self.custom.cat_to_chars(cat) if self.custom else []
+
+	def char_to_name(self, ch):
+		return char_to_name(ch) or self.custom and self.custom.char_to_name(ch)
+
+	def is_custom_char(self, ch):
+		return self.custom and self.custom.char_to_name(ch)
+
+	def name_to_char(self, name):
+		return name_to_char(name) or self.custom and self.custom.name_to_char(name)
+
+	def mnemonic_to_name(self, mnemonic):
+		return mnemonic_to_name(mnemonic) or self.custom and self.custom.mnemonic_to_name(mnemonic)
+
+	def name_to_mnemonics(self, name):
+		return name_to_mnemonics(name) or self.custom and self.custom.name_to_mnemonics(name)
+
+	def char_to_info(self, ch):
+		return char_to_info(ch) or self.custom and self.custom.char_to_info(ch)
 
 class UniEditorHelp():
 	def __init__(self, root, config):

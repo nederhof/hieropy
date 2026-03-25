@@ -1,5 +1,5 @@
 import unittest
-from hieropy import UniParser, UniFontBuilder, UniExtractor
+from hieropy import UniParser, UniFontBuilder, UniExtractor, CustomSignList
 
 # @unittest.skip("Skipping tests that do file IO")
 class TestOpentype(unittest.TestCase):
@@ -86,3 +86,22 @@ class TestOpentype(unittest.TestCase):
 		for e in encodings:
 			builder.add(parser.parse(e))
 		builder.make_font('tests/tmp/bm.ttf')
+
+	@unittest.skip("Skipping tests that take too long")
+	def test_basic(self):
+		builder = UniFontBuilder()
+		builder.add_basic()
+		builder.make_font('tests/tmp/basic.ttf')
+
+	@unittest.skip("Skipping tests that take too long")
+	def test_all(self):
+		builder = UniFontBuilder()
+		builder.add_all()
+		builder.make_font('tests/tmp/all.ttf')
+
+	def test_custom(self):
+		custom = CustomSignList('CustomFont', 'customfont.ttf', [(chr(0xF000), 'A1z', chr(0x13001))])
+		parser = UniParser()
+		builder = UniFontBuilder(descent=0.3, custom=custom)
+		builder.add(parser.parse('𓀀𓐰\u200D'))
+		builder.make_font('tests/tmp/custom.ttf')

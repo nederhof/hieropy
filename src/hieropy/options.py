@@ -5,7 +5,7 @@ class Options:
 	def __init__(self, direction='hlr', linesize=1.0, fontsize=22, sep=0.08, hmargin=0.04, vmargin=0.04, \
 				imagetype='pil', transparent=False, signcolor='black', bracketcolor='red', \
 				shadecolor='gray', shadealpha=128, shadepattern='uniform', shadedist=5, shadethickness=1, \
-				align='middle', separated=False):
+				align='middle', separated=False, custom=None):
 		self.direction = direction
 		self.linesize = linesize
 		self.fontsize = fontsize
@@ -23,6 +23,7 @@ class Options:
 		self.shadethickness = shadethickness
 		self.align = align
 		self.separated = separated
+		self.custom = custom
 
 	def h(self):
 		return self.direction in ['hlr', 'hrl']
@@ -41,3 +42,4 @@ class MeasureOptions(Options):
 		self.sep = options.sep
 		self.transparent = False
 		self.align = options.align
+		self.custom = options.custom

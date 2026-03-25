@@ -195,7 +195,7 @@ class MdcUniConverter:
 	def convert_complex(self, group):
 		core = self.convert_group(group.hieroglyph)
 		if isinstance(core, (uni.Literal, uni.Overlay)):
-			places = core.allowed_places()
+			places = core.allowed_places(None)
 			if isinstance(group.hieroglyph, mdc.Sign):
 				name = group.hieroglyph.name
 				if mnemonic_to_name(name):
@@ -293,7 +293,7 @@ class MdcUniConverter:
 		if not core:
 			self.report('Ignored ligature')
 			return None
-		places = core.allowed_places()
+		places = core.allowed_places(None)
 		place = places[0] if len(places) > 0 else 'ts'
 		groups = []
 		for h in hieroglyphs[1:]:

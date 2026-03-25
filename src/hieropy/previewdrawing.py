@@ -25,7 +25,8 @@ class TkElem():
 		self.text = text
 		self.dir = self.preview.dir
 		self.hiero_size	= self.preview.editor.get_hiero_size()
-		options = Options(direction=self.dir, fontsize=self.hiero_size, shadepattern='uniform', imagetype='pil')
+		options = Options(direction=self.dir, fontsize=self.hiero_size, \
+			shadepattern='uniform', imagetype='pil', custom=self.preview.editor.custom)
 		hiero_parsed = self.preview.editor.parser.parse(text)
 		image = hiero_parsed.print(options).get_pil()
 		self.tk_image = ImageTk.PhotoImage(image)

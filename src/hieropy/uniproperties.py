@@ -22,6 +22,8 @@ _char_to_rotations = None
 _char_to_insertions = None
 _char_to_overlay_ligature = None
 _char_to_overlay_ligatures = None
+_key_to_vertical_ligatures = None
+_key_to_horizontal_ligatures = None
 _topup_chars = None
 _bottomdown_chars = None
 _circular = None
@@ -31,18 +33,12 @@ _tb_symmetric = None
 def translit_to_chars(t):
 	if _translit_to_chars is None:
 		cache_translit()
-	if t in _translit_to_chars:
-		return _translit_to_chars[t]
-	else:
-		return []
+	return _translit_to_chars.get(t, [])
 
 def keyword_to_chars(t):
 	if _keyword_to_chars is None:
 		cache_keywords()
-	if t in _keyword_to_chars:
-		return _keyword_to_chars[t]
-	else:
-		return []
+	return _keyword_to_chars.get(t, [])
 
 def cache_translit():
 	global _translit_to_chars
@@ -67,10 +63,7 @@ def cache_keywords():
 def char_to_info(ch):
 	if _char_to_info is None:
 		cache_info()
-	if ch in _char_to_info:
-		return _char_to_info[ch]
-	else:
-		return None
+	return _char_to_info.get(ch)
 
 def cache_info():
 	global _char_to_info
@@ -85,10 +78,7 @@ def cache_info():
 def char_to_rotations(ch):
 	if _char_to_rotations is None:
 		cache_rotations()
-	if ch in _char_to_rotations:
-		return _char_to_rotations[ch]
-	else:
-		return []
+	return _char_to_rotations.get(ch, [])
 
 def allowed_rotations(ch):
 	return [rot[0] for rot in char_to_rotations(ch)]
@@ -206,6 +196,11 @@ class OverlayLigature:
 		self.horizontal = horizontal
 		self.vertical = vertical
 
+class TabularLigature:
+	def __init__(self, ch, groups):
+		self.ch = ch
+		self.groups = groups
+
 class FlatElem:
 	def __init__(self, ch, vs, mirror, x, y, w, h):
 		self.ch = ch
@@ -232,11 +227,8 @@ def flat_group(group_json):
 def char_to_overlay_ligature(ch):
 	if _char_to_overlay_ligature is None:
 		cache_ligatures()
-	if ch in _char_to_overlay_ligature:
-		return _char_to_overlay_ligature[ch]
-	else:
-		return ch
-	
+	return _char_to_overlay_ligature.get(ch, ch)
+
 def overlay_to_ligature(hor, ver):
 	if _char_to_overlay_ligatures is None:
 		cache_ligatures()
@@ -259,25 +251,61 @@ def overlay_to_ligature(hor, ver):
 				return lig, True
 	return None, False
 
+def flat_key(groups):
+	return ''.join(g.ch for g in groups)
+	
+def vertical_to_ligature(groups):
+	if _key_to_vertical_ligatures is None:
+		cache_ligatures()
+	key = flat_key(groups)
+	for lig in _key_to_vertical_ligatures.get(key, []):
+		if all(g1.vs == g2.vs and g1.mirror == g2.mirror for g1, g2 in zip(lig.groups, groups)):
+			return lig
+	return None
+	
+def horizontal_to_ligature(groups):
+	if _key_to_horizontal_ligatures is None:
+		cache_ligatures()
+	key = flat_key(groups)
+	for lig in _key_to_horizontal_ligatures.get(key, []):
+		if all(g1.vs == g2.vs and g1.mirror == g2.mirror for g1, g2 in zip(lig.groups, groups)):
+			return lig
+	return None
+	
 def cache_ligatures():
 	global _char_to_overlay_ligature
 	global _char_to_overlay_ligatures
+	global _key_to_vertical_ligatures
+	global _key_to_horizontal_ligatures
 	_char_to_overlay_ligature = {}
 	_char_to_overlay_ligatures = defaultdict(list)
+	_key_to_vertical_ligatures = defaultdict(list)
+	_key_to_horizontal_ligatures = defaultdict(list)
 	with resources.files('hieropy.resources').joinpath(LIGATURES_FILE).open('r') as f:
 		map_json = json.load(f)
 	for point_json in map_json:
 		parts_json = map_json[point_json]
 		ch = chr(int(point_json,16))
-		if parts_json['type'] == 'overlay':
-			alt = 'alt' in parts_json
-			hor = flat_group(parts_json['horizontal'])
-			ver = flat_group(parts_json['vertical'])
-			ligature = OverlayLigature(ch, alt, hor, ver)
-			_char_to_overlay_ligature[ch] = ligature
-			if not alt:
-				_char_to_overlay_ligatures[hor[0].ch].append(ligature)
-				_char_to_overlay_ligatures[ver[0].ch].append(ligature)
+		match parts_json['type']:
+			case 'overlay':
+				alt = 'alt' in parts_json
+				hor = flat_group(parts_json['horizontal'])
+				ver = flat_group(parts_json['vertical'])
+				ligature = OverlayLigature(ch, alt, hor, ver)
+				_char_to_overlay_ligature[ch] = ligature
+				if not alt:
+					_char_to_overlay_ligatures[hor[0].ch].append(ligature)
+					_char_to_overlay_ligatures[ver[0].ch].append(ligature)
+			case 'vertical':
+				groups = flat_group(parts_json['groups'])
+				key = flat_key(groups)
+				ligature = TabularLigature(ch, groups)
+				_key_to_vertical_ligatures[key].append(ligature)
+			case 'horizontal':
+				groups = flat_group(parts_json['groups'])
+				key = flat_key(groups)
+				ligature = TabularLigature(ch, groups)
+				_key_to_horizontal_ligatures[key].append(ligature)
 
 def topup_chars():
 	global _topup_chars

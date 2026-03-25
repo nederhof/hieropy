@@ -399,10 +399,10 @@ def res_pattern_to_square(patt):
 
 def allowed_insertions(group):
 	if isinstance(group, Literal):
-		places = group.allowed_places()
+		places = group.allowed_places(None)
 		return places if len(places) > 0 else INSERTION_PLACES
 	elif isinstance(group, Overlay):
-		places = group.allowed_places()
+		places = group.allowed_places(None)
 		return places if len(places) > 0 else OVERLAY_INSERTION_PLACES
 	elif isinstance(group, Basic):
 		return [place for place in allowed_insertions(group.core) if place not in group.insertions]
