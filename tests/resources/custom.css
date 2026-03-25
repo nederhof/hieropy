@@ -1,0 +1,12 @@
+@font-face {
+    font-family: 'NewGardinerHlr';
+    src: url('../tmp/custom.ttf') format('opentype');
+}
+
+.hlr {
+    font-feature-settings: "liga";
+    font-size: 200%;
+    font-family: 'NewGardinerHlr';
+    word-break: break-all;
+}
+

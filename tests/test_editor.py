@@ -61,7 +61,7 @@ class TestEditor(unittest.TestCase):
 				time.sleep(0.1)
 			myeditor.root.destroy()
 
-	# @unittest.skip("Skipping test that opens GUI")
+	@unittest.skip("Skipping test that opens GUI")
 	def test_custom(self):
 		mnemonics = [('jjj', 'A1z')]
 		info = [('\uF000', '<ul><li><b>Det.</b> description</li></ul>')]

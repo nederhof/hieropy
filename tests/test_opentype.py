@@ -1,7 +1,6 @@
 import unittest
 from hieropy import UniParser, UniFontBuilder, UniExtractor, CustomSignList
 
-# @unittest.skip("Skipping tests that do file IO")
 class TestOpentype(unittest.TestCase):
 
 	def test_extract(self):
