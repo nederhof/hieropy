@@ -66,7 +66,7 @@ class TestEditor(unittest.TestCase):
 		mnemonics = [('jjj', 'A1z')]
 		info = [('\uF000', '<ul><li><b>Det.</b> description</li></ul>')]
 		fontname = 'CustomFont'
-		fontpath = 'tests/resources/NewGardinerNonCore.ttf'
+		fontpath = 'tests/resources/Custom.ttf'
 		signs = [('\uF000', 'A800', '\U00013000'), \
 			('\U00013460', 'A801', '\U00013050'), \
 			('\U0001346E', 'B801')]

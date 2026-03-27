@@ -30,6 +30,12 @@ class Group:
 def round_advance(pos, fontsize, shadedist):
 	return math.ceil(pos * fontsize / shadedist) * shadedist / fontsize
 
+def chars_to_fallback(chars, options):
+	if options.custom:
+		return ''.join(map(options.custom.char_to_fallback, chars))
+	else:
+		return chars
+
 class Fragment(Group):
 	# groups: list of Vertical/Horizontal/Enclosure/Basic/Overlay/Literal/Singleton/Blank/Lost
 	def __init__(self, groups, color=None):
@@ -127,7 +133,7 @@ class Fragment(Group):
 						printed = PrintedTtf(width, height, w_accum, h_accum, options)
 					case _:
 						printed = PrintedPil(width, height, w_accum, h_accum, options)
-				printed.selectable_text += str(g)
+				printed.selectable_text += chars_to_fallback(str(g), options)
 				g.print(options, printed)
 				printeds.append(printed)
 				if options.h():
@@ -149,7 +155,7 @@ class Fragment(Group):
 					printed = PrintedPil(width, height, 0, 0, options)
 			printed.add_text(str(self))
 			for g in self.groups:
-				printed.selectable_text += str(g)
+				printed.selectable_text += chars_to_fallback(str(g), options)
 				g.print(options, printed)
 			return printed
 

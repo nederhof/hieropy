@@ -97,7 +97,7 @@ class TestFonts(unittest.TestCase):
 	def test_pdf_select(self):
 		parser = UniParser()
 		signs = [(chr(0x142AD), 'A1z', chr(0x13001))]
-		custom = CustomSignList('CustomFont', 'tests/resources/NewGardinerNonCore.ttf', signs)
+		custom = CustomSignList('CustomFont', 'tests/resources/Custom.ttf', signs)
 		encodings = [\
 			'𓀀',
 			'𓆓𓐻𓐷𓈎𓐱𓏹𓐸',

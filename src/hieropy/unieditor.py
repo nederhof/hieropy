@@ -861,7 +861,7 @@ class UniEditor():
 		for i in range(1, len(INSERTION_PLACES)):
 			index = (index+1) % len(INSERTION_PLACES)
 			place = INSERTION_PLACES[index]
-			if place in self.tree.focus.parent.allowed_places(self.custom) \
+			if place in self.tree.focus.parent.allowed_places() \
 						and place not in self.tree.focus.parent.places():
 				self.place_value.set(place)
 				self.adjust_place(place)

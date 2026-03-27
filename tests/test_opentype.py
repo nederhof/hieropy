@@ -99,8 +99,8 @@ class TestOpentype(unittest.TestCase):
 		builder.make_font('tests/tmp/all.ttf')
 
 	def test_custom(self):
-		custom = CustomSignList('CustomFont', 'customfont.ttf', [(chr(0xF000), 'A1z', chr(0x13001))])
+		custom = CustomSignList('CustomFont', 'tests/resources/Custom.ttf', [(chr(0xF000), 'A1z', chr(0x13001))])
 		parser = UniParser()
 		builder = UniFontBuilder(descent=0.3, custom=custom)
-		builder.add(parser.parse('𓀀𓐰\u200D'))
+		builder.add(parser.parse('𓀀𓐰'))
 		builder.make_font('tests/tmp/custom.ttf')
