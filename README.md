@@ -468,7 +468,7 @@ venv\Scripts\activate
 
 ## Changelog
 
-### 0.1.8 (to be released)
+### 0.1.8
 
 * Custom signs.
 * Output PDF images are selectable.
