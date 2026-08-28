@@ -54,16 +54,11 @@ LEN_OCT = 3 # number of octal digits
 all_poss = list(range(LEN_OCT))
 LEN_BIN = 3 * LEN_OCT # number of bits in binary expansion
 
-# EM is font size including margin around signs. 
+# EM_EXCLUSIVE is font size excluding margin around signs. 
 # FONT_UNITS_EXCLUSIVE is assumed to be 1000 (matching the source font).
-EM = 53
 EM_EXCLUSIVE = 50
 RESOLUTION = 20
-FONT_UNITS = EM * RESOLUTION
 FONT_UNITS_EXCLUSIVE = EM_EXCLUSIVE * RESOLUTION
-MARGIN = FONT_UNITS - FONT_UNITS_EXCLUSIVE
-MARGIN_FACTOR = EM / EM_EXCLUSIVE
-SEP = MARGIN / FONT_UNITS_EXCLUSIVE
 
 def int_to_octal(n):
 	return f'{n:0{LEN_OCT}o}'
@@ -89,7 +84,6 @@ SCALEDOWN = 3/4
 all_down_carry = [0, 2, 4, 6]
 
 MAX_OCTAL_INT = 8 ** LEN_OCT - 1
-SCALEDOWN_INT = math.floor(SCALEDOWN * EM)
 
 def iterate_scaledown(val, sc):
 	out = int(val)
@@ -98,11 +92,6 @@ def iterate_scaledown(val, sc):
 	return out
 
 all_advances = list(set(d * 8**p for d in all_digits for p in all_poss))
-
-def enclosure_descent(sc):
-	outer_scale = SCALEDOWN ** sc * EM * RESOLUTION
-	inner_scale = SCALEDOWN ** (sc+1) * EM * RESOLUTION
-	return round((outer_scale - inner_scale) / 2)
 
 class MeasuredInsertion:
 	def __init__(self, place, x, y):
@@ -159,10 +148,14 @@ class MeasuredInsertion:
 		self.ext_bottom += 1
 
 class UniOmniFontBuilder:
-	def __init__(self, signcolor='black', bracketcolor='black', shadecolor='black', 
+	def __init__(self, sep=8, signcolor='black', bracketcolor='black', shadecolor='black', 
 			shadealpha=255, shadepattern='diagonal', fontname=HIERO_FONT_OMNI_NAME, 
 			maxdepth=4, nscales=5, gap=0.1, 
 			debug=False, log=False):
+		self.em = EM_EXCLUSIVE + round(sep / 100 * EM_EXCLUSIVE)
+		self.font_units = self.em * RESOLUTION
+		self.margin = self.font_units - FONT_UNITS_EXCLUSIVE
+		self.sep = self.margin / FONT_UNITS_EXCLUSIVE
 		self.signcolor = signcolor
 		self.bracketcolor = bracketcolor
 		self.shadecolor = shadecolor
@@ -177,6 +170,11 @@ class UniOmniFontBuilder:
 		self.all_depths = list(range(self.max_depth))
 		self.all_scales = list(range(self.n_scales))
 
+	def enclosure_descent(self, sc):
+		outer_scale = SCALEDOWN ** sc * self.em * RESOLUTION
+		inner_scale = SCALEDOWN ** (sc+1) * self.em * RESOLUTION
+		return round((outer_scale - inner_scale) / 2)
+
 	def make_font(self, path):
 		self.make_font_initial()
 		self.syntax_analysis()
@@ -189,7 +187,7 @@ class UniOmniFontBuilder:
 		self.make_font_final(path)
 
 	def make_font_initial(self):
-		self.builder = FeatureFontBuilder(self.fontname, SEP, 0.0, self.gap)
+		self.builder = FeatureFontBuilder(self.fontname, self.sep, 0.0, self.gap)
 		self.repeat_lookups_num = defaultdict(int)
 		self.lookup_to_marks = {}
 		self.sym = {}
@@ -209,7 +207,7 @@ class UniOmniFontBuilder:
 
 	def add_char(self, ch, color, expand=False):
 		if expand:
-			name, w, h = self.builder.copy_glyph_scale(ch, MARGIN_FACTOR, color=color)
+			name, w, h = self.builder.copy_glyph_scale(ch, self.em / EM_EXCLUSIVE, color=color)
 		else:
 			name, w, h = self.builder.copy_glyph(ch, color=color)
 		self.sym[ch] = name
@@ -255,8 +253,8 @@ class UniOmniFontBuilder:
 			return name_font
 
 	def add_lost(self, width, height, ch):
-		w = round(width * EM) * RESOLUTION
-		h = round(height * EM) * RESOLUTION
+		w = round(width * self.em) * RESOLUTION
+		h = round(height * self.em) * RESOLUTION
 		if self.shadepattern == 'diagonal':
 			name = self.builder.add_shade_diagonal(w, h, RESOLUTION, ch=ch)
 		elif self.shadepattern == 'uniform':
@@ -277,8 +275,8 @@ class UniOmniFontBuilder:
 				name_font = self.builder.add_outline_p(w, h, thickness, name=debug_name, color=self.signcolor)
 		else:
 			brick_thickness = round(thickness)
-			brick_length = round(EM / 8 * RESOLUTION)
-			brick_interval = round(EM / 5 * RESOLUTION)
+			brick_length = round(self.em / 8 * RESOLUTION)
+			brick_interval = round(self.em / 5 * RESOLUTION)
 			if rot:
 				name_font = self.builder.add_outline_w_rot(w, h, \
 						thickness, brick_thickness, brick_length, brick_interval, name=debug_name, color=self.signcolor)
@@ -348,6 +346,12 @@ class UniOmniFontBuilder:
 					self.unscaled_sign_to_size[name_rot_mir] = (width_rot, height_rot, 0, 0)
 					self.name_to_mirrored[name_rot] = name_rot_mir
 
+		for lig in overlay_ligatures() + vertical_ligatures() + horizontal_ligatures():
+			if lig.ch not in self.sym:
+				name, width, height = self.add_char(lig.ch, self.signcolor)
+				self.unmirrored_signs.append(name)
+				self.unscaled_sign_to_size[name] = (width, height, 0, 0)
+
 		self.insertion_bases = []
 		self.name_to_insertion_copy1 = {}
 		self.name_to_insertion_copy2 = {}
@@ -406,12 +410,9 @@ class UniOmniFontBuilder:
 				if (name, place) not in self.name_place_to_pair:
 					self.name_place_to_pair[(name, place)] = self.add_aux(f'ins_{name}_{place}', 'nm', 'pl')
 					self.name_place_to_geom[(name, place)] = (x + s/2 - e/2, y + b/2 - t/2, w, h)
-
-		for lig in overlay_ligatures() + vertical_ligatures() + horizontal_ligatures():
-			if lig.ch not in self.sym:
-				name, width, height = self.add_char(lig.ch, self.signcolor)
-				self.unmirrored_signs.append(name)
-				self.unscaled_sign_to_size[name] = (width, height, 0, 0)
+		self.insertion_base_list = list(self.name_to_insertion_copy1.keys())
+		self.insertion_base_overlay_list = list(set(self.sym[lig.ch] for lig in overlay_ligatures() \
+						if lig.ch in self.sym and self.sym[lig.ch] in self.insertion_base_list))
 
 		self.name_scale_to_name = {}
 		for name in self.unscaled_sign_to_size.keys():
@@ -525,8 +526,8 @@ class UniOmniFontBuilder:
 		for lost, (w,h) in self.unscaled_lost_to_size.items():
 			for sc in range(1, self.n_scales):
 				factor = SCALEDOWN ** sc
-				width = round(factor * w * EM) * RESOLUTION
-				height = round(factor * h * EM) * RESOLUTION
+				width = round(factor * w * self.em) * RESOLUTION
+				height = round(factor * h * self.em) * RESOLUTION
 				self.lost_scale_to_lost[(lost, sc)] = self.add_shade(width, height, \
 						f'lost_{w}_{h}_{sc}', 'lost', f'{sc}')
 		vs1 = ord(num_to_variation(1))
@@ -712,11 +713,11 @@ class UniOmniFontBuilder:
 		for p1 in all_poss:
 			for d1 in all_digits:
 				w = d1 * 8**p1
-				if d1 > 0 and w <= 1.5 * EM:
+				if d1 > 0 and w <= 1.5 * self.em:
 					for p2 in all_poss:
 						for d2 in all_digits:
 							h = d2 * 8**p2
-							if d2 > 0 and h <= 1.5 * EM:
+							if d2 > 0 and h <= 1.5 * self.em:
 								self.shade_combinations.append((p1, d1, w, p2, d2, h))
 		for p1, d1, w, p2, d2, h in self.shade_combinations:
 			self.add_shade(w * RESOLUTION, h * RESOLUTION, f'shade_{d1}_{d2}_{p1}_{p2}', f'{d1}.{d2}', f'{p1}.{p2}')
@@ -734,7 +735,7 @@ class UniOmniFontBuilder:
 					continue
 				size = round(d * 8**p) * RESOLUTION
 				for sc in self.all_scales:
-					unit = round(SCALEDOWN**sc * EM) * RESOLUTION
+					unit = round(SCALEDOWN**sc * self.em) * RESOLUTION
 					plain_thickness = round(SCALEDOWN**sc * PLAIN_THICKNESS)
 					walled_thickness = round(SCALEDOWN**sc * WALLED_THICKNESS)
 					self.add_outline('plain', False, size, unit, plain_thickness, \
@@ -1154,8 +1155,8 @@ class UniOmniFontBuilder:
 		self.add_class('@Direction', [self.horizontal, self.vertical])
 		self.add_class('@Directionactive', [self.horizontal_active, self.vertical_active])
 
-		self.insertion_base_list = list(self.name_to_insertion_copy1.keys())
 		self.add_class('@InsertionBase', self.insertion_base_list)
+		self.add_class('@InsertionBaseOverlay', self.insertion_base_overlay_list)
 		self.add_class('@InsertionCopy1', [self.name_to_insertion_copy1[name] for name in self.insertion_base_list])
 
 		# for scale analysis
@@ -2123,27 +2124,27 @@ class UniOmniFontBuilder:
 
 	def width_limits_subrules(self):
 		name, rules = 'width-limits', []
-		rules.append(simple_sub_rule([self.size_limits], self.to_octal_limit_width(FONT_UNITS) + self.octal_max_height()))
+		rules.append(simple_sub_rule([self.size_limits], self.to_octal_limit_width(self.font_units) + self.octal_max_height()))
 		return name, rules
 
 	def height_limits_subrules(self):
 		name, rules = 'height-limits', []
-		rules.append(simple_sub_rule([self.size_limits], self.octal_max_width() + self.to_octal_limit_height(FONT_UNITS)))
+		rules.append(simple_sub_rule([self.size_limits], self.octal_max_width() + self.to_octal_limit_height(self.font_units)))
 		return name, rules
 
 	def width_height_limits_subrules(self):
 		name, rules = 'width-height-limits', []
-		rules.append(simple_sub_rule([self.size_limits], self.to_octal_limit_width(FONT_UNITS) + self.to_octal_limit_height(FONT_UNITS)))
+		rules.append(simple_sub_rule([self.size_limits], self.to_octal_limit_width(self.font_units) + self.to_octal_limit_height(self.font_units)))
 		return name, rules
 
 	def enclosure_width_limits_subrules(self):
 		name, rules = 'enclosure-width-limits', []
-		rules.append(simple_sub_rule([self.size_limits], self.to_octal_limit_width(SCALEDOWN * FONT_UNITS) + self.octal_max_height()))
+		rules.append(simple_sub_rule([self.size_limits], self.to_octal_limit_width(SCALEDOWN * self.font_units) + self.octal_max_height()))
 		return name, rules
 
 	def enclosure_height_limits_subrules(self):
 		name, rules = 'enclosure-height-limits', []
-		rules.append(simple_sub_rule([self.size_limits], self.octal_max_width() + self.to_octal_limit_height(SCALEDOWN * FONT_UNITS)))
+		rules.append(simple_sub_rule([self.size_limits], self.octal_max_width() + self.to_octal_limit_height(SCALEDOWN * self.font_units)))
 		return name, rules
 
 	def pair_limits_subrules(self, i):
@@ -2185,8 +2186,11 @@ class UniOmniFontBuilder:
 	def insertion_copy_rules(self):
 		name, rules, filt = 'insertion-copy', [], '@AuxInsertionCopy' 
 		self.add_class(filt, ['@UndoneOuterInner', '@InsertionBase'])
-		rules.append(chain_sub_rule([self.open_outer_('i'), self.open_inner_('b')], [('@InsertionBase', ['insertion-duplicate'])], []))
-		rules.append(chain_sub_rule([self.open_outer_('i'), self.open_inner_('o')], [('@InsertionBase', ['insertion-duplicate'])], []))
+		rules.append(chain_sub_rule([self.open_outer_('i'), self.open_inner_('b')], \
+				[('@InsertionBase', ['insertion-duplicate'])], []))
+		if self.insertion_base_overlay_list:
+			rules.append(chain_sub_rule([self.open_outer_('i'), self.open_inner_('o')], \
+					[('@InsertionBaseOverlay', ['insertion-duplicate'])], []))
 		return name, rules, filt
 
 	def insertion_limits_rules(self):
@@ -2290,7 +2294,7 @@ class UniOmniFontBuilder:
 
 	def topgroup_ver_limits_rules(self):
 		name, rules, filt, feat = 'topgroup-ver-limits', [], None, 'vert'
-		rules.append(simple_sub_rule([self.size_top_limits], self.to_octal_limit_width(FONT_UNITS) + self.octal_max_height()))
+		rules.append(simple_sub_rule([self.size_top_limits], self.to_octal_limit_width(self.font_units) + self.octal_max_height()))
 		rules.append(simple_sub_rule([self.horizontal], [self.vertical]))
 		for cap, cap_rot in self.cap_to_rotate.items():
 			rules.append(simple_sub_rule([cap], [cap_rot]))
@@ -2298,7 +2302,7 @@ class UniOmniFontBuilder:
 
 	def topgroup_hor_limits_rules(self):
 		name, rules = 'topgroup-hor-limits', []
-		rules.append(simple_sub_rule([self.size_top_limits], self.octal_max_width() + self.to_octal_limit_height(FONT_UNITS)))
+		rules.append(simple_sub_rule([self.size_top_limits], self.octal_max_width() + self.to_octal_limit_height(self.font_units)))
 		return name, rules
 
 	###### Scale analysis
@@ -2452,8 +2456,8 @@ class UniOmniFontBuilder:
 	def size_sign_rules(self, i, basics):
 		name, rules = f'size-sign-{i}', []
 		for (sign, (w, h, _, _)) in basics:
-			width = self.to_octal_width(w + MARGIN)
-			height = self.to_octal_height(h + MARGIN)
+			width = self.to_octal_width(w + self.margin)
+			height = self.to_octal_height(h + self.margin)
 			rules.append(simple_sub_rule([sign], [sign] + width + height))
 		return name, rules
 
@@ -2461,13 +2465,13 @@ class UniOmniFontBuilder:
 		name, rules = 'size-basic', []
 		for cap in self.caps:
 			w, h = self.unscaled_cap_to_size[cap]
-			width = self.to_octal_width(w + MARGIN / 2)
+			width = self.to_octal_width(w + self.margin / 2)
 			height = self.to_octal_height(h)
 			rules.append(simple_sub_rule([cap], [cap] + width + height))
 		for cap in self.caps_rot:
 			w, h = self.unscaled_cap_rot_to_size[cap]
 			width = self.to_octal_width(w)
-			height = self.to_octal_height(h + MARGIN / 2)
+			height = self.to_octal_height(h + self.margin / 2)
 			rules.append(simple_sub_rule([cap], [cap] + width + height))
 		zero_width = self.to_octal_width(0)
 		zero_height = self.to_octal_height(0)
@@ -2483,8 +2487,8 @@ class UniOmniFontBuilder:
 				(self.wide_lost_exp, 1, 0.5),
 				(self.full_blank, 1, 1),
 				(self.half_blank, 0.5, 0.5)]:
-			width = self.to_octal_width(w * FONT_UNITS)
-			height = self.to_octal_height(h * FONT_UNITS)
+			width = self.to_octal_width(w * self.font_units)
+			height = self.to_octal_height(h * self.font_units)
 			rules.append(simple_sub_rule([placeholder], [placeholder] + width + height))
 		return name, rules
 
@@ -2862,7 +2866,7 @@ class UniOmniFontBuilder:
 	def enclosure_width_rules(self):
 		name, rules, filt = 'enclosure-width', [], '@AuxEnclosureWidth'
 		self.add_class(filt, ['@OuterSize', self.vertical_active])
-		unit_size = self.to_octal_size(FONT_UNITS)
+		unit_size = self.to_octal_size(self.font_units)
 		for level in 'pw':
 			for i in range(LEN_OCT):
 				rules.append(context_sub_rule([self.open_outer_(level), self.vertical_active] + i * ['@Size'], '@Size', [], unit_size[i]))
@@ -2871,7 +2875,7 @@ class UniOmniFontBuilder:
 	def enclosure_height_rules(self):
 		name, rules, filt = 'enclosure-height', [], '@AuxEnclosureHeight'
 		self.add_class(filt, ['@OuterSize', self.horizontal_active])
-		unit_size = self.to_octal_size(FONT_UNITS)
+		unit_size = self.to_octal_size(self.font_units)
 		for level in 'pw':
 			for i in range(LEN_OCT):
 				rules.append(context_sub_rule([self.open_outer_(level), self.horizontal_active] + i * ['@Size'], '@Size', [], unit_size[i]))
@@ -3324,7 +3328,7 @@ class UniOmniFontBuilder:
 
 	def unit_pad_subrules(self):
 		name, rules = 'unit-pad', []
-		rules.append(simple_sub_rule([self.record], [self.size_full_sep] + self.to_octal_size(FONT_UNITS) + [self.record]))
+		rules.append(simple_sub_rule([self.record], [self.size_full_sep] + self.to_octal_size(self.font_units) + [self.record]))
 		return name, rules
 
 	def inner_pad_subrules(self):
@@ -3556,7 +3560,7 @@ class UniOmniFontBuilder:
 
 	def insert_content_subrules(self, sc):
 		name, rules = f'insert-content-{sc}', []
-		n = SCALEDOWN ** (sc+1) * FONT_UNITS
+		n = SCALEDOWN ** (sc+1) * self.font_units
 		rules.append(simple_sub_rule([self.inner_pad], \
 			[self.size_full_sep] + self.to_octal_size_full_scaled(n)))
 		return name, rules
@@ -3781,7 +3785,7 @@ class UniOmniFontBuilder:
 			bracket_list = [self.pos_bracket_(i) for i in all_poss]
 			for sc in self.all_scales:
 				bracket_scaled = self.bracket_scale_to_bracket[(bracket, sc)]
-				size = self.to_octal_limit_height(SCALEDOWN ** sc * FONT_UNITS)
+				size = self.to_octal_limit_height(SCALEDOWN ** sc * self.font_units)
 				bracket_list.extend([bracket_scaled] + size)
 			bracket_list.append(self.nil_scale)
 			rules.append(simple_sub_rule([bracket], bracket_list))
@@ -3957,14 +3961,14 @@ class UniOmniFontBuilder:
 		for (sign, sc), scaled in self.cap_scale_to_cap.items():
 			factor = SCALEDOWN ** sc
 			w, h = self.unscaled_cap_to_size[sign]
-			width = factor * (w + MARGIN / 2)
+			width = factor * (w + self.margin / 2)
 			height = factor * h
 			rules.append(simple_sub_rule([scaled], [scaled] + self.to_octal_width_full(width) + self.to_octal_height_full(height)))
 		for (sign, sc), scaled in self.cap_rot_scale_to_cap.items():
 			factor = SCALEDOWN ** sc
 			w, h = self.unscaled_cap_rot_to_size[sign]
 			width = factor * w
-			height = factor * (h + MARGIN / 2)
+			height = factor * (h + self.margin / 2)
 			rules.append(simple_sub_rule([scaled], [scaled] + self.to_octal_width_full(width) + self.to_octal_height_full(height)))
 		return name, rules
 
@@ -4127,7 +4131,7 @@ class UniOmniFontBuilder:
 				for p2 in all_poss:
 					for d2 in all_digits:
 						h = d2 * 8**p2
-						if w <= 1.5 * EM and h <= 1.5 * EM:
+						if w <= 1.5 * self.em and h <= 1.5 * self.em:
 							if d1 > 0 and d2 > 0:
 								rules.append(simple_sub_rule([self.w_shade_(d1, p1), self.h_shade_(d2, p2)], 
 										[self.shade_(d1, d2, p1, p2)]))
@@ -4251,27 +4255,27 @@ class UniOmniFontBuilder:
 			self.add_markclass('@SignScaled0Mark', [sign], x=x, y=y)
 		for opening in self.openings:
 			w,h = self.unscaled_cap_to_size[opening]
-			x = round((w-MARGIN/2)/2)
+			x = round((w-self.margin/2)/2)
 			y = round(h/2)
 			self.add_markclass('@SignScaled0Mark', [opening], x=x, y=y)
 		for closing in self.closings:
 			w,h = self.unscaled_cap_to_size[closing]
-			x = round((w+MARGIN/2)/2)
+			x = round((w+self.margin/2)/2)
 			y = round(h/2)
 			self.add_markclass('@SignScaled0Mark', [closing], x=x, y=y)
 		for opening in self.openings_rot:
 			w,h = self.unscaled_cap_rot_to_size[opening]
 			x = round(w/2)
-			y = round((h+MARGIN/2)/2)
+			y = round((h+self.margin/2)/2)
 			self.add_markclass('@SignScaled0Mark', [opening], x=x, y=y)
 		for closing in self.closings_rot:
 			w,h = self.unscaled_cap_rot_to_size[closing]
 			x = round(w/2)
-			y = round((h-MARGIN/2)/2)
+			y = round((h-self.margin/2)/2)
 			self.add_markclass('@SignScaled0Mark', [closing], x=x, y=y)
 		for lost, (w,h) in self.unscaled_lost_to_size.items():
-			x = round(w * EM / 2) * RESOLUTION
-			y = round(h * EM / 2) * RESOLUTION
+			x = round(w * self.em / 2) * RESOLUTION
+			y = round(h * self.em / 2) * RESOLUTION
 			self.add_markclass('@SignScaled0Mark', [lost], x=x, y=y)
 		for (sign, sc), scaled in self.name_scale_to_name.items():
 			factor = SCALEDOWN ** sc
@@ -4283,34 +4287,34 @@ class UniOmniFontBuilder:
 			for sc in self.all_scales:
 				scaled = self.cap_scale_to_cap[(opening, sc)]
 				factor = SCALEDOWN ** sc
-				x = -round(factor * MARGIN / 2 / RESOLUTION) * RESOLUTION
-				y = round(factor * EM) * RESOLUTION - enclosure_descent(sc)
+				x = -round(factor * self.margin / 2 / RESOLUTION) * RESOLUTION
+				y = round(factor * self.em) * RESOLUTION - self.enclosure_descent(sc)
 				self.add_markclass(f'@CapScaledMark', [scaled], x=x, y=y)
 		for closing in self.closings:
 			for sc in self.all_scales:
 				scaled = self.cap_scale_to_cap[(closing, sc)]
 				factor = SCALEDOWN ** sc
-				y = round(factor * EM) * RESOLUTION - enclosure_descent(sc)
+				y = round(factor * self.em) * RESOLUTION - self.enclosure_descent(sc)
 				self.add_markclass(f'@CapScaledMark', [scaled], x=0, y=y)
 		for opening in self.openings_rot:
 			for sc in self.all_scales:
 				scaled = self.cap_rot_scale_to_cap[(opening, sc)]
 				factor = SCALEDOWN ** sc
 				(_, h) = self.unscaled_cap_rot_to_size[opening]
-				y = round(factor * (h + MARGIN / 2) / RESOLUTION) * RESOLUTION
-				self.add_markclass(f'@CapRotScaledMark', [scaled], x=enclosure_descent(sc), y=y)
+				y = round(factor * (h + self.margin / 2) / RESOLUTION) * RESOLUTION
+				self.add_markclass(f'@CapRotScaledMark', [scaled], x=self.enclosure_descent(sc), y=y)
 		for closing in self.closings_rot:
 			for sc in self.all_scales:
 				scaled = self.cap_rot_scale_to_cap[(closing, sc)]
 				factor = SCALEDOWN ** sc
 				(_, h) = self.unscaled_cap_rot_to_size[closing]
 				y = round(factor * h / RESOLUTION) * RESOLUTION
-				self.add_markclass(f'@CapRotScaledMark', [scaled], x=enclosure_descent(sc), y=y)
+				self.add_markclass(f'@CapRotScaledMark', [scaled], x=self.enclosure_descent(sc), y=y)
 		for (lost, sc), scaled in self.lost_scale_to_lost.items():
 			factor = SCALEDOWN ** sc
 			(w, h) = self.unscaled_lost_to_size[lost]
-			x = round(factor * w * EM / 2) * RESOLUTION
-			y = round(factor * h * EM / 2) * RESOLUTION
+			x = round(factor * w * self.em / 2) * RESOLUTION
+			y = round(factor * h * self.em / 2) * RESOLUTION
 			self.add_markclass(f'@SignScaled{sc}Mark', [scaled], x=x, y=y)
 		self.add_class('@EnclosureScale', \
 				[self.enclosure_scale_(sc) for sc in self.all_scales] + \
@@ -4322,12 +4326,12 @@ class UniOmniFontBuilder:
 			for sc in self.all_scales:
 				bracket_scaled = self.bracket_scale_to_bracket[(bracket, sc)]
 				x = self.bracket_width[bracket_scaled]
-				y = round(SCALEDOWN ** sc * FONT_UNITS)
+				y = round(SCALEDOWN ** sc * self.font_units)
 				self.add_markclass(f'@BracketMark', [bracket_scaled], x=x, y=y)
 		for bracket in self.close_brackets:
 			for sc in self.all_scales:
 				bracket_scaled = self.bracket_scale_to_bracket[(bracket, sc)]
-				y = round(SCALEDOWN ** sc * FONT_UNITS)
+				y = round(SCALEDOWN ** sc * self.font_units)
 				self.add_markclass(f'@BracketMark', [bracket_scaled], x=0, y=y)
 		for depth in self.all_depths:
 			self.add_markclass(f'@AnchorStart{depth}Mark', [self.anchor_start_(depth)])
@@ -4369,7 +4373,7 @@ class UniOmniFontBuilder:
 		for depth in self.all_depths:
 			self.add_markclass(f'@BracketAnchor{depth}Mark', [self.bracket_anchor_(depth)])
 		for sc in self.all_scales:
-			offset = round(SCALEDOWN ** sc * EM) * RESOLUTION - enclosure_descent(sc)
+			offset = round(SCALEDOWN ** sc * self.em) * RESOLUTION - self.enclosure_descent(sc)
 			for d in all_digits[1:]:
 				for p in all_poss:
 					if p == LEN_OCT-1 and d > 1:
@@ -4378,7 +4382,7 @@ class UniOmniFontBuilder:
 					self.add_markclass('@OutlineHorMark', [self.outline_(level, sc, 'hor', d, p) for level in 'pw'],
 							x=0, y=offset)
 					self.add_markclass('@OutlineVerMark', [self.outline_(level, sc, 'ver', d, p) for level in 'pw'],
-							x=enclosure_descent(sc), y=size)
+							x=self.enclosure_descent(sc), y=size)
 
 	def anchor_insert_marker_subrules(self):
 		name, rules = 'anchor-insert-marker', []
@@ -4698,8 +4702,8 @@ class UniOmniFontBuilder:
 	def anchor_start_rules(self):
 		name, rules, filt = 'anchor-start', [], '@AuxAnchorStart'
 		self.add_class(filt, [self.start_hor, self.start_ver, '@AnchorStart0Mark'])
-		rules.append(base_pos_rule(self.start_hor, '@AnchorStart0Mark', 0, FONT_UNITS))
-		rules.append(base_pos_rule(self.start_ver, '@AnchorStart0Mark', - FONT_UNITS // 2, 0))
+		rules.append(base_pos_rule(self.start_hor, '@AnchorStart0Mark', 0, self.font_units))
+		rules.append(base_pos_rule(self.start_ver, '@AnchorStart0Mark', - self.font_units // 2, 0))
 		return name, rules, filt
 
 	def anchor_general_rules(self):
@@ -4797,13 +4801,13 @@ class UniOmniFontBuilder:
 		for (sign, sc), scaled in self.cap_scale_to_cap.items():
 			factor = SCALEDOWN ** sc
 			(_, h) = self.unscaled_cap_to_size[sign]
-			margin = -round(factor * MARGIN / 2 / RESOLUTION) * RESOLUTION if sign in self.openings else 0
+			margin = -round(factor * self.margin / 2 / RESOLUTION) * RESOLUTION if sign in self.openings else 0
 			y = round(factor * h / RESOLUTION) * RESOLUTION
 			rules.append(mark_pos_rule(scaled, '@ShadeMark', margin, y))
 		for (sign, sc), scaled in self.cap_rot_scale_to_cap.items():
 			factor = SCALEDOWN ** sc
 			(_, h) = self.unscaled_cap_rot_to_size[sign]
-			margin = MARGIN/2 if sign in self.openings_rot else 0
+			margin = self.margin/2 if sign in self.openings_rot else 0
 			y = round(factor * (h+margin) / RESOLUTION) * RESOLUTION
 			rules.append(mark_pos_rule(scaled, '@ShadeMark', 0, y))
 		for p in all_poss:
@@ -4846,14 +4850,14 @@ class UniOmniFontBuilder:
 			factor = SCALEDOWN ** sc
 			(w, h) = self.unscaled_cap_to_size[sign]
 			x = round(factor * w / RESOLUTION) * RESOLUTION
-			y = round(factor * h / RESOLUTION) * RESOLUTION - enclosure_descent(sc)
+			y = round(factor * h / RESOLUTION) * RESOLUTION - self.enclosure_descent(sc)
 			for depth in range(1, self.max_depth):
 				rules.append(mark_pos_rule(scaled, f'@CapAnchorEnd{depth}Mark', x, y))
 		for (_, sc), scaled in self.cap_rot_scale_to_cap.items():
 			for depth in range(1, self.max_depth):
-				rules.append(mark_pos_rule(scaled, f'@CapAnchorEnd{depth}Mark', enclosure_descent(sc), 0))
+				rules.append(mark_pos_rule(scaled, f'@CapAnchorEnd{depth}Mark', self.enclosure_descent(sc), 0))
 		for sc in self.all_scales:
-			descent = enclosure_descent(sc)
+			descent = self.enclosure_descent(sc)
 			rules.append(mark_pos_rule('@CapAnchorStart', f'@EnclosureScaleHorizontal{sc}Mark', 0, -descent))
 			rules.append(mark_pos_rule('@CapAnchorStart', f'@EnclosureScaleVertical{sc}Mark', descent, 0))
 		for depth in range(1, self.max_depth):
@@ -4865,7 +4869,7 @@ class UniOmniFontBuilder:
 		self.add_class(filt, ['@AnchorStart', '@OutlineHorMark'])
 		rules.append(mark_pos_rule('@AnchorStart', '@OutlineHorMark', 0, 0))
 		for sc in self.all_scales:
-			offset = round(SCALEDOWN ** sc * EM) * RESOLUTION - enclosure_descent(sc)
+			offset = round(SCALEDOWN ** sc * self.em) * RESOLUTION - self.enclosure_descent(sc)
 			for d in all_digits[1:]:
 				for p in all_poss:
 					if p == LEN_OCT-1 and d > 1:
@@ -4883,13 +4887,13 @@ class UniOmniFontBuilder:
 		self.add_class(filt, ['@AnchorStart', '@OutlineVerMark'])
 		rules.append(mark_pos_rule('@AnchorStart', '@OutlineVerMark', 0, 0))
 		for sc in self.all_scales:
-			offset = round(SCALEDOWN ** sc * EM) * RESOLUTION - enclosure_descent(sc)
+			offset = round(SCALEDOWN ** sc * self.em) * RESOLUTION - self.enclosure_descent(sc)
 			for d in all_digits[1:]:
 				for p in all_poss:
 					if p == LEN_OCT-1 and d > 1:
 						continue
 					size = int(d) * 8**p * RESOLUTION
-					x = enclosure_descent(sc)
+					x = self.enclosure_descent(sc)
 					for level in 'pw':
 						rules.append(mark_pos_rule(self.outline_(level, sc, 'ver', d, p), 
 								'@OutlineVerMark', x, 0))

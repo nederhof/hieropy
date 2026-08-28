@@ -34,7 +34,7 @@ default_editor_config = {
 }
 
 class UniEditor():
-	def __init__(self, custom=None, text=PLACEHOLDER, \
+	def __init__(self, custom=None, text='', \
 			address=[0], d='hlr', save=None, cancel=None, config=default_editor_config):
 		self.custom = custom
 		self.save_function = save

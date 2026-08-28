@@ -428,6 +428,17 @@ class Enclosure(Group):
 		self.damage_open = damage_open
 		self.delim_close = delim_close
 		self.damage_close = damage_close
+		match self.typ:
+			case 'plain':
+				if self.delim_open and self.delim_open not in OPENING_PLAIN_CHARS:
+					self.delim_open = OPEN_BOX
+				if self.delim_close and self.delim_close not in CLOSING_PLAIN_CHARS:
+					self.delim_close = CLOSE_BOX
+			case 'walled':
+				if self.delim_open and self.delim_open not in OPENING_WALLED_CHARS:
+					self.delim_open = OPEN_WALLED
+				if self.delim_close and self.delim_close not in CLOSING_WALLED_CHARS:
+					self.delim_close = CLOSE_WALLED
 	def __repr__(self):
 		params = []
 		name = 'walled' if self.typ == 'walled' else 'boxed'

@@ -362,6 +362,8 @@ class MdcUniConverter:
 			else:
 				self.report(f'Name {name} not found')
 				return None
+		elif group.name == 'o' or group.name == 'O':
+			return uni.Literal('\U000143F6', 0, mirror, damage)
 		else:
 			return uni.Literal(PLACEHOLDER, 0, mirror, damage)
 

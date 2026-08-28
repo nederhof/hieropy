@@ -86,6 +86,14 @@ class TestOpentype(unittest.TestCase):
 			builder.add(parser.parse(e))
 		builder.make_font('tests/tmp/bm.ttf')
 
+	def test_vs(self):
+		parser = UniParser()
+		builder = UniFontBuilder(descent=0.3)
+		encodings = UniExtractor().extract_html('tests/resources/vs.html', classname='hlr')
+		for e in encodings:
+			builder.add(parser.parse(e))
+		builder.make_font('tests/tmp/vs.ttf')
+
 	@unittest.skip("Skipping tests that take too long")
 	def test_basic(self):
 		builder = UniFontBuilder()

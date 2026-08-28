@@ -6,6 +6,7 @@ from .resconversion import ResUniConverter
 from .mdcconversion import MdcUniConverter
 from .ocr import ImageUniConverter
 from .unittf import UniFontBuilder
+from .uniomnifont import UniOmniFontBuilder
 from .uniextraction import UniExtractor
 from .custom import CustomSignList
 

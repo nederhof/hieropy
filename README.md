@@ -35,6 +35,8 @@ UniEditor(text=database_entry, save=save, cancel=cancel)
 print('Database entry is now', *[hex(ord(ch)) for ch in database_entry])
 ```
 
+A formal specification of the syntax is found in the documentation of [HieroJax](https://nederhof.github.io/hierojax/).
+
 ## Rendering
 
 Convert encoding to image (raster graphics or PDF or SVG):
@@ -69,7 +71,7 @@ Options for rendering:
 | direction | 'hlr' | 'hlr', 'hrl', 'vlr', 'vrl' | text direction |
 | fontsize | 22 | int (pixels) | font size, determining EM |
 | linesize | 1.0 | float (EM) | size of line |
-| sep | 0.08 | float (EM) | separation between signs (in EM) |
+| sep | 0.08 | float (EM) | distance between signs (in EM) |
 | hmargin | 0.04 | float (EM) | horizontal margin around hieroglyphic |
 | vmargin | 0.04 | float (EM) | vertical margin around hieroglyphic |
 | imagetype | 'pil' | 'pil', 'pdf', 'svg' | type of image to be created |
@@ -272,9 +274,9 @@ shading = [[(0,20),(30,20),(30,40),(0,40)],[(50,60),(70,60),(70,90),(50,90)]]
 encoding_out = str(converter.convert_line(image, shading=shading))
 ```
 
-## Fonts
+## Fonts (fixed collection of texts)
 
-For a fixed collection of texts, an OpenType font can be created that renders all the hieroglyphic groups in those texts. (If the texts change, the font needs to be recreated.) If there are several text directions, a separate font needs to be created for each. Suppose we have horizontal left-to-right text (indicated by class `hlr`) and vertical right-to-left text (indicated by class `vrl`) in an HTML file `webpage.html`:
+For a fixed collection of texts, an OpenType font can be built that renders all the hieroglyphic groups in those texts. (If the texts change, the font needs to be rebuilt.) If there are several text directions, a separate font needs to be built for each. Suppose we have horizontal left-to-right text (indicated by class `hlr`) and vertical right-to-left text (indicated by class `vrl`) in an HTML file `webpage.html`:
 ```html
 <html>
 <head>
@@ -377,10 +379,10 @@ Options of `UniFontBuilder`:
 | ---- | ------- | ------ | ------- |
 | direction | 'hlr' | 'hlr', 'hrl', 'vlr', 'vrl' | text direction |
 | linesize | 1.0 | float (EM) | size of line |
-| sep | 0.08 | float (EM) | separation between signs (in EM) |
-| signcolor | 'black' | str | name of color for signs |                                            
-| bracketcolor | 'black' | str | name of color for brackets |                                        
-| shadecolor | 'black' | str | name of color for shading |                                          
+| sep | 0.08 | float (EM) | distance between signs (in EM) |
+| signcolor | 'black' | str | name of color for signs |
+| bracketcolor | 'black' | str | name of color for brackets |
+| shadecolor | 'black' | str | name of color for shading |
 | shadealpha | 255 | int | opacity of shading, between 0 and 255 |
 | shadepattern | 'diagonal' | 'diagonal', 'uniform' | kind of shading |
 | shadedist | 100 | int (font units) | distance between lines of shading (only for 'diagonal') |
@@ -392,15 +394,68 @@ Options of `UniFontBuilder`:
 | gap | 0.1 | float (EM) | gap between rows/columns of text (in EM) |
 | custom | None | CustomSignList | list of custom signs (see below) |
 
-If `shadepattern` is `'uniform'`, then `shadealpha` should be set to a value below 255, typically around 150. A color font is created only if needed, which is if `signcolor` has a value other than `black`, or if there are brackets or shading and `bracketcolor` or `shadecolor` have values other than `black` or if `shadealpha` has a value other than 255.
+If `shadepattern` is `'uniform'`, then `shadealpha` should be set to a value below 255, typically around 150. A color font is created only if needed, which is if `signcolor` has a value other than `'black'`, or if there are brackets or shading and `bracketcolor` or `shadecolor` have values other than `'black'` or if `shadealpha` has a value other than 255.
 
 The family name of the font becomes the `basename` followed by one `'Hlr'`, `'Hrl'`, `'Vlr'`, `'Vrl'`, depending on the text direction.
+
+## Fonts (dynamic interpretation of control characters)
+
+A font can be built that is able to render any text, albeit with a bound on the depth of nesting of subgroups:
+```python
+from hieropy import UniOmniFontBuilder
+
+builder = UniOmniFontBuilder(bracketcolor='red')
+builder.make_font('NewGardinerOmni.ttf')
+```
+
+Already built versions of NewGardinerOmni can be found in the [NewGardiner](https://github.com/nederhof/newgardiner) repository.
+
+Options of `UniOmniFontBuilder`:
+
+| Name | Default | Values | Purpose |
+| ---- | ------- | ------ | ------- |
+| sep | 8 | 0, 2, 4, 6, 8, ... | minimum distance between unscaled signs (as percentage of EM) |
+| signcolor | 'black' | str | name of color for signs |
+| bracketcolor | 'black' | str | name of color for brackets |
+| shadecolor | 'black' | str | name of color for shading |
+| shadealpha | 255 | int | opacity of shading, between 0 and 255 |
+| shadepattern | 'diagonal' | 'diagonal', 'uniform' | kind of shading |
+| maxdepth | 4 | int >= 3 | bound on the depth of nesting |
+| nscales | 5 | 4 or 5 | number of scaled copies per sign |
+| gap | 0.1 | float (EM) | gap between rows/columns of text (in EM) |
+
+Text can be horizontal left-to-right (`hlr`) and vertical left-to-right (`vlr`).
+For use in web pages, one would have a file `omni.css` such as:
+```css
+@font-face { font-family: 'NewGardinerOmni'; src: url('NewGardinerOmni.ttf') format('opentype'); }
+
+.hlr {
+    font-feature-settings: 'liga' 1, 'mark' 1;
+    font-size: 200%;
+    font-family: 'NewGardinerOmni';
+    word-break: break-all;
+}
+.vlr {
+    font-feature-settings: 'liga' 1, 'mark' 1, 'vert' 1;
+    font-size: 200%;
+    font-family: 'NewGardinerOmni';
+    word-break: break-all;
+    writing-mode: vertical-lr;
+    text-orientation: upright;
+}
+```
+
+There are a number of caveats:
+* The shaping engine (HarfBuzz) present in most browsers and Word processors is incapable of handling the font due to its complexity, especially with `maxdepth=4`. With `maxdepth=3`, most versions of HarfBuzz seem to be able to render texts correctly, but one commonly encounters groups with depth exceeding 3. An example of a group with depth 4 is: two signs next to one another, above another sign, and this within a cartouche. To be on the safe side and to be able to handle any text, one would probably want to set the bound at `maxdepth=6` or `maxdepth=7`, but I have yet to come across a tool that could handle the resulting font.
+* Browsers and Word processors have less difficulty handling the font if it is compiled with `nscales=4` rather than with `nscales=5`, but then the positioning may look somewhat wrong and signs may start to overlap. The appearance would have been even better with `nscales=6` or higher, but this won't compile due to inherent limitations of OpenType technology, allowing only up to 65,535 glyphs. That limit is reached with `nscales=5` unless one compromises and excludes certain signs from being mirrored and/or scaled. Incidentally, it was always a bad idea to include non-core signs in the Extended-A sign list and the issue of the ceiling of 65,535 glyphs in OpenType fonts confirms once more that it was the right decision to exclude non-core signs from the NewGardiner font.
+* With NewGardinerOmni, the quality of the appearance cannot match what can be achieved with `UniFontBuilder` when the collection of texts is fixed.
+* Currently only left-to-right text is supported. Code to build fonts for right-to-left horizontal and vertical text is under development.
 
 ## Custom signs
 
 One may wish to encode texts that contain signs that are not in Unicode, or that contain graphical variants that are not in Unicode even though other graphical variants of the same underlying grapheme are. For this purpose, one may create an additional font, with glyphs at code points in the range U+F000 — U+F8FF (part of the BMP Private Use Area).
 
-The font should have 1000 units per EM, to match the NewGardiner font.  In addition, one should construct a `CustomSignList`, with the name and path of the font, and for each character a Gardiner name that identifies it, and, optionally, a core sign that represents the underlying grapheme, which we will refer to as the **fallback sign**. One may also add mnemonics and documentation on the extra signs. 
+The font should have 1000 units per EM, to match the NewGardiner font.  In addition, one should construct a `CustomSignList`, with the name and path of the font, and for each character a Gardiner name that identifies it, and, optionally, a core sign that represents the underlying grapheme, which we will refer to as the **fallback sign**. One may also add mnemonics and documentation on the extra signs.
 
 The `CustomSignList` may be passed to the editor, and it may be part of an `Option` to be passed
 to the `print` method:
@@ -467,6 +522,10 @@ venv\Scripts\activate
 ```
 
 ## Changelog
+
+### 0.1.9
+
+* Generation of the NewGardinerOmni font.
 
 ### 0.1.8
 

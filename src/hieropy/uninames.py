@@ -26,6 +26,7 @@ _name_to_mnemonics = None
 _tall_names = None
 _broad_names = None
 _narrow_names = None
+_all_chars = None
 
 def name_to_char(name):
 	if _name_to_char is None:
@@ -79,7 +80,9 @@ def ext_chars():
 	return sorted([ch for cat in UNI_CATEGORIES for ch in cat_to_chars_ext(cat)])
 
 def all_chars():
-	return sorted([ch for cat in UNI_CATEGORIES for ch in cat_to_chars(cat) + cat_to_chars_ext(cat)])
+	if _all_chars is None:
+		cache_all_chars()
+	return _all_chars
 
 def mnemonic_to_name(mnemonic):
 	if _mnemonic_to_name is None:
@@ -229,3 +232,8 @@ def cache_size_names():
 		_broad_names = [name for line in f for name in line.split()]
 	with resources.files('hieropy.resources').joinpath(NARROW_FILE).open('r') as f:
 		_narrow_names = [name for line in f for name in line.split()]
+
+def cache_all_chars():
+	global _all_chars
+	_all_chars = sorted([ch for cat in UNI_CATEGORIES for ch in cat_to_chars(cat) + cat_to_chars_ext(cat)])
+	

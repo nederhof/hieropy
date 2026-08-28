@@ -434,7 +434,7 @@ class UniFontBuilder:
 				TypoLineGap=self.gap,
 				usWinAscent=self.ascent, usWinDescent=self.descent)
 		fb.setupPost()
-		fb.setupHead()
+		fb.setupHead(unitsPerEm=self.total_height)
 		fb.font['head'].created = timestampNow()
 		fb.font['head'].modified = timestampNow()
 

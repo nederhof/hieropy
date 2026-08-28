@@ -228,6 +228,10 @@ class PlaneRestricted:
 		return x < 0 or self.width() <= x or y < 0 or self.height() <= y or \
 			self.im.getpixel((x, y)) < 128
 
+	def set_dark(self, x, y):
+		if 0 <= x and x < self.width() and 0 <= y and y < self.height():
+			self.im.putpixel((x, y), 0)
+
 	def topmost_dark(self, x, y_min, y_max):
 		for y in range(y_min, y_max+1):
 			if self.is_dark(x, y):
@@ -251,6 +255,29 @@ class PlaneRestricted:
 			if self.is_dark(x, y):
 				return x
 		return None
+
+	def bbox(self):
+		x_min, y_min, x_max, y_max = None, None, None, None
+		for y in range(self.height()):
+			if self.leftmost_dark(0, self.width()-1, y) is not None:
+				y_min = y
+				break
+		for y in reversed(range(self.height())):
+			if self.leftmost_dark(0, self.width()-1, y) is not None:
+				y_max = y
+				break
+		for x in range(self.width()):
+			if self.topmost_dark(x, 0, self.height()-1) is not None:
+				x_min = x
+				break
+		for x in reversed(range(self.width())):
+			if self.topmost_dark(x, 0, self.height()-1) is not None:
+				x_max = x
+				break
+		if x:
+			return x_min, y_min, x_max-x_min+1, y_max-y_min+1
+		else:
+			return None, None, None, None
 
 class PlaneExtended(PlaneRestricted):
 	def __init__(self, im):

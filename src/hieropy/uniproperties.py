@@ -22,8 +22,11 @@ _char_to_rotations = None
 _char_to_insertions = None
 _char_to_overlay_ligature = None
 _char_to_overlay_ligatures = None
+_overlay_ligatures = None
 _key_to_vertical_ligatures = None
 _key_to_horizontal_ligatures = None
+_vertical_ligatures = None
+_horizontal_ligatures = None
 _topup_chars = None
 _bottomdown_chars = None
 _circular = None
@@ -115,11 +118,21 @@ def mirrored_insertion_places(places):
 			case 'b': places_mir['b'] = adjustment_mir
 	return places_mir
 
+def mirrored_edge(place):
+	match place:
+		case 's': return 'e'
+		case 'e': return 's'
+		case _: return place
+
+def mirrored_edges(places):
+	return ''.join(mirrored_edge(place) for place in places)
+
 class Insertion:
-	def __init__(self, ch, rot, places):
+	def __init__(self, ch, rot, places, out):
 		self.ch = ch
 		self.rot = rot
 		self.places = places
+		self.out = out
 
 	def rotation(self):
 		return 0 if self.rot is None else self.rot
@@ -128,7 +141,7 @@ class Insertion:
 		return self.places.keys()
 
 	def mirrored(self):
-		return Insertion(self.ch, self.rot, mirrored_insertion_places(self.places))
+		return Insertion(self.ch, self.rot, mirrored_insertion_places(self.places), mirrored_edges(self.out))
 
 	def __str__(self):
 		return 'Insertion ' + str(self.ch) + ' ' + str(self.rot) + ' ' + str(self.places)
@@ -156,6 +169,11 @@ def char_to_insertions(ch, mirror=False):
 	else:
 		return []
 
+def insertion_list():
+	if _char_to_insertions is None:
+		cache_insertions()
+	return [(ch, ins) for (ch, insertions) in _char_to_insertions.items() for ins in insertions]
+
 def char_to_places(ch, rotation, mirror):
 	places = []
 	for ins in char_to_insertions(ch, mirror):
@@ -164,6 +182,19 @@ def char_to_places(ch, rotation, mirror):
 				if name not in places:
 					places.append(name)
 	return places
+
+def char_rot_places_variant():
+	if _char_to_insertions is None:
+		cache_insertions()
+	variant_list = []
+	for ch, insertions in _char_to_insertions.items():
+		rots = set(ins.rot or 0 for ins in insertions)
+		for rot in rots:
+			inserts = [ins for ins in insertions if (ins.rot or 0) == rot]
+			if len([ins for ins in insertions if ins.ch]) > 0:
+				for ins in insertions:
+					variant_list.append((ch, rot, ins.places.keys(), ins.ch))
+	return variant_list
 	
 def cache_insertions():
 	global _char_to_insertions
@@ -177,16 +208,19 @@ def cache_insertions():
 			alt = None
 			rot = None
 			places = {}
+			out = ''
 			for key, value in insertion_json.items():
 				if key == 'ch':
 					alt = chr(int(value,16))
 				elif key == 'rot':
 					rot = value
+				elif key == 'out':
+					out = value
 				else:
 					x = insertion_json[key].get('x', None)
 					y = insertion_json[key].get('y', None)
 					places[key] = InsertionAdjust(x, y)
-			insertions.append(Insertion(alt, rot, places))
+			insertions.append(Insertion(alt, rot, places, out))
 		_char_to_insertions[ch] = insertions
 
 class OverlayLigature:
@@ -202,9 +236,9 @@ class TabularLigature:
 		self.groups = groups
 
 class FlatElem:
-	def __init__(self, ch, vs, mirror, x, y, w, h):
+	def __init__(self, ch, rot, mirror, x, y, w, h):
 		self.ch = ch
-		self.vs = vs
+		self.rot = rot
 		self.mirror = mirror
 		self.x = x
 		self.y = y
@@ -215,13 +249,13 @@ def flat_group(group_json):
 	group = []
 	for elem in group_json:
 		ch = chr(int(elem['ch'],16))
-		vs = elem.get('vs', 0)
+		rot = elem.get('rot', 0)
 		mirror = elem.get('mirror', False)
 		x = elem['x']
 		y = elem['y']
 		w = elem['w']
 		h = elem['h']
-		group.append(FlatElem(ch, vs, mirror, x, y, w, h))
+		group.append(FlatElem(ch, rot, mirror, x, y, w, h))
 	return group
 
 def char_to_overlay_ligature(ch):
@@ -238,18 +272,27 @@ def overlay_to_ligature(hor, ver):
 		for lig in ligs:
 			if len(lig.horizontal) == len(hor) and \
 					len(lig.vertical) == len(ver) and \
-					all(g1.ch == g2.ch and g1.vs == g2.vs and g1.mirror == g2.mirror \
+					all(g1.ch == g2.ch and g1.rot == g2.rotation_coarse() and g1.mirror == g2.mirror \
 						for g1, g2 in zip(lig.horizontal, hor)) and \
-					all(g1.ch == g2.ch and g1.vs == g2.vs and g1.mirror == g2.mirror \
+					all(g1.ch == g2.ch and g1.rot == g2.rotation_coarse() and g1.mirror == g2.mirror \
 						for g1, g2 in zip(lig.vertical, ver)):
 				return lig, False
 	if len(hor) == 1 and len(ver) == 1 and ver[0].ch in _char_to_overlay_ligatures:
 		ligs = _char_to_overlay_ligatures[ver[0].ch]
 		for lig in ligs:
 			if len(lig.horizontal) == 1 and len(lig.vertical) == 1 and \
-					lig.horizontal[0].ch == ver[0].ch and lig.vertical[0].ch == hor[0].ch:
+					lig.horizontal[0].ch == ver[0].ch and lig.vertical[0].ch == hor[0].ch and \
+					lig.horizontal[0].rot == ver[0].rotation_coarse() and \
+					lig.horizontal[0].mirror == ver[0].mirror and \
+					lig.vertical[0].rot == hor[0].rotation_coarse() and \
+					lig.vertical[0].mirror == hor[0].mirror:
 				return lig, True
 	return None, False
+
+def overlay_ligatures():
+	if _char_to_overlay_ligatures is None:
+		cache_ligatures()
+	return _overlay_ligatures
 
 def flat_key(groups):
 	return ''.join(g.ch for g in groups)
@@ -259,7 +302,7 @@ def vertical_to_ligature(groups):
 		cache_ligatures()
 	key = flat_key(groups)
 	for lig in _key_to_vertical_ligatures.get(key, []):
-		if all(g1.vs == g2.vs and g1.mirror == g2.mirror for g1, g2 in zip(lig.groups, groups)):
+		if all(g1.rot == g2.rotation_coarse() and g1.mirror == g2.mirror for g1, g2 in zip(lig.groups, groups)):
 			return lig
 	return None
 	
@@ -268,19 +311,35 @@ def horizontal_to_ligature(groups):
 		cache_ligatures()
 	key = flat_key(groups)
 	for lig in _key_to_horizontal_ligatures.get(key, []):
-		if all(g1.vs == g2.vs and g1.mirror == g2.mirror for g1, g2 in zip(lig.groups, groups)):
+		if all(g1.rot == g2.rotation_coarse() and g1.mirror == g2.mirror for g1, g2 in zip(lig.groups, groups)):
 			return lig
 	return None
 	
+def vertical_ligatures():
+	if _char_to_overlay_ligatures is None:
+		cache_ligatures()
+	return _vertical_ligatures
+
+def horizontal_ligatures():
+	if _char_to_overlay_ligatures is None:
+		cache_ligatures()
+	return _horizontal_ligatures
+
 def cache_ligatures():
 	global _char_to_overlay_ligature
 	global _char_to_overlay_ligatures
+	global _overlay_ligatures
 	global _key_to_vertical_ligatures
 	global _key_to_horizontal_ligatures
+	global _vertical_ligatures
+	global _horizontal_ligatures
 	_char_to_overlay_ligature = {}
 	_char_to_overlay_ligatures = defaultdict(list)
+	_overlay_ligatures = []
 	_key_to_vertical_ligatures = defaultdict(list)
 	_key_to_horizontal_ligatures = defaultdict(list)
+	_vertical_ligatures = []
+	_horizontal_ligatures = []
 	with resources.files('hieropy.resources').joinpath(LIGATURES_FILE).open('r') as f:
 		map_json = json.load(f)
 	for point_json in map_json:
@@ -296,16 +355,19 @@ def cache_ligatures():
 				if not alt:
 					_char_to_overlay_ligatures[hor[0].ch].append(ligature)
 					_char_to_overlay_ligatures[ver[0].ch].append(ligature)
+				_overlay_ligatures.append(ligature)
 			case 'vertical':
 				groups = flat_group(parts_json['groups'])
 				key = flat_key(groups)
 				ligature = TabularLigature(ch, groups)
 				_key_to_vertical_ligatures[key].append(ligature)
+				_vertical_ligatures.append(ligature)
 			case 'horizontal':
 				groups = flat_group(parts_json['groups'])
 				key = flat_key(groups)
 				ligature = TabularLigature(ch, groups)
 				_key_to_horizontal_ligatures[key].append(ligature)
+				_horizontal_ligatures.append(ligature)
 
 def topup_chars():
 	global _topup_chars
