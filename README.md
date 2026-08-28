@@ -408,7 +408,7 @@ builder = UniOmniFontBuilder(bracketcolor='red')
 builder.make_font('NewGardinerOmni.ttf')
 ```
 
-Already built versions of NewGardinerOmni can be found in the [NewGardiner](https://github.com/nederhof/newgardiner) repository.
+Already built versions of NewGardinerOmni can be found in the [NewGardiner](https://github.com/nederhof/newgardiner) repository, together with a demo.
 
 Options of `UniOmniFontBuilder`:
 
@@ -446,7 +446,7 @@ For use in web pages, one would have a file `omni.css` such as:
 ```
 
 There are a number of caveats:
-* The shaping engine (HarfBuzz) present in most browsers and Word processors is incapable of handling the font due to its complexity, especially with `maxdepth=4`. With `maxdepth=3`, most versions of HarfBuzz seem to be able to render texts correctly, but one commonly encounters groups with depth exceeding 3. An example of a group with depth 4 is: two signs next to one another, above another sign, and this within a cartouche. To be on the safe side and to be able to handle any text, one would probably want to set the bound at `maxdepth=6` or `maxdepth=7`, but I have yet to come across a tool that could handle the resulting font.
+* The shaping engine (HarfBuzz) present in most browsers and Word processors is incapable of handling the font due to its complexity, especially with `maxdepth=4`. With `maxdepth=3`, most versions of HarfBuzz seem to be able to render texts correctly, but one commonly encounters groups with depth exceeding 3. An example of a group with depth 4 is: two signs next to one another, above another sign, and this within a cartouche. To be on the safe side and to be able to handle any text, one would probably want to set the bound at `maxdepth=6` or `maxdepth=7`, but I have yet to come across a shaping engine that could handle the resulting font.
 * Browsers and Word processors have less difficulty handling the font if it is compiled with `nscales=4` rather than with `nscales=5`, but then the positioning may look somewhat wrong and signs may start to overlap. The appearance would have been even better with `nscales=6` or higher, but this won't compile due to inherent limitations of OpenType technology, allowing only up to 65,535 glyphs. That limit is reached with `nscales=5` unless one compromises and excludes certain signs from being mirrored and/or scaled. Incidentally, it was always a bad idea to include non-core signs in the Extended-A sign list and the issue of the ceiling of 65,535 glyphs in OpenType fonts confirms once more that it was the right decision to exclude non-core signs from the NewGardiner font.
 * With NewGardinerOmni, the quality of the appearance cannot match what can be achieved with `UniFontBuilder` when the collection of texts is fixed.
 * Currently only left-to-right text is supported. Code to build fonts for right-to-left horizontal and vertical text is under development.
