@@ -20,7 +20,7 @@ class TestOmni(unittest.TestCase):
 
 	@classmethod
 	def setUpClass(cls):
-		cls.builder = UniOmniFontBuilder(debug=True)
+		cls.builder = UniOmniFontBuilder(debug=True, ndigits=3)
 		cls.builder.make_font_initial()
 		cls.builder.syntax_analysis()
 		cls.builder.local_analysis()
@@ -99,8 +99,8 @@ class TestOmni(unittest.TestCase):
 ##### sizing
 
 def fragment_sizing(frag, builder, direction):
-	w_limit = builder.em if direction == 'vlr' else MAX_OCTAL_INT
-	h_limit = MAX_OCTAL_INT if direction == 'vlr' else builder.em
+	w_limit = builder.em if direction == 'vlr' else builder.max_octal_int
+	h_limit = builder.max_octal_int if direction == 'vlr' else builder.em
 	for g in frag.groups:
 		top_group_sizing(g, builder, direction, w_limit, h_limit)
 
@@ -155,17 +155,17 @@ def vertical_sizing(group, builder, direction, w_limit, h_limit):
 	if group.alt:
 		name = builder.sym[group.alt.ch]
 		w, h, _, _ = builder.unscaled_sign_to_size[name]
-		group.w = font_units_to_int(w + builder.margin)
-		group.h = font_units_to_int(h + builder.margin)
+		group.w = builder.font_units_to_int(w + builder.margin)
+		group.h = builder.font_units_to_int(h + builder.margin)
 		scaledown_to_fit(group, builder, w_limit, h_limit)
 		for g in group.groups:
 			group_no_sizing(g, direction)
 		scaledown_to_fit(group, builder, w_limit, h_limit)
 		return
 	for g in group.groups:
-		group_sizing(g, builder, direction, builder.em, MAX_OCTAL_INT)
+		group_sizing(g, builder, direction, builder.em, builder.max_octal_int)
 	group.w = max(g.w for g in group.groups)
-	group.h = sum(g.h for g in group.groups) % (MAX_OCTAL_INT+1)
+	group.h = sum(g.h for g in group.groups) % (builder.max_octal_int+1)
 	scaledown_to_fit(group, builder, w_limit, h_limit)
 	for g in group.groups:
 		group_scaledown(g, builder, group.sc)
@@ -175,16 +175,16 @@ def horizontal_sizing(group, builder, direction, w_limit, h_limit):
 	if group.alt:
 		name = builder.sym[group.alt.ch]
 		w, h, _, _ = builder.unscaled_sign_to_size[name]
-		group.w = font_units_to_int(w + builder.margin)
-		group.h = font_units_to_int(h + builder.margin)
+		group.w = builder.font_units_to_int(w + builder.margin)
+		group.h = builder.font_units_to_int(h + builder.margin)
 		scaledown_to_fit(group, builder, w_limit, h_limit)
 		for g in group.groups:
 			group_no_sizing(g, direction)
 		scaledown_to_fit(group, builder, w_limit, h_limit)
 		return
 	for g in group.groups:
-		group_sizing(g, builder, direction, MAX_OCTAL_INT, builder.em)
-	group.w = sum(g.w for g in group.groups if not isinstance(g, (BracketOpen, BracketClose))) % (MAX_OCTAL_INT+1)
+		group_sizing(g, builder, direction, builder.max_octal_int, builder.em)
+	group.w = sum(g.w for g in group.groups if not isinstance(g, (BracketOpen, BracketClose))) % (builder.max_octal_int+1)
 	group.h = max(g.h for g in group.groups if not isinstance(g, (BracketOpen, BracketClose)))
 	scaledown_to_fit(group, builder, w_limit, h_limit)
 	for g in group.groups:
@@ -193,8 +193,8 @@ def horizontal_sizing(group, builder, direction, w_limit, h_limit):
 
 def enclosure_sizing(group, builder, direction, w_limit, h_limit):
 	scaledown_int = int(SCALEDOWN * builder.em)
-	w_limit_sub = scaledown_int if group.ver else MAX_OCTAL_INT
-	h_limit_sub = MAX_OCTAL_INT if group.ver else scaledown_int
+	w_limit_sub = scaledown_int if group.ver else builder.max_octal_int
+	h_limit_sub = builder.max_octal_int if group.ver else scaledown_int
 	for g in group.groups:
 		group_sizing(g, builder, direction, w_limit_sub, h_limit_sub)
 	if group.ver:
@@ -209,7 +209,7 @@ def enclosure_sizing(group, builder, direction, w_limit, h_limit):
 			h += builder.margin / 2
 			group.delim_open_unscaled_w = w
 			group.delim_open_unscaled_h = h
-			group.h += font_units_to_int(h)
+			group.h += builder.font_units_to_int(h)
 		if group.delim_close:
 			name = builder.sym[group.delim_close]
 			group.close_name = builder.cap_to_rotate[name]
@@ -219,8 +219,8 @@ def enclosure_sizing(group, builder, direction, w_limit, h_limit):
 			h += builder.margin / 2
 			group.delim_close_unscaled_w = w
 			group.delim_close_unscaled_h = h
-			group.h += font_units_to_int(h)
-		group.h = group.h % (MAX_OCTAL_INT+1)
+			group.h += builder.font_units_to_int(h)
+		group.h = group.h % (builder.max_octal_int+1)
 	else:
 		group.w = sum(g.w for g in group.groups)
 		group.h = builder.em
@@ -232,7 +232,7 @@ def enclosure_sizing(group, builder, direction, w_limit, h_limit):
 			w += builder.margin / 2
 			group.delim_open_unscaled_w = w
 			group.delim_open_unscaled_h = h
-			group.w += font_units_to_int(w)
+			group.w += builder.font_units_to_int(w)
 		if group.delim_close:
 			group.close_name = builder.sym[group.delim_close]
 			w, h = builder.unscaled_cap_to_size[group.close_name]
@@ -241,8 +241,8 @@ def enclosure_sizing(group, builder, direction, w_limit, h_limit):
 			w += builder.margin / 2
 			group.delim_close_unscaled_w = w
 			group.delim_close_unscaled_h = h
-			group.w += font_units_to_int(w)
-		group.w = group.w % (MAX_OCTAL_INT+1)
+			group.w += builder.font_units_to_int(w)
+		group.w = group.w % (builder.max_octal_int+1)
 	scaledown_to_fit(group, builder, w_limit, h_limit)
 	for g in group.groups:
 		group_scaledown(g, builder, group.sc)
@@ -258,17 +258,17 @@ def basic_sizing(group, builder, direction, w_limit, h_limit):
 		group.core.alt_name = name
 	else:
 		name = builder.sym.get(group.core.alt.ch) if group.core.alt else None
-	group_sizing(group.core, builder, direction, MAX_OCTAL_INT, MAX_OCTAL_INT)
+	group_sizing(group.core, builder, direction, builder.max_octal_int, builder.max_octal_int)
 	for pl, g in group.insertions.items():
 		if name and (name, pl) in builder.name_place_to_geom:
 			g.insert_geom = builder.name_place_to_geom[(name, pl)]
 		else:
 			g.insert_geom = builder.default_geom(pl)
 		x, y, w, h = g.insert_geom
-		x_int = font_units_to_int(x)
-		y_int = font_units_to_int(y)
-		w_int = font_units_to_int(w)
-		h_int = font_units_to_int(h)
+		x_int = builder.font_units_to_int(x)
+		y_int = builder.font_units_to_int(y)
+		w_int = builder.font_units_to_int(w)
+		h_int = builder.font_units_to_int(h)
 		group_sizing(g, builder, direction, w_int, h_int)
 		g.insert_x = x_int
 		g.insert_y = y_int
@@ -284,8 +284,8 @@ def overlay_sizing(group, builder, direction, w_limit, h_limit):
 	if group.alt:
 		name = builder.sym[group.alt.ch]
 		w, h, _, _ = builder.unscaled_sign_to_size[name]
-		group.w = font_units_to_int(w + builder.margin) 
-		group.h = font_units_to_int(h + builder.margin)
+		group.w = builder.font_units_to_int(w + builder.margin) 
+		group.h = builder.font_units_to_int(h + builder.margin)
 		for g in group.lits1:
 			group_no_sizing(g, direction)
 		group.w1 = 0
@@ -298,10 +298,10 @@ def overlay_sizing(group, builder, direction, w_limit, h_limit):
 		return
 	if len(group.lits1) > 1:
 		for g in group.lits1:
-			group_sizing(g, builder, direction, MAX_OCTAL_INT, builder.em)
+			group_sizing(g, builder, direction, builder.max_octal_int, builder.em)
 	else:
-		group_sizing(group.lits1[0], builder, direction, MAX_OCTAL_INT, MAX_OCTAL_INT)
-	group.w1 = sum(g.w for g in group.lits1) % (MAX_OCTAL_INT+1)
+		group_sizing(group.lits1[0], builder, direction, builder.max_octal_int, builder.max_octal_int)
+	group.w1 = sum(g.w for g in group.lits1) % (builder.max_octal_int+1)
 	group.h1 = max(g.h for g in group.lits1)
 	group.sc1 = 0
 	while group.sc1+1 < builder.n_scales and group.w1 > builder.em:
@@ -312,11 +312,11 @@ def overlay_sizing(group, builder, direction, w_limit, h_limit):
 			scaledown_factor(g, builder, 1)
 	if len(group.lits2) > 1:
 		for g in group.lits2:
-			group_sizing(g, builder, direction, builder.em, MAX_OCTAL_INT)
+			group_sizing(g, builder, direction, builder.em, builder.max_octal_int)
 	else:
-		group_sizing(group.lits2[0], builder, direction, MAX_OCTAL_INT, MAX_OCTAL_INT)
+		group_sizing(group.lits2[0], builder, direction, builder.max_octal_int, builder.max_octal_int)
 	group.w2 = max(g.w for g in group.lits2)
-	group.h2 = sum(g.h for g in group.lits2) % (MAX_OCTAL_INT+1)
+	group.h2 = sum(g.h for g in group.lits2) % (builder.max_octal_int+1)
 	group.sc2 = 0
 	while group.sc2+1 < builder.n_scales and group.h2 > builder.em:
 		group.sc2 += 1
@@ -339,8 +339,8 @@ def literal_sizing(group, builder, direction, w_limit, h_limit):
 	if group.vs:
 		name = builder.name_rotate_to_name[(name, num_to_rotate(group.vs))]
 	w, h, _, _ = builder.unscaled_sign_to_size[name]
-	group.w = font_units_to_int(w + builder.margin)
-	group.h = font_units_to_int(h + builder.margin)
+	group.w = builder.font_units_to_int(w + builder.margin)
+	group.h = builder.font_units_to_int(h + builder.margin)
 	scaledown_to_fit(group, builder, w_limit, h_limit)
 	group.is_absent = False
 
@@ -351,14 +351,14 @@ def singleton_sizing(group, builder, direction, w_limit, h_limit):
 		w, h = builder.unscaled_cap_rot_to_size[group.name]
 	else:
 		w, h = builder.unscaled_cap_to_size[group.name]
-	group.w = font_units_to_int(w) if group.ver else font_units_to_int(w + builder.margin / 2)
-	group.h = font_units_to_int(h + builder.margin / 2) if group.ver else font_units_to_int(h)
+	group.w = builder.font_units_to_int(w) if group.ver else builder.font_units_to_int(w + builder.margin / 2)
+	group.h = builder.font_units_to_int(h + builder.margin / 2) if group.ver else builder.font_units_to_int(h)
 	scaledown_to_fit(group, builder, w_limit, h_limit)
 
 def blank_sizing(group, builder, direction, w_limit, h_limit):
 	group.name = builder.full_blank if group.dim == 1 else builder.half_blank
-	group.w = font_units_to_int(group.dim * builder.font_units)
-	group.h = font_units_to_int(group.dim * builder.font_units)
+	group.w = builder.font_units_to_int(group.dim * builder.font_units)
+	group.h = builder.font_units_to_int(group.dim * builder.font_units)
 	scaledown_to_fit(group, builder, w_limit, h_limit)
 
 def lost_sizing(group, builder, direction, w_limit, h_limit):
@@ -370,8 +370,8 @@ def lost_sizing(group, builder, direction, w_limit, h_limit):
 		group.name = builder.wide_lost_exp if group.expand else builder.wide_lost
 	else:
 		group.name = builder.full_lost_exp if group.expand else builder.full_lost
-	group.w = font_units_to_int(group.width * builder.font_units)
-	group.h = font_units_to_int(group.height * builder.font_units)
+	group.w = builder.font_units_to_int(group.width * builder.font_units)
+	group.h = builder.font_units_to_int(group.height * builder.font_units)
 	scaledown_to_fit(group, builder, w_limit, h_limit)
 
 def bracket_open_sizing(group, builder, direction, w_limit, h_limit):
@@ -543,11 +543,11 @@ def bracket_close_max_depth(group, level):
 ##### to characters
 
 def to_width_scaled_active(builder, n):
-	oc = reversed(list(f'{n:0{LEN_OCT}o}'))
+	oc = reversed(list(f'{n:0{builder.len_oct}o}'))
 	return [builder.width_scaled_active_(d) for d in oc]
 
 def to_height_scaled_active(builder, n):
-	oc = reversed(list(f'{n:0{LEN_OCT}o}'))
+	oc = reversed(list(f'{n:0{builder.len_oct}o}'))
 	return [builder.height_scaled_active_(d) for d in oc]
 
 def to_insert_x(builder, x, sc):
@@ -557,7 +557,7 @@ def to_insert_x(builder, x, sc):
 		sign = [builder.minus_insert] if x < 0 else []
 		x_abs = abs(x)
 		x_scaled = iterate_scaledown(x_abs, sc)
-		oc = reversed(list(f'{x_scaled:0{LEN_OCT}o}'))
+		oc = reversed(list(f'{x_scaled:0{builder.len_oct}o}'))
 		return sign + [builder.insert_sep] + [builder.insert_x_(d) for d in oc]
 
 def to_insert_y(builder, y, sc):
@@ -567,15 +567,15 @@ def to_insert_y(builder, y, sc):
 		sign = [builder.minus_insert] if y < 0 else []
 		y_abs = abs(y)
 		y_scaled = iterate_scaledown(y_abs, sc)
-		oc = reversed(list(f'{y_scaled:0{LEN_OCT}o}'))
+		oc = reversed(list(f'{y_scaled:0{builder.len_oct}o}'))
 		return sign + [builder.insert_sep] + [builder.insert_y_(d) for d in oc] 
 
 def to_width_full_scaled(builder, n):
-	oc = reversed(list(f'{n:0{LEN_OCT}o}'))
+	oc = reversed(list(f'{n:0{builder.len_oct}o}'))
 	return [builder.width_full_scaled_(d) for d in oc]
 
 def to_height_full_scaled(builder, n):
-	oc = reversed(list(f'{n:0{LEN_OCT}o}'))
+	oc = reversed(list(f'{n:0{builder.len_oct}o}'))
 	return [builder.height_full_scaled_(d) for d in oc]
 
 def active_dimensions(builder, group):

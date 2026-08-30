@@ -414,7 +414,8 @@ Options of `UniOmniFontBuilder`:
 
 | Name | Default | Values | Purpose |
 | ---- | ------- | ------ | ------- |
-| sep | 8 | 0, 2, 4, 6, 8, ... | minimum distance between unscaled signs (as percentage of EM) |
+| ndigits | 3 | 2 or 3 | number of octal digits to represent dimensions |
+| sep | 0.08 | float (EM) | distance between signs (in EM) |
 | signcolor | 'black' | str | name of color for signs |
 | bracketcolor | 'black' | str | name of color for brackets |
 | shadecolor | 'black' | str | name of color for shading |
@@ -423,6 +424,8 @@ Options of `UniOmniFontBuilder`:
 | maxdepth | 4 | int >= 3 | bound on the depth of nesting |
 | nscales | 5 | 4 or 5 | number of scaled copies per sign |
 | gap | 0.1 | float (EM) | gap between rows/columns of text (in EM) |
+
+With `ndigits=2`, the positioning is more coarse than with `ndigits=3` and it may happen more frequently that signs accidentally touch one another. The advantage is that the built font becomes easier to process. If `ndigits=3`, then `sep` is rounded to multiples of 2 percent of EM, and if `ndigits=2`, then `sep` is rounded to multiples of 4 percent of EM.
 
 Text can be horizontal left-to-right (`hlr`) and vertical left-to-right (`vlr`).
 For use in web pages, one would have a file `omni.css` such as:
@@ -446,8 +449,8 @@ For use in web pages, one would have a file `omni.css` such as:
 ```
 
 There are a number of caveats:
-* The shaping engine (HarfBuzz) present in most browsers and Word processors is incapable of handling the font due to its complexity, especially with `maxdepth=4`. With `maxdepth=3`, most versions of HarfBuzz seem to be able to render texts correctly, but one commonly encounters groups with depth exceeding 3. An example of a group with depth 4 is: two signs next to one another, above another sign, and this within a cartouche. To be on the safe side and to be able to handle any text, one would probably want to set the bound at `maxdepth=6` or `maxdepth=7`, but I have yet to come across a shaping engine that could handle the resulting font.
-* Browsers and Word processors have less difficulty handling the font if it is compiled with `nscales=4` rather than with `nscales=5`, but then the positioning may look somewhat wrong and signs may start to overlap. The appearance would have been even better with `nscales=6` or higher, but this won't compile due to inherent limitations of OpenType technology, allowing only up to 65,535 glyphs. That limit is reached with `nscales=5` unless one compromises and excludes certain signs from being mirrored and/or scaled. Incidentally, it was always a bad idea to include non-core signs in the Extended-A sign list and the issue of the ceiling of 65,535 glyphs in OpenType fonts confirms once more that it was the right decision to exclude non-core signs from the NewGardiner font.
+* The shaping engine (HarfBuzz) present in most browsers and Word processors is incapable of handling the font built with the default paramters, due to its complexity. Fonts built with `maxdepth=3` are easier to handle, but one commonly encounters groups with depth exceeding 3. An example of a group with depth 4 is: two signs next to one another, above another sign, and this within a cartouche. To be on the safe side and to be able to handle any text, one would probably want to set the bound at `maxdepth=6` or `maxdepth=7`, but I have yet to come across a shaping engine that could handle the resulting font.
+* Also fonts built with `nscales=4` are easier to handle, but then the positioning may look somewhat wrong and signs may start to overlap. The appearance would have been even better with `nscales=6` or higher, but this won't compile due to inherent limitations of OpenType technology, allowing only up to 65,535 glyphs. That limit is reached with `nscales=5` unless one compromises and excludes certain signs from being mirrored and/or scaled. Incidentally, it was always a bad idea to include non-core signs in the Extended-A sign list and the issue of the ceiling of 65,535 glyphs in OpenType fonts confirms once more that it was the right decision to exclude non-core signs from the NewGardiner font.
 * With NewGardinerOmni, the quality of the appearance cannot match what can be achieved with `UniFontBuilder` when the collection of texts is fixed.
 * Currently only left-to-right text is supported. Code to build fonts for right-to-left horizontal and vertical text is under development.
 
@@ -502,6 +505,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 pip install -e .
+pip install -r requirements-dev.txt # for developers only
 deactivate
 ```
 
@@ -522,6 +526,10 @@ venv\Scripts\activate
 ```
 
 ## Changelog
+
+### 0.1.10
+
+* Added ndigits parameter to UniOmniFontBuilder.
 
 ### 0.1.9
 

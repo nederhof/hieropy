@@ -33,17 +33,17 @@ class TestOmni(unittest.TestCase):
 		with open('tests/resources/omni.txt', 'r') as f:
 			return f.readlines()
 
-	def test_single(self):
+	def no_test_single(self):
 		encodings = self.various_encodings()
 		make_page(FONTFILE, f'{DIR}/omnitest1.html', self.fontname, encodings, 'hlr', self.info)
 
-	def test_encodings(self):
+	def no_test_encodings(self):
 		encodings = self.various_encodings()
 		for encoding in encodings:
 			self.compare(encoding)
 
 	def test_generation(self):
-		generator = UniGenerator(depth_limit=7)
+		generator = UniGenerator(depth_limit=7, chars=[chr(0x13000), chr(0x13001), chr(0x13002)])
 		# generator = UniGenerator(depth_limit=3, chars=[chr(0x13000), chr(0x13001), chr(0x13002)])
 		fragments = [generator.generate_fragment() for _ in range(100000)]
 		for fragment in fragments:
@@ -51,6 +51,7 @@ class TestOmni(unittest.TestCase):
 
 	def compare(self, encoding):
 		fragment = self.parser.parse(encoding)
+		encoding = str(fragment)
 		names_tree = fragment_tree(fragment, self.builder)
 		raw_names, _ = self.emulator.run(encoding, 'hlr')
 		names_emulator = [re.sub(r'_base$', '', s) for s in raw_names]

@@ -20,7 +20,7 @@ class TestOmni(unittest.TestCase):
 
 	@classmethod
 	def setUpClass(cls):
-		cls.builder = UniOmniFontBuilder(debug=True)
+		cls.builder = UniOmniFontBuilder(debug=True, ndigits=2)
 		cls.builder.make_font_initial()
 		cls.builder.syntax_analysis()
 		cls.builder.local_analysis()
@@ -102,15 +102,15 @@ def quotients(n, divisor):
 	r = n - q * divisor
 	return q, q + r
 
-def recalculate_padding(group, w_limit, h_limit, w_pad, h_pad, w_alt=False, h_alt=False):
+def recalculate_padding(group, builder, w_limit, h_limit, w_pad, h_pad, w_alt=False, h_alt=False):
 	if w_limit is not None:
 		group.w_full = w_limit
 	else:
-		group.w_full = (group.w + w_pad) % (MAX_OCTAL_INT+1)
+		group.w_full = (group.w + w_pad) % (builder.max_octal_int+1)
 	if h_limit is not None:
 		group.h_full = h_limit
 	else:
-		group.h_full = (group.h + h_pad) % (MAX_OCTAL_INT+1)
+		group.h_full = (group.h + h_pad) % (builder.max_octal_int+1)
 	if w_alt:
 		group.w_pad = group.w_full
 	else:
@@ -151,7 +151,7 @@ def group_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
 			return lost_pad(group, builder, w_limit, h_limit, w_pad, h_pad)
 
 def vertical_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
-	recalculate_padding(group, w_limit, h_limit, w_pad, h_pad, h_alt=group.alt)
+	recalculate_padding(group, builder, w_limit, h_limit, w_pad, h_pad, h_alt=group.alt)
 	h_q0, h_q1 = quotients(group.h_pad, group.length)
 	for i, g in enumerate(group.groups):
 		if i+1 < len(group.groups):
@@ -160,7 +160,7 @@ def vertical_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
 			group_pad(g, builder, group.w_full, None, 0, h_q1)
 
 def horizontal_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
-	recalculate_padding(group, w_limit, h_limit, w_pad, h_pad, w_alt=group.alt)
+	recalculate_padding(group, builder, w_limit, h_limit, w_pad, h_pad, w_alt=group.alt)
 	w_q0, w_q1 = quotients(group.w_pad, group.length)
 	proper_subgroups = [g for g in group.groups if not isinstance(g, (BracketOpen, BracketClose))]
 	for i, g in enumerate(proper_subgroups):
@@ -170,7 +170,7 @@ def horizontal_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
 			group_pad(g, builder, None, group.h_full, w_q1, 0)
 
 def enclosure_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
-	recalculate_padding(group, w_limit, h_limit, w_pad, h_pad)
+	recalculate_padding(group, builder, w_limit, h_limit, w_pad, h_pad)
 	if group.ver:
 		w_limit_sub = round(SCALEDOWN ** (group.sc+1) * builder.em)
 	else:
@@ -183,7 +183,7 @@ def enclosure_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
 		group_pad(g, builder, w_limit_sub, h_limit_sub, 0, 0)
 
 def basic_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
-	recalculate_padding(group, w_limit, h_limit, w_pad, h_pad)
+	recalculate_padding(group, builder, w_limit, h_limit, w_pad, h_pad)
 	size = builder.em
 	for _ in range(group.sc):
 		size = math.floor(SCALEDOWN * size)
@@ -192,7 +192,7 @@ def basic_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
 		group_pad(g, builder, None, None, 0, 0)
 
 def overlay_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
-	recalculate_padding(group, w_limit, h_limit, w_pad, h_pad)
+	recalculate_padding(group, builder, w_limit, h_limit, w_pad, h_pad)
 	group.w1_full = group.w_full
 	group.h1_full = group.h_full
 	group.w1_pad = max(group.w_full - group.w1, 0)
@@ -221,16 +221,16 @@ def overlay_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
 				group_pad(g, builder, group.w_full, None, 0, h2_q1)
 
 def literal_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
-	recalculate_padding(group, w_limit, h_limit, w_pad, h_pad)
+	recalculate_padding(group, builder, w_limit, h_limit, w_pad, h_pad)
 
 def singleton_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
-	recalculate_padding(group, w_limit, h_limit, w_pad, h_pad)
+	recalculate_padding(group, builder, w_limit, h_limit, w_pad, h_pad)
 
 def blank_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
-	recalculate_padding(group, w_limit, h_limit, w_pad, h_pad)
+	recalculate_padding(group, builder, w_limit, h_limit, w_pad, h_pad)
 
 def lost_pad(group, builder, w_limit, h_limit, w_pad, h_pad):
-	recalculate_padding(group, w_limit, h_limit, w_pad, h_pad)
+	recalculate_padding(group, builder, w_limit, h_limit, w_pad, h_pad)
 
 def bracket_open_pad(group, builder, height):
 	pass
@@ -241,27 +241,27 @@ def bracket_close_pad(group, builder, height):
 ##### to characters
 
 def to_width(builder, n):
-	oc = reversed(list(f'{n:0{LEN_OCT}o}'))
+	oc = reversed(list(f'{n:0{builder.len_oct}o}'))
 	return [builder.width_(d) for d in oc]
 
 def to_height(builder, n):
-	oc = reversed(list(f'{n:0{LEN_OCT}o}'))
+	oc = reversed(list(f'{n:0{builder.len_oct}o}'))
 	return [builder.height_(d) for d in oc]
 
 def to_width_full(builder, n):
-	oc = reversed(list(f'{n:0{LEN_OCT}o}'))
+	oc = reversed(list(f'{n:0{builder.len_oct}o}'))
 	return [builder.width_full_(d) for d in oc]
 
 def to_height_full(builder, n):
-	oc = reversed(list(f'{n:0{LEN_OCT}o}'))
+	oc = reversed(list(f'{n:0{builder.len_oct}o}'))
 	return [builder.height_full_(d) for d in oc]
 
 def to_width_full_scaled(builder, n):
-	oc = reversed(list(f'{n:0{LEN_OCT}o}'))
+	oc = reversed(list(f'{n:0{builder.len_oct}o}'))
 	return [builder.width_full_scaled_(d) for d in oc]
 
 def to_height_full_scaled(builder, n):
-	oc = reversed(list(f'{n:0{LEN_OCT}o}'))
+	oc = reversed(list(f'{n:0{builder.len_oct}o}'))
 	return [builder.height_full_scaled_(d) for d in oc]
 
 def full_dimensions(builder, group):

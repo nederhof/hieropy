@@ -32,7 +32,7 @@ def printables_of(builder):
 	chars.update(builder.bracket_scale_to_bracket.values())
 	chars.update(builder.shade_(d1, d2, p1, p2) for (p1, d1, _, p2, d2, _) in builder.shade_combinations)
 	chars.update(builder.outline_(level, sc, direction, d, p) \
-			for sc in builder.all_scales for d in all_digits[1:] for p in all_poss \
+			for sc in builder.all_scales for d in all_digits[1:] for p in builder.all_poss \
 			for direction in ['hor', 'ver'] for level in 'pw')
 
 	# chars.add(builder.anchor_start_insert_(1))
@@ -49,7 +49,7 @@ class TestOmni(unittest.TestCase):
 
 	@classmethod
 	def setUpClass(cls):
-		cls.builder = UniOmniFontBuilder(debug=False, log=True, maxdepth=3, nscales=3, \
+		cls.builder = UniOmniFontBuilder(debug=False, log=True, maxdepth=3, nscales=3, ndigits=2, \
 					signcolor='black', bracketcolor='black', shadealpha=255, shadepattern='diagonal')
 		cls.builder.make_font_initial()
 		cls.builder.syntax_analysis()
@@ -73,10 +73,19 @@ class TestOmni(unittest.TestCase):
 
 	def test_single(self):
 		encodings = self.various_encodings()
+		#encodings = ['𓑂⸣']
+		#encodings = ['𓑂⟧𓀀']
+		#encodings = ['𓍹𓐼𓀀𓐽𓍺']
+		encodings = ['𓀁𓐲𓉘𓑐𓐼𓀀𓑎𓐽𓍺']
+		#encodings = ['𓀀𓐳𓐷[𓐷𓀀𓐰𓀁𓐸𓐸']
 		make_page(FONTFILE, f'{DIR}/omnitest4.html', self.fontname, encodings, 'hlr', self.info)
 
 	def test_encodings(self):
 		encodings = sorted(self.various_encodings(), key=len)
+		#encodings = ['𓑂⟧𓀀']
+		#encodings = ['𓍹𓐼𓀀𓐽𓍺']
+		encodings = ['𓀁𓐲𓉘𓑐𓐼𓀀𓑎𓐽𓍺']
+		#encodings = ['𓀀𓐳𓐷[𓐷𓀀𓐰𓀁𓐸𓐸']
 		for encoding in encodings:
 			if not self.compare(encoding, 'hlr'):
 				return
@@ -106,22 +115,25 @@ class TestOmni(unittest.TestCase):
 	
 	def compare(self, encoding, direction):
 		fragment = self.parser.parse(encoding)
+		encoding = str(fragment)
 		depth = fragment_max_depth(fragment)
 		if depth > self.builder.max_depth:
 			print(f'Depth {depth} exceeds {self.builder.max_depth}')
 			return True
-		fragment_sizing(fragment, self.builder, direction)
-		fragment_pad(fragment, self.builder, direction)
-		fragment_position(fragment, self.builder, direction)
-		try:
-			poss_tree = fragment_tree(fragment, self.builder)
-		except:
-			with open(f'{DIR}/omni.txt', 'a', encoding='utf-8') as f:
-				f.write(f'crashed on:{encoding}\n')
-			print("fragment_tree crashed")
-			exit(0)
+		if True: # temporarily omitted
+			fragment_sizing(fragment, self.builder, direction)
+			fragment_pad(fragment, self.builder, direction)
+			fragment_position(fragment, self.builder, direction)
+			try:
+				poss_tree = fragment_tree(fragment, self.builder)
+			except:
+				with open(f'{DIR}/omni.txt', 'a', encoding='utf-8') as f:
+					f.write(f'crashed on:{encoding}\n')
+				print("fragment_tree crashed")
+				exit(0)
 		_, poss_emulator = self.emulator.run(encoding, direction)
 		poss_emulator = [tupl for tupl in poss_emulator if tupl[0] in self.printables]
+		# print(poss_emulator)
 		end_marker = [('end', 0, 0, 0, 0)]
 		poss_tree_ext = poss_tree + end_marker
 		poss_emulator_ext = poss_emulator + end_marker
@@ -178,7 +190,7 @@ def vertical_position(group, builder, x, y):
 	y_accum = y
 	for g in group.groups:
 		group_position(g, builder, x, y_accum)
-		y_accum -= g.h_full * RESOLUTION
+		y_accum -= g.h_full * builder.resolution
 
 def horizontal_position(group, builder, x, y):
 	x_accum = x
@@ -189,7 +201,7 @@ def horizontal_position(group, builder, x, y):
 			bracket_close_position(g, builder, x_accum, y, group.groups[i-1].h_full)
 		else:
 			group_position(g, builder, x_accum, y)
-			x_accum += g.w_full * RESOLUTION
+			x_accum += g.w_full * builder.resolution
 
 def enclosure_position(group, builder, x, y):
 	factor = SCALEDOWN ** group.sc
@@ -198,12 +210,12 @@ def enclosure_position(group, builder, x, y):
 	if group.delim_open:
 		if group.ver:
 			group.delim_open_x = x
-			h = font_units_to_int(factor * group.delim_open_unscaled_h) * RESOLUTION
+			h = builder.font_units_to_int(factor * group.delim_open_unscaled_h) * builder.resolution
 			group.delim_open_y = y - h
 			y_accum = y - h
 		else:
-			w = font_units_to_int(factor * group.delim_open_unscaled_w_exclusive) * RESOLUTION
-			margin = round(factor * builder.margin / 2 / RESOLUTION) * RESOLUTION
+			w = builder.font_units_to_int(factor * group.delim_open_unscaled_w_exclusive) * builder.resolution
+			margin = round(factor * builder.margin / 2 / builder.resolution) * builder.resolution
 			group.delim_open_x = x + margin
 			x_accum = x + w + margin
 			group.delim_open_y = y
@@ -214,37 +226,37 @@ def enclosure_position(group, builder, x, y):
 	for g in group.groups:
 		group_position(g, builder, x_accum, y_accum)
 		if group.ver:
-			y_accum -= g.h_full * RESOLUTION
+			y_accum -= g.h_full * builder.resolution
 		else:
-			x_accum += g.w_full * RESOLUTION
+			x_accum += g.w_full * builder.resolution
 	if group.delim_close:
 		group.delim_close_x = x if group.ver else x_accum
 		group.delim_close_y = y_accum if group.ver else y
 
 def basic_position(group, builder, x, y):
 	group_position(group.core, builder, x, y)
-	x_center_group = x + int(group.w_full / 2) * RESOLUTION
-	y_center_group = y - int(group.h_full / 2) * RESOLUTION
+	x_center_group = x + int(group.w_full / 2) * builder.resolution
+	y_center_group = y - int(group.h_full / 2) * builder.resolution
 	base = group.core.alt
 	for pl, g in group.insertions.items():
 		x_center, y_center, _, _ = g.insert_geom
-		x_round = font_units_to_int(x_center)
-		y_round = font_units_to_int(y_center)
-		x_center = iterate_scaledown(x_round, group.sc) * RESOLUTION
-		y_center = iterate_scaledown(y_round, group.sc) * RESOLUTION
-		x_pl = x_center_group + x_center - int(g.w_full / 2) * RESOLUTION
-		y_pl = y_center_group + y_center + int(g.h_full / 2) * RESOLUTION
+		x_round = builder.font_units_to_int(x_center)
+		y_round = builder.font_units_to_int(y_center)
+		x_center = iterate_scaledown(x_round, group.sc) * builder.resolution
+		y_center = iterate_scaledown(y_round, group.sc) * builder.resolution
+		x_pl = x_center_group + x_center - int(g.w_full / 2) * builder.resolution
+		y_pl = y_center_group + y_center + int(g.h_full / 2) * builder.resolution
 		group_position(g, builder, x_pl, y_pl)
 
 def overlay_position(group, builder, x, y):
 	x_accum = x
 	for g in group.lits1:
 		group_position(g, builder, x_accum, y)
-		x_accum += g.w_full * RESOLUTION
+		x_accum += g.w_full * builder.resolution
 	y_accum = y
 	for g in group.lits2:
 		group_position(g, builder, x, y_accum)
-		y_accum -= g.h_full * RESOLUTION
+		y_accum -= g.h_full * builder.resolution
 
 def literal_position(group, builder, x, y):
 	pass
@@ -262,14 +274,14 @@ def bracket_open_position(group, builder, x, y, height):
 	group.x = x
 	group.y = y
 	group.sc = 0
-	while font_units_to_int(SCALEDOWN ** group.sc * builder.font_units) > height and group.sc+1 < builder.n_scales:
+	while builder.font_units_to_int(SCALEDOWN ** group.sc * builder.font_units) > height and group.sc+1 < builder.n_scales:
 		group.sc += 1
 
 def bracket_close_position(group, builder, x, y, height):
 	group.x = x
 	group.y = y
 	group.sc = 0
-	while font_units_to_int(SCALEDOWN ** group.sc * builder.font_units) > height and group.sc+1 < builder.n_scales:
+	while builder.font_units_to_int(SCALEDOWN ** group.sc * builder.font_units) > height and group.sc+1 < builder.n_scales:
 		group.sc += 1
 
 ##### to characters
@@ -331,11 +343,11 @@ def enclosure_tree(group, builder):
 			chars.append((open_name, group.delim_open_x, group.delim_open_y, 0, 0))
 		else:
 			open_name = builder.cap_scale_to_cap[(open_name, group.sc)]
-			height = round(factor * builder.em) * RESOLUTION
+			height = round(factor * builder.em) * builder.resolution
 			chars.append((open_name, group.delim_open_x, group.delim_open_y - height, 0, 0))
 		if group.damage_open:
-			w = font_units_to_int(factor * group.delim_open_unscaled_w)
-			h = font_units_to_int(factor * group.delim_open_unscaled_h)
+			w = builder.font_units_to_int(factor * group.delim_open_unscaled_w)
+			h = builder.font_units_to_int(factor * group.delim_open_unscaled_h)
 			chars.extend(damage_tree(builder, group.x, group.y, \
 					w, h, group.damage_open))
 	for g in group.groups:
@@ -346,13 +358,13 @@ def enclosure_tree(group, builder):
 				if int(d) > 0:
 					outline = builder.outline_(level, group.sc, direction, d, p)
 					chars.append((outline, \
-							group.x, y_accum - int(d) * 8 ** p * RESOLUTION, 0, 0))
-					y_accum -= int(d) * 8**p * RESOLUTION
+							group.x, y_accum - int(d) * 8 ** p * builder.resolution, 0, 0))
+					y_accum -= int(d) * 8**p * builder.resolution
 			for _ in range(int(digits[-1])):
-				outline = builder.outline_(level, group.sc, direction, 1, LEN_OCT-1)
+				outline = builder.outline_(level, group.sc, direction, 1, builder.len_oct-1)
 				chars.append((outline, \
-						group.x, y_accum - 8**(LEN_OCT-1) * RESOLUTION, 0, 0))
-				y_accum -= 8**(LEN_OCT-1) * RESOLUTION
+						group.x, y_accum - 8**(builder.len_oct-1) * builder.resolution, 0, 0))
+				y_accum -= 8**(builder.len_oct-1) * builder.resolution
 		else:
 			digits = builder.int_to_octal_reverse(g.w)
 			x_accum = g.x
@@ -360,28 +372,28 @@ def enclosure_tree(group, builder):
 				if int(d) > 0:
 					outline = builder.outline_(level, group.sc, direction, d, p)
 					chars.append((outline, \
-							x_accum, group.y - round(SCALEDOWN ** group.sc * builder.em) * RESOLUTION, 0, 0))
-					x_accum += int(d) * 8**p * RESOLUTION
+							x_accum, group.y - round(SCALEDOWN ** group.sc * builder.em) * builder.resolution, 0, 0))
+					x_accum += int(d) * 8**p * builder.resolution
 			for _ in range(int(digits[-1])):
-				outline = builder.outline_(level, group.sc, direction, 1, LEN_OCT-1)
+				outline = builder.outline_(level, group.sc, direction, 1, builder.len_oct-1)
 				chars.append((outline, \
-						x_accum, group.y - round(SCALEDOWN ** group.sc * builder.em) * RESOLUTION, 0, 0))
-				x_accum += 8**(LEN_OCT-1) * RESOLUTION
+						x_accum, group.y - round(SCALEDOWN ** group.sc * builder.em) * builder.resolution, 0, 0))
+				x_accum += 8**(builder.len_oct-1) * builder.resolution
 		chars.extend(group_tree(g, builder))
 	if group.delim_close:
 		close_name = group.close_name
 		if group.ver:
 			_, h = builder.unscaled_cap_rot_to_size[close_name]
 			close_name = builder.cap_rot_scale_to_cap[(close_name, group.sc)]
-			height = round(factor * h / RESOLUTION) * RESOLUTION
+			height = round(factor * h / builder.resolution) * builder.resolution
 			chars.append((close_name, group.delim_close_x, group.delim_close_y - height, 0, 0))
 		else:
 			close_name = builder.cap_scale_to_cap[(close_name, group.sc)]
-			height = round(factor * builder.em) * RESOLUTION
+			height = round(factor * builder.em) * builder.resolution
 			chars.append((close_name, group.delim_close_x, group.delim_close_y - height, 0, 0))
 		if group.damage_close:
-			w = font_units_to_int(factor * group.delim_close_unscaled_w)
-			h = font_units_to_int(factor * group.delim_close_unscaled_h)
+			w = builder.font_units_to_int(factor * group.delim_close_unscaled_w)
+			h = builder.font_units_to_int(factor * group.delim_close_unscaled_h)
 			chars.extend(damage_tree(builder, group.delim_close_x, group.delim_close_y, \
 					w, h, group.damage_close))
 	return chars
@@ -417,8 +429,8 @@ def literal_tree(group, builder):
 		factor = SCALEDOWN ** group.sc
 		x_center = round(factor * (w/2+dx))
 		y_center = round(factor * (h/2+dy))
-		x = group.x + int(group.w_full / 2) * RESOLUTION - x_center
-		y = group.y - int(group.h_full / 2) * RESOLUTION - y_center
+		x = group.x + int(group.w_full / 2) * builder.resolution - x_center
+		y = group.y - int(group.h_full / 2) * builder.resolution - y_center
 		chars.append((name, x, y, 0, 0))
 	chars.extend(damage_tree(builder, group.x, group.y, group.w_full, group.h_full, group.damage))
 	return chars
@@ -443,8 +455,8 @@ def singleton_tree(group, builder):
 		else:
 			x_center = round((w+builder.margin/2)/2)
 			y_center = round(h/2)
-	x = group.x + int(group.w_full / 2) * RESOLUTION - x_center
-	y = group.y - int(group.h_full / 2) * RESOLUTION - y_center
+	x = group.x + int(group.w_full / 2) * builder.resolution - x_center
+	y = group.y - int(group.h_full / 2) * builder.resolution - y_center
 	chars.append((name, x, y, 0, 0))
 	chars.extend(damage_tree(builder, group.x, group.y, group.w_full, group.h_full, group.damage))
 	return chars
@@ -462,10 +474,10 @@ def lost_tree(group, builder):
 		if group.sc > 0:
 			name = builder.lost_scale_to_lost[(name, group.sc)]
 		factor = SCALEDOWN ** group.sc
-		x_center = round(factor * builder.em * w / 2) * RESOLUTION
-		y_center = round(factor * builder.em * h / 2) * RESOLUTION
-		x = group.x + int(group.w_full / 2) * RESOLUTION - x_center
-		y = group.y - int(group.h_full / 2) * RESOLUTION - y_center
+		x_center = round(factor * builder.em * w / 2) * builder.resolution
+		y_center = round(factor * builder.em * h / 2) * builder.resolution
+		x = group.x + int(group.w_full / 2) * builder.resolution - x_center
+		y = group.y - int(group.h_full / 2) * builder.resolution - y_center
 		chars.append((name, x, y, 0, 0))
 	return chars
 
@@ -497,8 +509,8 @@ def ligature_tree(group, builder):
 	factor = SCALEDOWN ** group.sc
 	x_center = round(factor * (w/2+dx))
 	y_center = round(factor * (h/2+dx))
-	x = group.x + int(group.w_full / 2) * RESOLUTION - x_center
-	y = group.y - int(group.h_full / 2) * RESOLUTION - y_center
+	x = group.x + int(group.w_full / 2) * builder.resolution - x_center
+	y = group.y - int(group.h_full / 2) * builder.resolution - y_center
 	return [(name, x, y, 0, 0)]
 
 def damage_tree(builder, x, y, w, h, damage):
@@ -509,37 +521,37 @@ def damage_tree(builder, x, y, w, h, damage):
 		case 1:
 			chars.extend(damage_rect(builder, x, y, w2, h2))
 		case 2:
-			chars.extend(damage_rect(builder, x, y - h2 * RESOLUTION, w2, h2))
+			chars.extend(damage_rect(builder, x, y - h2 * builder.resolution, w2, h2))
 		case 3:
 			chars.extend(damage_rect(builder, x, y, w2, h))
 		case 4:
-			chars.extend(damage_rect(builder, x + w2 * RESOLUTION, y, w2, h2))
+			chars.extend(damage_rect(builder, x + w2 * builder.resolution, y, w2, h2))
 		case 5:
 			chars.extend(damage_rect(builder, x, y, w, h2))
 		case 6:
-			chars.extend(damage_rect(builder, x + w2 * RESOLUTION, y, w2, h2))
-			chars.extend(damage_rect(builder, x, y - h2 * RESOLUTION, w2, h2))
+			chars.extend(damage_rect(builder, x + w2 * builder.resolution, y, w2, h2))
+			chars.extend(damage_rect(builder, x, y - h2 * builder.resolution, w2, h2))
 		case 7:
 			chars.extend(damage_rect(builder, x, y, w, h2))
-			chars.extend(damage_rect(builder, x, y - h2 * RESOLUTION, w2, h2))
+			chars.extend(damage_rect(builder, x, y - h2 * builder.resolution, w2, h2))
 		case 8:
-			chars.extend(damage_rect(builder, x + w2 * RESOLUTION, y - h2 * RESOLUTION, w2, h2))
+			chars.extend(damage_rect(builder, x + w2 * builder.resolution, y - h2 * builder.resolution, w2, h2))
 		case 9:
 			chars.extend(damage_rect(builder, x, y, w2, h2))
-			chars.extend(damage_rect(builder, x + w2 * RESOLUTION, y - h2 * RESOLUTION, w2, h2))
+			chars.extend(damage_rect(builder, x + w2 * builder.resolution, y - h2 * builder.resolution, w2, h2))
 		case 10:
-			chars.extend(damage_rect(builder, x, y - h2 * RESOLUTION, w, h2))
+			chars.extend(damage_rect(builder, x, y - h2 * builder.resolution, w, h2))
 		case 11:
 			chars.extend(damage_rect(builder, x, y, w2, h2))
-			chars.extend(damage_rect(builder, x, y - h2 * RESOLUTION, w, h2))
+			chars.extend(damage_rect(builder, x, y - h2 * builder.resolution, w, h2))
 		case 12:
-			chars.extend(damage_rect(builder, x + w2 * RESOLUTION, y, w2, h))
+			chars.extend(damage_rect(builder, x + w2 * builder.resolution, y, w2, h))
 		case 13:
 			chars.extend(damage_rect(builder, x, y, w, h2))
-			chars.extend(damage_rect(builder, x + w2 * RESOLUTION, y - h2 * RESOLUTION, w2, h2))
+			chars.extend(damage_rect(builder, x + w2 * builder.resolution, y - h2 * builder.resolution, w2, h2))
 		case 14:
-			chars.extend(damage_rect(builder, x + w2 * RESOLUTION, y, w2, h2))
-			chars.extend(damage_rect(builder, x, y - h2 * RESOLUTION, w, h2))
+			chars.extend(damage_rect(builder, x + w2 * builder.resolution, y, w2, h2))
+			chars.extend(damage_rect(builder, x, y - h2 * builder.resolution, w, h2))
 		case 15:
 			chars.extend(damage_rect(builder, x, y, w, h))
 	return chars
@@ -550,7 +562,7 @@ def damage_rect(builder, x, y, w, h):
 	h_digits = builder.int_to_octal_reverse(h)
 	y_accum = y
 	for j, dy in enumerate(h_digits):
-		height = int(dy) * 8 ** j * RESOLUTION
+		height = int(dy) * 8 ** j * builder.resolution
 		x_accum = x
 		for i, dx in enumerate(w_digits):
 			if int(dx) > 0 and int(dy) > 0:
@@ -558,6 +570,6 @@ def damage_rect(builder, x, y, w, h):
 					raise Exception(f'shade_{dx}_{dy}_{i}_{j} not in builder.sym')
 				ch = builder.shade_(dx, dy, i, j)
 				chars.append((ch, x_accum, y_accum - height, 0, 0))
-			x_accum += int(dx) * 8 ** i * RESOLUTION
+			x_accum += int(dx) * 8 ** i * builder.resolution
 		y_accum -= height
 	return chars

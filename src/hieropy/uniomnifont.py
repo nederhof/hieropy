@@ -22,7 +22,7 @@ from .options import Options, MeasureOptions
 from .uninames import all_chars
 from .uniproperties import allowed_rotations, rotation_adjustment, \
 	overlay_ligatures, vertical_ligatures, horizontal_ligatures, insertion_list, \
-	lr_symmetric_chars
+	lr_symmetric_chars, tb_symmetric_chars, circular_chars
 from .printables import em_size_of, PrintedPilWithoutExtras, PlaneRestricted
 
 import logging
@@ -50,27 +50,9 @@ all_remainders = list(range(MAX_COUNT))
 # Dimensions are in octal (least-significant digit first)
 all_digits = list(range(8))
 odd_digits = [d for d in all_digits if d%2 == 1]
-LEN_OCT = 3 # number of octal digits
-all_poss = list(range(LEN_OCT))
-LEN_BIN = 3 * LEN_OCT # number of bits in binary expansion
-
-# EM_EXCLUSIVE is font size excluding margin around signs. 
-# FONT_UNITS_EXCLUSIVE is assumed to be 1000 (matching the source font).
-EM_EXCLUSIVE = 50
-RESOLUTION = 20
-FONT_UNITS_EXCLUSIVE = EM_EXCLUSIVE * RESOLUTION
-
-def int_to_octal(n):
-	return f'{n:0{LEN_OCT}o}'
 
 def int_to_binary(n):
 	return f'{n:03b}'
-
-def font_units_to_int(n): # , exclusive=True):
-	return round(n / RESOLUTION)
-
-def font_units_to_octal(n):
-	return int_to_octal(font_units_to_int(n))
 
 def quotient_remain(n, divisor):
 	q = n // divisor
@@ -83,15 +65,11 @@ SCALEDOWN = 3/4
 # depending on the more significant octal digit?
 all_down_carry = [0, 2, 4, 6]
 
-MAX_OCTAL_INT = 8 ** LEN_OCT - 1
-
 def iterate_scaledown(val, sc):
 	out = int(val)
 	for _ in range(sc):
 		out = int(SCALEDOWN * out)
 	return out
-
-all_advances = list(set(d * 8**p for d in all_digits for p in all_poss))
 
 class MeasuredInsertion:
 	def __init__(self, place, x, y):
@@ -148,22 +126,27 @@ class MeasuredInsertion:
 		self.ext_bottom += 1
 
 class UniOmniFontBuilder:
-	def __init__(self, sep=8, signcolor='black', bracketcolor='black', shadecolor='black', 
-			shadealpha=255, shadepattern='diagonal', fontname=HIERO_FONT_OMNI_NAME, 
-			maxdepth=4, nscales=5, gap=0.1, 
-			debug=False, log=False):
-		self.em = EM_EXCLUSIVE + round(sep / 100 * EM_EXCLUSIVE)
-		self.font_units = self.em * RESOLUTION
+	def __init__(self, ndigits=3, sep=0.08, maxdepth=4, nscales=5,
+			signcolor='black', bracketcolor='black', shadecolor='black', shadealpha=255, shadepattern='diagonal', 
+			fontname=HIERO_FONT_OMNI_NAME, gap=0.1, debug=False, log=False):
+		self.len_oct = ndigits
+		self.max_octal_int = 8 ** self.len_oct - 1
+		self.all_poss = list(range(self.len_oct))
+		FONT_UNITS_EXCLUSIVE = 1000 # as in NewGardiner
+		self.em_exclusive = 50 if ndigits == 3 else 25
+		self.resolution = 1000 // self.em_exclusive
+		self.em = self.em_exclusive + round(sep * self.em_exclusive)
+		self.font_units = self.em * self.resolution
 		self.margin = self.font_units - FONT_UNITS_EXCLUSIVE
 		self.sep = self.margin / FONT_UNITS_EXCLUSIVE
+		self.max_depth = maxdepth
+		self.n_scales = nscales
 		self.signcolor = signcolor
 		self.bracketcolor = bracketcolor
 		self.shadecolor = shadecolor
 		self.shadealpha = shadealpha
 		self.shadepattern = shadepattern
 		self.fontname = fontname
-		self.max_depth = maxdepth
-		self.n_scales = nscales
 		self.gap = gap
 		self.debug = debug
 		self.log = log
@@ -171,9 +154,12 @@ class UniOmniFontBuilder:
 		self.all_scales = list(range(self.n_scales))
 
 	def enclosure_descent(self, sc):
-		outer_scale = SCALEDOWN ** sc * self.em * RESOLUTION
-		inner_scale = SCALEDOWN ** (sc+1) * self.em * RESOLUTION
+		outer_scale = SCALEDOWN ** sc * self.em * self.resolution
+		inner_scale = SCALEDOWN ** (sc+1) * self.em * self.resolution
 		return round((outer_scale - inner_scale) / 2)
+
+	def font_units_to_int(self, n):
+		return round(n / self.resolution)
 
 	def make_font(self, path):
 		self.make_font_initial()
@@ -207,7 +193,7 @@ class UniOmniFontBuilder:
 
 	def add_char(self, ch, color, expand=False):
 		if expand:
-			name, w, h = self.builder.copy_glyph_scale(ch, self.em / EM_EXCLUSIVE, color=color)
+			name, w, h = self.builder.copy_glyph_scale(ch, self.em / self.em_exclusive, color=color)
 		else:
 			name, w, h = self.builder.copy_glyph(ch, color=color)
 		self.sym[ch] = name
@@ -235,32 +221,32 @@ class UniOmniFontBuilder:
 
 	def add_shade(self, w, h, name, label1, label2):
 		if self.debug:
-			name_font = self.builder.add_shade_diagonal(w, h, RESOLUTION, name=name)
+			name_font = self.builder.add_shade_diagonal(w, h, self.resolution, name=name)
 			self.sym[name] = name_font
 			self.base[name] = self.builder.add_aux_base(name, label1, label2)
 			return name
 		else:
 			if self.shadepattern == 'diagonal':
-				name_font = self.builder.add_shade_diagonal(w, h, RESOLUTION, 
+				name_font = self.builder.add_shade_diagonal(w, h, self.resolution, 
 						color=self.shadecolor, alpha=self.shadealpha)
 			elif self.shadepattern == 'uniform':
 				name_font = self.builder.add_shade_uniform(w, h,
 						color=self.shadecolor, alpha=self.shadealpha)
 			else:
-				name_font = self.builder.add_shade_random(w, h, 3 * RESOLUTION,
+				name_font = self.builder.add_shade_random(w, h, 3 * self.resolution,
 						color=self.shadecolor, alpha=self.shadealpha)
 			self.sym[name] = name_font
 			return name_font
 
 	def add_lost(self, width, height, ch):
-		w = round(width * self.em) * RESOLUTION
-		h = round(height * self.em) * RESOLUTION
+		w = round(width * self.em) * self.resolution
+		h = round(height * self.em) * self.resolution
 		if self.shadepattern == 'diagonal':
-			name = self.builder.add_shade_diagonal(w, h, RESOLUTION, ch=ch)
+			name = self.builder.add_shade_diagonal(w, h, self.resolution, ch=ch)
 		elif self.shadepattern == 'uniform':
 			name = self.builder.add_shade_uniform(w, h, ch=ch)
 		else:
-			name = self.builder.add_shade_random(w, h, 3 * RESOLUTION, ch=ch)
+			name = self.builder.add_shade_random(w, h, 3 * self.resolution, ch=ch)
 		self.sym[ch] = name
 		if self.debug:
 			self.base[name] = self.builder.copy_base(ch)
@@ -275,8 +261,8 @@ class UniOmniFontBuilder:
 				name_font = self.builder.add_outline_p(w, h, thickness, name=debug_name, color=self.signcolor)
 		else:
 			brick_thickness = round(thickness)
-			brick_length = round(self.em / 8 * RESOLUTION)
-			brick_interval = round(self.em / 5 * RESOLUTION)
+			brick_length = round(self.em / 8 * self.resolution)
+			brick_interval = round(self.em / 5 * self.resolution)
 			if rot:
 				name_font = self.builder.add_outline_w_rot(w, h, \
 						thickness, brick_thickness, brick_length, brick_interval, name=debug_name, color=self.signcolor)
@@ -329,7 +315,7 @@ class UniOmniFontBuilder:
 			name, width, height = self.add_char(ch, self.signcolor)
 			self.unmirrored_signs.append(name)
 			self.unscaled_sign_to_size[name] = (width, height, 0, 0)
-			if ch not in lr_symmetric_chars():
+			if ch not in lr_symmetric_chars() and ch not in circular_chars():
 				name_mir = self.builder.add_transform(name, 1, 0, True, color=self.signcolor)[0]
 				self.unscaled_sign_to_size[name_mir] = (width, height, 0, 0)
 				self.name_to_mirrored[name] = name_mir
@@ -341,7 +327,7 @@ class UniOmniFontBuilder:
 				self.builder.add_vs(vs, ord(ch), name_rot)
 				self.unmirrored_signs.append(name_rot)
 				self.unscaled_sign_to_size[name_rot] = (width_rot, height_rot, 0, 0)
-				if ch not in lr_symmetric_chars():
+				if rot not in [90,270] or ch not in tb_symmetric_chars():
 					name_rot_mir = self.builder.add_transform(name, 1, rot_fine, True, color=self.signcolor)[0]
 					self.unscaled_sign_to_size[name_rot_mir] = (width_rot, height_rot, 0, 0)
 					self.name_to_mirrored[name_rot] = name_rot_mir
@@ -375,11 +361,16 @@ class UniOmniFontBuilder:
 					name, width, height = self.add_char(insertion.ch, self.signcolor)
 					self.unmirrored_signs.append(name)
 					self.unscaled_sign_to_size[name] = (width, height, 0, 0)
-					name_mir = self.builder.add_transform(name, 1, 0, True, color=self.signcolor)[0]
-					self.unscaled_sign_to_size[name_mir] = (width, height, 0, 0)
-					self.name_to_mirrored[name] = name_mir
+					# For right to left text, this would have to be extended.
+					# name_mir = self.builder.add_transform(name, 1, 0, True, color=self.signcolor)[0]
+					# self.unscaled_sign_to_size[name_mir] = (width, height, 0, 0)
+					# self.name_to_mirrored[name] = name_mir
 				else:
 					name = self.sym[insertion.ch]
+				if rot:
+					name, width, height = self.builder.add_transform(name, 1, rot, False, color=self.signcolor)
+					self.unmirrored_signs.append(name)
+					self.unscaled_sign_to_size[name] = (width, height, 0, 0)
 				ch = insertion.ch
 			else:
 				name = base_name
@@ -526,8 +517,8 @@ class UniOmniFontBuilder:
 		for lost, (w,h) in self.unscaled_lost_to_size.items():
 			for sc in range(1, self.n_scales):
 				factor = SCALEDOWN ** sc
-				width = round(factor * w * self.em) * RESOLUTION
-				height = round(factor * h * self.em) * RESOLUTION
+				width = round(factor * w * self.em) * self.resolution
+				height = round(factor * h * self.em) * self.resolution
 				self.lost_scale_to_lost[(lost, sc)] = self.add_shade(width, height, \
 						f'lost_{w}_{h}_{sc}', 'lost', f'{sc}')
 		vs1 = ord(num_to_variation(1))
@@ -616,7 +607,7 @@ class UniOmniFontBuilder:
 			self.add_aux(f'insert_y_{d}', f'y{d}', 'ins')
 		self.minus_insert = self.add_aux(f'minus_insert', 'min', 'in')
 		for d in all_digits[1:]:
-			for p in all_poss:
+			for p in self.all_poss:
 				self.add_aux(f'insert_w_{d}_{p}', f'{d}.{p}', 'inw')
 				self.add_aux(f'insert_h_{d}_{p}', f'{d}.{p}', 'inh')
 				self.add_aux(f'insert_w_{-d}_{p}', f'{-d}.{p}', 'inw')
@@ -630,7 +621,7 @@ class UniOmniFontBuilder:
 		self.size_reverse_sep = self.add_aux('size_reverse_sep', 'rev', 'sep')
 		self.size_first_sep = self.add_aux('size_first_sep', 'fir', 'sep')
 		self.nil_scale = self.add_aux('nil_scale', 'nil', 'sc')
-		for p in all_poss:
+		for p in self.all_poss:
 			self.add_aux(f'pos_reverse_{p}', f'{p}', 'rev')
 			self.add_aux(f'pos_reverse_final_{p}', f'{p}', 'rvf')
 		for s in self.all_scales + [self.n_scales]:
@@ -690,10 +681,10 @@ class UniOmniFontBuilder:
 		for d in all_remainders:
 			self.add_aux(f'remain_{d}', f'{d}', 're')
 			self.add_aux(f'remain_final_{d}', f'{d}', 'ref')
-		for p in all_poss:
+		for p in self.all_poss:
 			self.add_aux(f'pos_unreverse_{p}', f'{p}', 'urv')
 		# for shading
-		for p in all_poss:
+		for p in self.all_poss:
 			self.add_aux(f'left_shade_pos_{p}', f'{p}', 'l')
 			self.add_aux(f'half_left_shade_pos_{p}', f'{p}', 'hl')
 			self.add_aux(f'half_right_shade_pos_{p}', f'{p}', 'hr')
@@ -710,32 +701,32 @@ class UniOmniFontBuilder:
 				self.add_aux(f'w_shade_{d}_{p}', f'{d}.{p}', 'wp')
 				self.add_aux(f'h_shade_{d}_{p}', f'{d}.{p}', 'hp')
 		self.shade_combinations = []
-		for p1 in all_poss:
+		for p1 in self.all_poss:
 			for d1 in all_digits:
 				w = d1 * 8**p1
 				if d1 > 0 and w <= 1.5 * self.em:
-					for p2 in all_poss:
+					for p2 in self.all_poss:
 						for d2 in all_digits:
 							h = d2 * 8**p2
 							if d2 > 0 and h <= 1.5 * self.em:
 								self.shade_combinations.append((p1, d1, w, p2, d2, h))
 		for p1, d1, w, p2, d2, h in self.shade_combinations:
-			self.add_shade(w * RESOLUTION, h * RESOLUTION, f'shade_{d1}_{d2}_{p1}_{p2}', f'{d1}.{d2}', f'{p1}.{p2}')
+			self.add_shade(w * self.resolution, h * self.resolution, f'shade_{d1}_{d2}_{p1}_{p2}', f'{d1}.{d2}', f'{p1}.{p2}')
 		# for substitution
 		self.no_mirror = self.add_aux(f'no_mirror', f'no', 'mir')
-		for p in all_poss:
+		for p in self.all_poss:
 			self.add_aux(f'pos_bracket_{p}', f'{p}', 'br')
 		for d in self.all_depths:
 			self.add_aux(f'bracket_anchor_{d}', f'{d}', 'ba')
 		for d in all_digits[1:]:
 			PLAIN_THICKNESS = 45
 			WALLED_THICKNESS = 40
-			for p in all_poss:
-				if p == LEN_OCT-1 and d > 1:
+			for p in self.all_poss:
+				if p == self.len_oct-1 and d > 1:
 					continue
-				size = round(d * 8**p) * RESOLUTION
+				size = round(d * 8**p) * self.resolution
 				for sc in self.all_scales:
-					unit = round(SCALEDOWN**sc * self.em) * RESOLUTION
+					unit = round(SCALEDOWN**sc * self.em) * self.resolution
 					plain_thickness = round(SCALEDOWN**sc * PLAIN_THICKNESS)
 					walled_thickness = round(SCALEDOWN**sc * WALLED_THICKNESS)
 					self.add_outline('plain', False, size, unit, plain_thickness, \
@@ -747,12 +738,12 @@ class UniOmniFontBuilder:
 					self.add_outline('walled', True, unit, size, walled_thickness, \
 							f'w_outline_{sc}_ver_{d}_{p}', f'o{sc}', f'{d}.{p}')
 		for d in all_digits[2:]:
-			p = LEN_OCT-1
+			p = self.len_oct-1
 			for sc in self.all_scales:
 				for level in 'pw':
 					for direction in ['hor', 'ver']:
 						self.add_aux(f'{level}_outline_{sc}_{direction}_{d}_{p}', f'o{sc}', f'{d}.{p}')
-		for p in all_poss:
+		for p in self.all_poss:
 			for sc in self.all_scales:
 				for level in 'pw':
 					for direction in ['hor', 'ver']:
@@ -760,17 +751,17 @@ class UniOmniFontBuilder:
 		# for positioning
 		self.start_hor = self.add_aux('start_hor', 'st', 'hor', cls=BASE)
 		self.start_ver = self.add_aux('start_ver', 'st', 'ver', cls=BASE)
-		for p in all_poss:
+		for p in self.all_poss:
 			self.add_aux(f'to_advance_{p}', 'to', f'{p}')
 		self.to_anchor_start = self.add_aux('to_anchor_start', 'to', 'ans')
 		self.to_anchor_end = self.add_aux('to_anchor_end', 'to', 'ane')
 		self.to_anchor_size = self.add_aux('to_anchor_size', 'to', 'siz')
 		for d in all_digits:
-			for p in all_poss:
+			for p in self.all_poss:
 				adv = d * 8**p
 				if p != 0 and adv == 0:
 					continue
-				adv_units = RESOLUTION * adv
+				adv_units = self.resolution * adv
 				self.add_aux(f'advance_w_{adv}', f'{adv}', 'adw')
 				self.add_aux(f'advance_h_{adv}', f'{adv}', 'adh')
 				self.add_aux(f'advance_w_base_{adv}', f'{adv}', 'awb', cls=BASE, x_advance=adv_units)
@@ -938,10 +929,14 @@ class UniOmniFontBuilder:
 	def cap_anchor_end_(self, d):
 		return self.sym[f'cap_anchor_end_{d}']
 
+	def int_to_octal(self, n):
+		return f'{n:0{self.len_oct}o}'
+	def font_units_to_octal(self, n):
+		return self.int_to_octal(self.font_units_to_int(n))
 	def font_units_to_octal_reverse(self, n):
-		return list(reversed(font_units_to_octal(n)))
+		return list(reversed(self.font_units_to_octal(n)))
 	def int_to_octal_reverse(self, n):
-		return list(reversed(int_to_octal(n)))
+		return list(reversed(self.int_to_octal(n)))
 	def to_octal_width(self, n):
 		return [self.width_(d) for d in self.font_units_to_octal_reverse(n)] # , exclusive=exclusive)]
 	def to_octal_height(self, n):
@@ -960,9 +955,9 @@ class UniOmniFontBuilder:
 	def to_octal_size_full_scaled(self, n):
 		return [self.size_full_scaled_(d) for d in self.font_units_to_octal_reverse(n)]
 	def octal_max_width(self):
-		return LEN_OCT * [self.limit_width_(7)]
+		return self.len_oct * [self.limit_width_(7)]
 	def octal_max_height(self):
-		return LEN_OCT * [self.limit_height_(7)]
+		return self.len_oct * [self.limit_height_(7)]
 	def to_octal_size(self, n):
 		return [self.size_(d) for d in self.font_units_to_octal_reverse(n)]
 	def int_to_octal_size(self, n):
@@ -1207,8 +1202,8 @@ class UniOmniFontBuilder:
 		self.add_class('@OuterHeight', ['@Outer', '@Height'])
 		self.add_class('@OuterSize', ['@Outer', '@Size'])
 		self.add_class('@OuterNil', ['@Outer', self.nil])
-		self.add_class('@Posreverse', [self.pos_reverse_(p) for p in all_poss])
-		self.add_class('@Posreversefinal', [self.pos_reverse_final_(p) for p in all_poss])
+		self.add_class('@Posreverse', [self.pos_reverse_(p) for p in self.all_poss])
+		self.add_class('@Posreversefinal', [self.pos_reverse_final_(p) for p in self.all_poss])
 
 		self.add_class('@Carry', [self.carry_(d) for d in all_digits])
 		self.add_class('@NoCarry', ['@Size', self.size_sep])
@@ -1233,7 +1228,7 @@ class UniOmniFontBuilder:
 		self.add_class('@Quotient', [self.quotient_(b) for b in [0,1]])
 		self.add_class('@Remain', [self.remain_(n) for n in all_remainders])
 		self.add_class('@RemainFinal', [self.remain_final_(n) for n in all_remainders])
-		self.add_class('@Posunreverse', [self.pos_unreverse_(p) for p in all_poss])
+		self.add_class('@Posunreverse', [self.pos_unreverse_(p) for p in self.all_poss])
 		self.add_class('@SizeFull', [self.size_full_(d) for d in all_digits])
 		self.add_class('@WidthFull', [self.width_full_(d) for d in all_digits])
 		self.add_class('@HeightFull', [self.height_full_(d) for d in all_digits])
@@ -1245,7 +1240,7 @@ class UniOmniFontBuilder:
 
 		# for substitution
 
-		self.add_class('@PosBracket', [self.pos_bracket_(p) for p in all_poss])
+		self.add_class('@PosBracket', [self.pos_bracket_(p) for p in self.all_poss])
 		self.add_class('@BracketScaled', self.brackets_scaled)
 		self.add_class('@BracketScaledLarger', [self.bracket_scale_to_bracket[(bracket, sc)] \
 				for bracket in self.brackets for sc in self.all_scales if sc+1 < self.n_scales])
@@ -1253,16 +1248,16 @@ class UniOmniFontBuilder:
 		# for shading
 
 		self.add_class('@WShadePos', \
-			[self.left_shade_pos_(p) for p in all_poss] +
-			[self.half_left_shade_pos_(p) for p in all_poss] +
-			[self.half_right_shade_pos_(p) for p in all_poss] +
-			[self.w_shade_pos_(p) for p in all_poss] +
-			[self.half_w_shade_pos_(p) for p in all_poss])
+			[self.left_shade_pos_(p) for p in self.all_poss] +
+			[self.half_left_shade_pos_(p) for p in self.all_poss] +
+			[self.half_right_shade_pos_(p) for p in self.all_poss] +
+			[self.w_shade_pos_(p) for p in self.all_poss] +
+			[self.half_w_shade_pos_(p) for p in self.all_poss])
 		self.add_class('@HShadePos', \
-			[self.down_shade_pos_(p) for p in all_poss] +
-			[self.half_down_shade_pos_(p) for p in all_poss] +
-			[self.h_shade_pos_(p) for p in all_poss] +
-			[self.half_h_shade_pos_(p) for p in all_poss])
+			[self.down_shade_pos_(p) for p in self.all_poss] +
+			[self.half_down_shade_pos_(p) for p in self.all_poss] +
+			[self.h_shade_pos_(p) for p in self.all_poss] +
+			[self.half_h_shade_pos_(p) for p in self.all_poss])
 		self.add_class('@WidthFullOdd', [self.width_full_(d) for d in odd_digits])
 		self.add_class('@HeightFullOdd', [self.height_full_(d) for d in odd_digits])
 
@@ -1273,16 +1268,16 @@ class UniOmniFontBuilder:
 		self.add_class('@AnchorEndW', [self.anchor_end_w_(depth) for depth in self.all_depths])
 		self.add_class('@AnchorEndH', [self.anchor_end_h_(depth) for depth in self.all_depths])
 		self.add_class('@Anchorinsertmid', [self.anchor_insert_mid_(depth) for depth in self.all_depths[:-1]])
-		self.add_class('@ToAdvance', [self.to_advance_(p) for p in all_poss])
+		self.add_class('@ToAdvance', [self.to_advance_(p) for p in self.all_poss])
 		self.add_class('@CapAnchorStart', [self.cap_anchor_start_(d) for d in self.all_depths])
 		self.add_class('@CapAnchorEnd', [self.cap_anchor_end_(d) for d in self.all_depths])
 		self.add_class('@Outlinepos', [self.outline_pos_(level, sc, direction, p) \
 			for level in 'pw' for sc in self.all_scales for direction in ['hor', 'ver'] \
-			for p in all_poss])
-		self.add_class('@InsertW', [self.insert_w_(d, p) for d in all_digits[1:] for p in all_poss] + \
-				[self.insert_w_(-d, p) for d in all_digits[1:] for p in all_poss])
-		self.add_class('@InsertH', [self.insert_h_(d, p) for d in all_digits[1:] for p in all_poss] + \
-				[self.insert_h_(-d, p) for d in all_digits[1:] for p in all_poss])
+			for p in self.all_poss])
+		self.add_class('@InsertW', [self.insert_w_(d, p) for d in all_digits[1:] for p in self.all_poss] + \
+				[self.insert_w_(-d, p) for d in all_digits[1:] for p in self.all_poss])
+		self.add_class('@InsertH', [self.insert_h_(d, p) for d in all_digits[1:] for p in self.all_poss] + \
+				[self.insert_h_(-d, p) for d in all_digits[1:] for p in self.all_poss])
 
 	###### Insertions
 
@@ -1298,7 +1293,7 @@ class UniOmniFontBuilder:
 		return x, y, w, h
 
 	def geometries(self, ch, rotate, insertion_places, out):
-		options = Options(fontsize=EM_EXCLUSIVE)
+		options = Options(fontsize=self.em_exclusive)
 		w_em, h_em = em_size_of(ch, options, 1, 1, rotate, False)
 		printed = PrintedPilWithoutExtras(options, 3, 3)
 		printed.add_sign(ch, 1, 1, 1, rotate, False, Rectangle(1, 1, w_em, h_em))
@@ -1348,9 +1343,9 @@ class UniOmniFontBuilder:
 		e_margin = max(0, max((ins.x_max() - x_max) for ins in insertions))
 		t_margin = max(0, max((y_min - ins.y) for ins in insertions))
 		b_margin = max(0, max((ins.y_max() - y_max) for ins in insertions))
-		return {ins.place: ( (ins.x_center() - x_center) * RESOLUTION, (y_center - ins.y_center()) * RESOLUTION, \
-					ins.w * RESOLUTION, ins.h * RESOLUTION ) for ins in insertions}, \
-				s_margin * RESOLUTION, e_margin * RESOLUTION, t_margin * RESOLUTION, b_margin * RESOLUTION
+		return {ins.place: ( (ins.x_center() - x_center) * self.resolution, (y_center - ins.y_center()) * self.resolution, \
+					ins.w * self.resolution, ins.h * self.resolution ) for ins in insertions}, \
+				s_margin * self.resolution, e_margin * self.resolution, t_margin * self.resolution, b_margin * self.resolution
 
 	def name_rot_places_to_variant(self, name, rot, places):
 		for alt_places, alt_name in self.name_rot_to_places_variant[(name, rot)]:
@@ -2642,13 +2637,13 @@ class UniOmniFontBuilder:
 		name, rules, filt = 'cap-width-size1', [], '@AuxCapWidthSize1'
 		self.add_class(filt, ['@OuterInner', '@Cap', '@Width'])
 		rules.append(chain_sub_rule([self.open_outer_('p'), '@OpeningPlain'], 
-			(LEN_OCT-1) * [('@Width', ['to-size'])] + [('@Width', ['to-size-marker'])], []))
+			(self.len_oct-1) * [('@Width', ['to-size'])] + [('@Width', ['to-size-marker'])], []))
 		rules.append(chain_sub_rule(['@ClosingPlain'], 
-			(LEN_OCT-1) * [('@Width', ['to-size'])] + [('@Width', ['to-size-marker'])], [self.close_outer_('p')]))
+			(self.len_oct-1) * [('@Width', ['to-size'])] + [('@Width', ['to-size-marker'])], [self.close_outer_('p')]))
 		rules.append(chain_sub_rule([self.open_outer_('w'), '@OpeningWalled'], 
-			(LEN_OCT-1) * [('@Width', ['to-size'])] + [('@Width', ['to-size-marker'])], []))
+			(self.len_oct-1) * [('@Width', ['to-size'])] + [('@Width', ['to-size-marker'])], []))
 		rules.append(chain_sub_rule(['@ClosingWalled'], 
-			(LEN_OCT-1) * [('@Width', ['to-size'])] + [('@Width', ['to-size-marker'])], [self.close_outer_('w')]))
+			(self.len_oct-1) * [('@Width', ['to-size'])] + [('@Width', ['to-size-marker'])], [self.close_outer_('w')]))
 		return name, rules, filt
 
 	def cap_width_size2_rules(self):
@@ -2665,9 +2660,9 @@ class UniOmniFontBuilder:
 		self.add_class(filt, ['@OuterInner', '@Cap', '@Height'])
 		for level in 'pw':
 			rules.append(chain_sub_rule([self.open_outer_(level), '@Cap'], 
-				(LEN_OCT-1) * [('@Height', ['to-size'])] + [('@Height', ['to-size-marker'])], []))
+				(self.len_oct-1) * [('@Height', ['to-size'])] + [('@Height', ['to-size-marker'])], []))
 			rules.append(chain_sub_rule(['@Cap'], 
-				(LEN_OCT-1) * [('@Height', ['to-size'])] + [('@Height', ['to-size-marker'])], [self.close_outer_(level)]))
+				(self.len_oct-1) * [('@Height', ['to-size'])] + [('@Height', ['to-size-marker'])], [self.close_outer_(level)]))
 		return name, rules, filt
 
 	def cap_height_size2_rules(self):
@@ -2681,9 +2676,9 @@ class UniOmniFontBuilder:
 
 	def receive_width_rules(self):
 		name, rules, filt = 'receive-width', [], '@Outer'
-		summing_receiver = [self.size_sep] + LEN_OCT * [self.size_(0)]
-		maxing_receiver = [self.size_reverse_sep] + [self.pos_reverse_final_(p) for p in all_poss]
-		first_receiver = [self.size_first_sep] + LEN_OCT * [self.size_first_(0)]
+		summing_receiver = [self.size_sep] + self.len_oct * [self.size_(0)]
+		maxing_receiver = [self.size_reverse_sep] + [self.pos_reverse_final_(p) for p in self.all_poss]
+		first_receiver = [self.size_first_sep] + self.len_oct * [self.size_first_(0)]
 		rules.append(simple_sub_rule([self.close_outer_('h')], summing_receiver + [self.close_outer_('h')]))
 		rules.append(simple_sub_rule([self.close_outer_('v')], maxing_receiver + [self.close_outer_('v')]))
 		rules.append(simple_sub_rule([self.close_outer_('i')], first_receiver + [self.close_outer_('i')]))
@@ -2694,9 +2689,9 @@ class UniOmniFontBuilder:
 
 	def receive_height_rules(self):
 		name, rules, filt = 'receive-height', [], '@Outer'
-		summing_receiver = [self.size_sep] + LEN_OCT * [self.size_(0)]
-		maxing_receiver = [self.size_reverse_sep] + [self.pos_reverse_final_(p) for p in all_poss]
-		first_receiver = [self.size_first_sep] + LEN_OCT * [self.size_first_(0)]
+		summing_receiver = [self.size_sep] + self.len_oct * [self.size_(0)]
+		maxing_receiver = [self.size_reverse_sep] + [self.pos_reverse_final_(p) for p in self.all_poss]
+		first_receiver = [self.size_first_sep] + self.len_oct * [self.size_first_(0)]
 		rules.append(simple_sub_rule([self.close_outer_('h')], maxing_receiver + [self.close_outer_('h')]))
 		rules.append(simple_sub_rule([self.close_outer_('v')], summing_receiver + [self.close_outer_('v')]))
 		rules.append(simple_sub_rule([self.close_outer_('i')], first_receiver + [self.close_outer_('i')]))
@@ -2708,25 +2703,25 @@ class UniOmniFontBuilder:
 	def copy_ligature_sum_rules(self):
 		name, rules, filt = 'copy-ligature-sum', [], '@AuxCopyLigatureSum'
 		self.add_class(filt, ['@Outer', self.alt_end_active, '@Size'])
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
-				rules.append(context_sub_rule([self.size_(d)] + (LEN_OCT-1-p) * ['@Size'] + [self.alt_end_active] + \
+				rules.append(context_sub_rule([self.size_(d)] + (self.len_oct-1-p) * ['@Size'] + [self.alt_end_active] + \
 					p * ['@Size'], self.size_(0), [], self.size_(d)))
 		return name, rules, filt
 		
 	def copy_ligature_max_rules(self):
 		name, rules, filt = 'copy-ligature-max', [], '@AuxCopyLigatureMax'
 		self.add_class(filt, ['@Outer', self.alt_end_active, '@Size', '@Posreversefinal'])
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
-				rules.append(context_sub_rule([self.size_(d)] + (LEN_OCT-1-p) * ['@Size'] + [self.alt_end_active] + \
+				rules.append(context_sub_rule([self.size_(d)] + (self.len_oct-1-p) * ['@Size'] + [self.alt_end_active] + \
 					p * ['@Size'], self.pos_reverse_final_(p), [], self.size_(d)))
 		return name, rules, filt
 
 	def remove_alt_size_rules(self):
 		name, rules, filt = 'remove-alt-size', [], '@AuxRemoveAltSize'
 		self.add_class(filt, [self.alt_start_active, self.alt_end_active, '@Size'])
-		rules.append(simple_sub_rule([self.alt_start_active] + LEN_OCT * ['@Size'], [self.alt_start_active]))
+		rules.append(simple_sub_rule([self.alt_start_active] + self.len_oct * ['@Size'], [self.alt_start_active]))
 		return name, rules, filt
 
 	def remove_alt_rules(self):
@@ -2739,9 +2734,9 @@ class UniOmniFontBuilder:
 		name, rules, filt = 'init-size', [], '@Inner'
 		for level in all_levels:
 			rules.append(simple_sub_rule([self.close_inner_(level)], 
-				[self.size_sep] + LEN_OCT * [self.size_(0)] + \
-				[self.size_first_sep] + LEN_OCT * [self.size_first_(0)] + \
-				[self.size_reverse_sep] + [self.pos_reverse_(p) for p in all_poss] + \
+				[self.size_sep] + self.len_oct * [self.size_(0)] + \
+				[self.size_first_sep] + self.len_oct * [self.size_first_(0)] + \
+				[self.size_reverse_sep] + [self.pos_reverse_(p) for p in self.all_poss] + \
 				[self.close_inner_(level)]))
 		return name, rules, filt
 
@@ -2749,28 +2744,28 @@ class UniOmniFontBuilder:
 		name, rules, filt = 'init-width', [], '@AuxInitWidth'
 		self.add_class(filt, ['@Inner', '@Widthscaledactive', '@Size'])
 		for d in all_digits:
-			rules.append(context_sub_rule([self.width_scaled_active_(d)] + (LEN_OCT-1) * ['@AuxInitWidth'], self.size_(0), [], self.size_(d)))
+			rules.append(context_sub_rule([self.width_scaled_active_(d)] + (self.len_oct-1) * ['@AuxInitWidth'], self.size_(0), [], self.size_(d)))
 		return name, rules, filt
 
 	def init_height_rules(self):
 		name, rules, filt = 'init-height', [], '@AuxInitHeight'
 		self.add_class(filt, ['@Inner', '@Heightscaledactive', '@Size'])
 		for d in all_digits:
-			rules.append(context_sub_rule([self.height_scaled_active_(d)] + (LEN_OCT-1) * ['@AuxInitHeight'], self.size_(0), [], self.size_(d)))
+			rules.append(context_sub_rule([self.height_scaled_active_(d)] + (self.len_oct-1) * ['@AuxInitHeight'], self.size_(0), [], self.size_(d)))
 		return name, rules, filt
 
 	def init_first_rules(self):
 		name, rules, filt = 'init-first', [], '@AuxInitFirst'
 		self.add_class(filt, ['@Inner', '@Size', '@Sizefirst'])
 		for d in all_digits:
-			rules.append(context_sub_rule([self.size_(d)] + (LEN_OCT-1) * ['@AuxInitFirst'], self.size_first_(0), [], self.size_first_(d)))
+			rules.append(context_sub_rule([self.size_(d)] + (self.len_oct-1) * ['@AuxInitFirst'], self.size_first_(0), [], self.size_first_(d)))
 		return name, rules, filt
 
 	def init_reverse_rules(self):
 		name, rules, filt = 'init-reverse', [], '@AuxInitReverse'
 		self.add_class(filt, ['@Inner', '@Size', '@Posreverse'])
 		for d in all_digits:
-			for p in all_poss:
+			for p in self.all_poss:
 				rules.append(context_sub_rule([self.size_(d)] + p * ['@Size'], self.pos_reverse_(p), [], self.size_reverse_(d)))
 		return name, rules, filt
 
@@ -2788,13 +2783,13 @@ class UniOmniFontBuilder:
 				carry_s, carry_c = sum_carry(1+d1+d2)
 				out = self.carry_(s) if c else self.size_(s)
 				carry_out = self.carry_(carry_s) if carry_c else self.size_(carry_s)
-				rules.append(context_sub_rule([d1_sym] + (LEN_OCT-1) * ['@MaybeCarry'] + ['@NoCarry'],
+				rules.append(context_sub_rule([d1_sym] + (self.len_oct-1) * ['@MaybeCarry'] + ['@NoCarry'],
 					d2_sym, [], out))
-				rules.append(context_sub_rule([d1_car] + (LEN_OCT-1) * ['@MaybeCarry'] + ['@NoCarry'],
+				rules.append(context_sub_rule([d1_car] + (self.len_oct-1) * ['@MaybeCarry'] + ['@NoCarry'],
 					d2_sym, [], out))
-				rules.append(context_sub_rule([d1_sym] + (LEN_OCT-1) * ['@MaybeCarry'] + ['@Carry'],
+				rules.append(context_sub_rule([d1_sym] + (self.len_oct-1) * ['@MaybeCarry'] + ['@Carry'],
 					d2_sym, [], carry_out))
-				rules.append(context_sub_rule([d1_car] + (LEN_OCT-1) * ['@MaybeCarry'] + ['@Carry'],
+				rules.append(context_sub_rule([d1_car] + (self.len_oct-1) * ['@MaybeCarry'] + ['@Carry'],
 					d2_sym, [], carry_out))
 		return name, rules, filt
 
@@ -2803,21 +2798,21 @@ class UniOmniFontBuilder:
 		self.add_class(filt, ['@Outer', '@MaxAny', '@Posreversefinal'])
 		for d1 in all_digits:
 			rules.append(context_sub_rule(['@Lt'], self.size_reverse_(d1), [], self.lt_(d1)))
-			rules.append(context_sub_rule([f'@MaxAny{d1}'] + (LEN_OCT-1) * ['@MaxAny'] + ['@Gt'], '@Sizereverse', 
+			rules.append(context_sub_rule([f'@MaxAny{d1}'] + (self.len_oct-1) * ['@MaxAny'] + ['@Gt'], '@Sizereverse', 
 					[], self.gt_(d1)))
-			for p in all_poss:
+			for p in self.all_poss:
 				rules.append(context_sub_rule([f'@MaxAny{d1}'] + p * ['@MaxAny'] + [self.size_reverse_sep], 
 						self.pos_reverse_final_(p), [], self.size_(d1)))
 		for d1 in all_digits:
 			for d2 in all_digits:
 				if d1 < d2:
-					rules.append(context_sub_rule([f'@MaxAny{d1}'] + (LEN_OCT) * ['@MaxAny'], self.size_reverse_(d2), 
+					rules.append(context_sub_rule([f'@MaxAny{d1}'] + (self.len_oct) * ['@MaxAny'], self.size_reverse_(d2), 
 							[], self.lt_(d2)))
 				elif d1 > d2:
-					rules.append(context_sub_rule([f'@MaxAny{d1}'] + (LEN_OCT) * ['@MaxAny'], self.size_reverse_(d2), 
+					rules.append(context_sub_rule([f'@MaxAny{d1}'] + (self.len_oct) * ['@MaxAny'], self.size_reverse_(d2), 
 							[], self.gt_(d1)))
 				else:
-					rules.append(context_sub_rule([f'@MaxAny{d1}'] + (LEN_OCT) * ['@MaxAny'], self.size_reverse_(d2), 
+					rules.append(context_sub_rule([f'@MaxAny{d1}'] + (self.len_oct) * ['@MaxAny'], self.size_reverse_(d2), 
 							[], self.size_reverse_(d1)))
 		return name, rules, filt
 
@@ -2827,7 +2822,7 @@ class UniOmniFontBuilder:
 		self.add_class(filt, ['@Outer', '@SizefirstAny'])
 		for d1 in all_digits:
 			for d2 in all_digits:
-				rules.append(context_sub_rule([self.size_first_(d1)] + (LEN_OCT) * ['@SizefirstAny'], self.size_first_(d2), 
+				rules.append(context_sub_rule([self.size_first_(d1)] + (self.len_oct) * ['@SizefirstAny'], self.size_first_(d2), 
 						[], self.size_first_(d1)))
 		return name, rules, filt
 
@@ -2853,14 +2848,14 @@ class UniOmniFontBuilder:
 
 	def fin_size_cleanup_rules(self):
 		name, rules, filt = 'fin-size-cleanup', [], '@RecordNil'
-		rules.append(simple_sub_rule([self.record] + (3 * (LEN_OCT+1)) * [self.nil], [self.record]))
+		rules.append(simple_sub_rule([self.record] + (3 * (self.len_oct+1)) * [self.nil], [self.record]))
 		return name, rules, filt
 
 	def fin_cap_size_rules(self):
 		name, rules, filt = 'fin-cap-size', [], '@AuxFinCapSize'
 		self.add_class(filt, ['@OuterInner', '@Cap', '@Size', self.size_sep, self.cap_marker])
 		for c in self.caps + self.caps_rot:
-			rules.append(simple_sub_rule([c, self.size_sep] + LEN_OCT * ['@Size'] + [self.cap_marker], [c]))
+			rules.append(simple_sub_rule([c, self.size_sep] + self.len_oct * ['@Size'] + [self.cap_marker], [c]))
 		return name, rules, filt
 
 	def enclosure_width_rules(self):
@@ -2868,7 +2863,7 @@ class UniOmniFontBuilder:
 		self.add_class(filt, ['@OuterSize', self.vertical_active])
 		unit_size = self.to_octal_size(self.font_units)
 		for level in 'pw':
-			for i in range(LEN_OCT):
+			for i in range(self.len_oct):
 				rules.append(context_sub_rule([self.open_outer_(level), self.vertical_active] + i * ['@Size'], '@Size', [], unit_size[i]))
 		return name, rules, filt
 
@@ -2877,7 +2872,7 @@ class UniOmniFontBuilder:
 		self.add_class(filt, ['@OuterSize', self.horizontal_active])
 		unit_size = self.to_octal_size(self.font_units)
 		for level in 'pw':
-			for i in range(LEN_OCT):
+			for i in range(self.len_oct):
 				rules.append(context_sub_rule([self.open_outer_(level), self.horizontal_active] + i * ['@Size'], '@Size', [], unit_size[i]))
 		return name, rules, filt
 
@@ -2885,14 +2880,14 @@ class UniOmniFontBuilder:
 		name, rules, filt = 'empty-scaling', [], '@Recordactive'
 		rules.append(simple_sub_rule([self.record_active], 
 				[sym for s in self.all_scales for sym in [self.scale_(s)] + 
-						LEN_OCT * [self.to_scale if s > 0 else self.size_(0)]] + 
+						self.len_oct * [self.to_scale if s > 0 else self.size_(0)]] + 
 						[self.scale_(self.n_scales), self.record_active]))
 		return name, rules, filt
 
 	def copy_front_rules(self):
 		name, rules, filt = 'copy-front', [], '@OuterSize'
 		for d in all_digits:
-			rules.append(context_sub_rule([], self.size_(0), (LEN_OCT-1) * ['@Size'] + [self.size_(d)], self.size_scaled_(d)))
+			rules.append(context_sub_rule([], self.size_(0), (self.len_oct-1) * ['@Size'] + [self.size_(d)], self.size_scaled_(d)))
 		return name, rules, filt
 
 	def fill_scaling_rules(self):
@@ -2900,7 +2895,7 @@ class UniOmniFontBuilder:
 		self.add_class('@SizescaledScale', ['@Sizescaled', '@Scale'])
 		self.add_class('@SizescaledScaleSizescaledcarry', ['@SizescaledScale', '@Sizescaledcarry'])
 		self.add_class(filt, ['@Outer', '@SizescaledScaleSizescaledcarry', self.to_scale])
-		inter = (LEN_OCT-2) * ['@SizescaledScaleSizescaledcarry']
+		inter = (self.len_oct-2) * ['@SizescaledScaleSizescaledcarry']
 		for d in all_digits:
 			for down_carry in all_down_carry:
 				nex = f'@DownCarry{down_carry}'
@@ -2928,8 +2923,8 @@ class UniOmniFontBuilder:
 		name, rules, filt = 'size-cleanup', [], '@AuxSizeCleanup'
 		self.add_class(filt, [self.record_active, self.nil, self.size_sep, self.size_reverse_sep, self.size_first_sep])
 		for sep in [self.size_sep, self.size_reverse_sep, self.size_first_sep]:
-			rules.append(simple_sub_rule([self.record_active, sep] + LEN_OCT * [self.nil], [self.record_active]))
-		rules.append(simple_sub_rule([self.record_active] + LEN_OCT * [self.nil], [self.record_active]))
+			rules.append(simple_sub_rule([self.record_active, sep] + self.len_oct * [self.nil], [self.record_active]))
+		rules.append(simple_sub_rule([self.record_active] + self.len_oct * [self.nil], [self.record_active]))
 		return name, rules, filt
 
 	def width_size_limit_rules(self):
@@ -2959,7 +2954,7 @@ class UniOmniFontBuilder:
 					target = self.lt_(d2)
 				else:
 					target = self.eq_(d2)
-				for p in reversed(all_poss):
+				for p in reversed(self.all_poss):
 					rules.append(context_sub_rule(
 							[self.limit_size_(d1)] + p * ['@Limitsize'], 
 							self.size_scaled_(d2), p * ['@Sizescaled'] + ['@Scale'], target))
@@ -2968,19 +2963,19 @@ class UniOmniFontBuilder:
 	def big_scale_rules(self):
 		name, rules, filt = 'big-scale', [], '@AuxBigScale'
 		self.add_class(filt, ['@Outer', '@Scalehidden', '@Cmp', self.record_active])
-		for p in all_poss:
+		for p in self.all_poss:
 			rules.append(chain_sub_rule([], [('@ScalehiddenNonlast', ['remove-scale'])] + \
 					p * [('@Cmp', ['remove-scale'])] + \
 					[('@Gt', ['remove-scale'])] + \
-					(LEN_OCT-p-1) * [('@Eq', ['remove-scale'])], []))
+					(self.len_oct-p-1) * [('@Eq', ['remove-scale'])], []))
 		rules.append(chain_sub_rule([], [('@Scalehidden', ['restore-scale'])] + 
-				LEN_OCT * [('@Cmp', ['restore-scale'])], []))
+				self.len_oct * [('@Cmp', ['restore-scale'])], []))
 		rules.append(chain_sub_rule([], [(self.scale_hidden_(self.n_scales), ['remove-scale'])], []))
 		return name, rules, filt
 
 	def limit_cleanup_rules(self):
 		name, rules, filt = 'limit-cleanup', [], '@Limitsize'
-		rules.append(simple_sub_rule(LEN_OCT * ['@Limitsize'], [self.to_scale]))
+		rules.append(simple_sub_rule(self.len_oct * ['@Limitsize'], [self.to_scale]))
 		return name, rules, filt
 
 	def scale_copy_rules(self):
@@ -2994,18 +2989,18 @@ class UniOmniFontBuilder:
 		name, rules, filt = 'scale-width', [], '@AuxScaleWidth'
 		self.add_class(filt, ['@Outer', '@Scale', '@Sizescaled', '@Widthscaled'])
 		rules.append(chain_sub_rule(['@Outeropen'], [('@Scale', ['width-scale'])] + 
-				LEN_OCT * [('@Sizescaled', ['width-scale'])], []))
+				self.len_oct * [('@Sizescaled', ['width-scale'])], []))
 		rules.append(chain_sub_rule([], [('@Scale', ['width-scale-latent'])] + 
-				LEN_OCT * [('@Sizescaled', ['width-scale-latent'])], []))
+				self.len_oct * [('@Sizescaled', ['width-scale-latent'])], []))
 		return name, rules, filt
 
 	def scale_height_rules(self):
 		name, rules, filt = 'scale-height', [], '@AuxScaleHeight'
 		self.add_class(filt, ['@Outer', '@Scale', '@Sizescaled', '@Heightscaled'])
 		rules.append(chain_sub_rule(['@Outeropen'], [('@Scale', ['height-scale'])] + 
-				LEN_OCT * [('@Sizescaled', ['height-scale'])], []))
+				self.len_oct * [('@Sizescaled', ['height-scale'])], []))
 		rules.append(chain_sub_rule([], [('@Scale', ['height-scale-latent'])] + 
-				LEN_OCT * [('@Sizescaled', ['height-scale-latent'])], []))
+				self.len_oct * [('@Sizescaled', ['height-scale-latent'])], []))
 		return name, rules, filt
 
 	def inactive_scale_rules(self):
@@ -3072,41 +3067,41 @@ class UniOmniFontBuilder:
 				if s2 < s1:
 					rules.append(chain_sub_rule([self.scale_group_active_(s1)],
 							[(self.width_scale_(s2), ['remove-scale'])] +
-							LEN_OCT * [('@Widthscaled', ['remove-scale'])], []))
+							self.len_oct * [('@Widthscaled', ['remove-scale'])], []))
 					rules.append(chain_sub_rule([self.scale_group_active_(s1)],
 							[(self.width_scale_latent_(s2), ['remove-scale'])] +
-							LEN_OCT * [('@Widthscaledlatent', ['remove-scale'])], []))
+							self.len_oct * [('@Widthscaledlatent', ['remove-scale'])], []))
 					rules.append(chain_sub_rule([self.scale_group_active_(s1)],
 							[(self.height_scale_(s2), ['remove-scale'])] +
-							LEN_OCT * [('@Heightscaled', ['remove-scale'])], []))
+							self.len_oct * [('@Heightscaled', ['remove-scale'])], []))
 					rules.append(chain_sub_rule([self.scale_group_active_(s1)],
 							[(self.height_scale_latent_(s2), ['remove-scale'])] +
-							LEN_OCT * [('@Heightscaledlatent', ['remove-scale'])], []))
+							self.len_oct * [('@Heightscaledlatent', ['remove-scale'])], []))
 				elif s1 == s2:
 					rules.append(chain_sub_rule([self.scale_group_active_(s1)],
 							[(self.width_scale_latent_(s2), ['rescale'])] +
-							LEN_OCT * [('@Widthscaledlatent', ['rescale'])], [])) 
+							self.len_oct * [('@Widthscaledlatent', ['rescale'])], [])) 
 					rules.append(chain_sub_rule([self.scale_group_active_(s1)],
 							[(self.width_scale_(s2), ['rescale'])] +
-							LEN_OCT * [('@Widthscaled', ['rescale'])], [])) 
+							self.len_oct * [('@Widthscaled', ['rescale'])], [])) 
 					rules.append(chain_sub_rule([self.scale_group_active_(s1)],
 							[(self.height_scale_latent_(s2), ['rescale'])] +
-							LEN_OCT * [('@Heightscaledlatent', ['rescale'])], [])) 
+							self.len_oct * [('@Heightscaledlatent', ['rescale'])], [])) 
 					rules.append(chain_sub_rule([self.scale_group_active_(s1)],
 							[(self.height_scale_(s2), ['rescale'])] +
-							LEN_OCT * [('@Heightscaled', ['rescale'])], [])) 
+							self.len_oct * [('@Heightscaled', ['rescale'])], [])) 
 				else:
 					rules.append(chain_sub_rule([self.scale_group_active_(s1)],
 							[(self.width_scale_latent_(s2), ['activate-scale'])] +
-							LEN_OCT * [('@Widthscaledlatent', ['activate-scale'])], [])) 
+							self.len_oct * [('@Widthscaledlatent', ['activate-scale'])], [])) 
 					rules.append(chain_sub_rule([self.scale_group_active_(s1)],
 							[(self.height_scale_latent_(s2), ['activate-scale'])] +
-							LEN_OCT * [('@Heightscaledlatent', ['activate-scale'])], [])) 
+							self.len_oct * [('@Heightscaledlatent', ['activate-scale'])], [])) 
 		return name, rules, filt
 
 	def scale_cleanup1_rules(self):
 		name, rules, filt = 'scale-cleanup1', [], '@OuterNil'
-		rules.append(simple_sub_rule((LEN_OCT + 1) * [self.nil_scale], [self.nil_scale]))
+		rules.append(simple_sub_rule((self.len_oct + 1) * [self.nil_scale], [self.nil_scale]))
 		return name, rules, filt
 
 	def scale_cleanup2_rules(self):
@@ -3126,7 +3121,7 @@ class UniOmniFontBuilder:
 
 	def latent_cleanup2_rules(self):
 		name, rules = 'latent-cleanup2', []
-		rules.append(simple_sub_rule((LEN_OCT + 1) * [self.nil_scale], [self.nil_scale]))
+		rules.append(simple_sub_rule((self.len_oct + 1) * [self.nil_scale], [self.nil_scale]))
 		return name, rules
 
 	def latent_cleanup3_rules(self):
@@ -3155,15 +3150,15 @@ class UniOmniFontBuilder:
 		name, rules = 'empty-insertion-scaling', []
 		rules.append(simple_sub_rule([self.insert_sep], 
 				[sym for s in self.all_scales for sym in [self.scale_(s)] + 
-						LEN_OCT * [self.to_scale]]))
+						self.len_oct * [self.to_scale]]))
 		return name, rules
 
 	def copy_insertion_rules(self):
 		name, rules = 'copy-insertion', []
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
 				rules.append(context_sub_rule(\
-					[self.insert_(d)] + (LEN_OCT-1-p) * ['@Insert'] + [self.scale_(0)] + p * ['@Sizescaled'], self.to_scale, [], 
+					[self.insert_(d)] + (self.len_oct-1-p) * ['@Insert'] + [self.scale_(0)] + p * ['@Sizescaled'], self.to_scale, [], 
 					self.size_scaled_(d)))
 		return name, rules
 
@@ -3206,7 +3201,7 @@ class UniOmniFontBuilder:
 		name, rules, filt = 'filter-insertion-cleanup2', [], '@AuxFilterInsertCleanup2'
 		self.add_class(filt, ['@Undone', self.nil])
 		for level in all_levels:
-			rules.append(simple_sub_rule([self.open_(level)] + self.n_scales * 2 * (LEN_OCT+1) * [self.nil], [self.open_(level)]))
+			rules.append(simple_sub_rule([self.open_(level)] + self.n_scales * 2 * (self.len_oct+1) * [self.nil], [self.open_(level)]))
 		return name, rules, filt
 
 	###### Padding analysis
@@ -3323,7 +3318,7 @@ class UniOmniFontBuilder:
 		
 	def zero_pad_subrules(self):
 		name, rules = 'zero-pad', []
-		rules.append(simple_sub_rule([self.record], [self.size_sep] + LEN_OCT * [self.size_(0)] + [self.record]))
+		rules.append(simple_sub_rule([self.record], [self.size_sep] + self.len_oct * [self.size_(0)] + [self.record]))
 		return name, rules
 
 	def unit_pad_subrules(self):
@@ -3339,17 +3334,17 @@ class UniOmniFontBuilder:
 	def init_diff_subrules(self):
 		name, rules = 'init-diff', []
 		rules.append(simple_sub_rule([self.record_active], \
-			[self.size_sep] + LEN_OCT * [self.to_diff] + \
-			[self.size_reverse_sep] + [self.pos_reverse_(p) for p in all_poss] + \
-			[self.size_unreverse_sep] + [self.pos_unreverse_(p) for p in all_poss] + [self.record_active]))
+			[self.size_sep] + self.len_oct * [self.to_diff] + \
+			[self.size_reverse_sep] + [self.pos_reverse_(p) for p in self.all_poss] + \
+			[self.size_unreverse_sep] + [self.pos_unreverse_(p) for p in self.all_poss] + [self.record_active]))
 		return name, rules
 
 	def init_full_subrules(self):
 		name, rules = 'init-full', []
 		rules.append(simple_sub_rule([self.record_active], \
-			[self.size_sep] + LEN_OCT * [self.to_full] + \
-			[self.size_reverse_sep] + [self.pos_reverse_(p) for p in all_poss] + \
-			[self.size_unreverse_sep] + [self.pos_unreverse_(p) for p in all_poss] + [self.record_active]))
+			[self.size_sep] + self.len_oct * [self.to_full] + \
+			[self.size_reverse_sep] + [self.pos_reverse_(p) for p in self.all_poss] + \
+			[self.size_unreverse_sep] + [self.pos_unreverse_(p) for p in self.all_poss] + [self.record_active]))
 		return name, rules
 
 	def size_to_width_digit_subrules(self):
@@ -3453,7 +3448,7 @@ class UniOmniFontBuilder:
 		def subtract_borrow(d):
 			return d % 8, d < 0
 		for d2 in all_digits:
-			rules.append(context_sub_rule([self.size_(d2)] + LEN_OCT * ['@NoCarry'], self.to_full, [], self.size_(d2)))
+			rules.append(context_sub_rule([self.size_(d2)] + self.len_oct * ['@NoCarry'], self.to_full, [], self.size_(d2)))
 		for d1 in all_digits:
 			d1_sym = self.size_(d1)
 			for d2 in all_digits:
@@ -3461,39 +3456,39 @@ class UniOmniFontBuilder:
 				borrow_s, borrow_b = subtract_borrow(d2-d1-1)
 				out = self.carry_(s) if b else self.size_(s)
 				borrow_out = self.carry_(borrow_s) if borrow_b else self.size_(borrow_s)
-				rules.append(context_sub_rule([self.size_(d1)] + LEN_OCT * ['@NoCarry'] + \
-						[self.size_(d2)] + (LEN_OCT-1) * ['@MaybeCarry'] + ['@NoCarry'], \
+				rules.append(context_sub_rule([self.size_(d1)] + self.len_oct * ['@NoCarry'] + \
+						[self.size_(d2)] + (self.len_oct-1) * ['@MaybeCarry'] + ['@NoCarry'], \
 						self.to_diff, [], out))
-				rules.append(context_sub_rule([self.size_(d1)] + LEN_OCT * ['@NoCarry'] + \
-						[self.size_(d2)] + (LEN_OCT-1) * ['@MaybeCarry'] + ['@Carry'], \
+				rules.append(context_sub_rule([self.size_(d1)] + self.len_oct * ['@NoCarry'] + \
+						[self.size_(d2)] + (self.len_oct-1) * ['@MaybeCarry'] + ['@Carry'], \
 						self.to_diff, [], borrow_out))
 		return name, rules, filt
 
 	def nonnegative_rules(self):
 		name, rules, filt = 'nonnegative', [], '@MaybeCarry'
 		rules.append(chain_sub_rule([self.size_sep], \
-				(LEN_OCT-1) * [('@MaybeCarry', ['make-zero'])] + [('@Carry', ['make-zero'])], []))
+				(self.len_oct-1) * [('@MaybeCarry', ['make-zero'])] + [('@Carry', ['make-zero'])], []))
 		return name, rules, filt
 
 	def size_to_width_rules(self):
 		name, rules, filt = 'size-to-width', [], '@AuxSizeToWidth'
 		self.add_class(filt, ['@Outeropen', '@Size', self.size_sep, self.record_active])
-		rules.append(chain_sub_rule(['@Outeropen'], LEN_OCT * [('@Size', ['size-to-width-digit'])], []))
-		rules.append(chain_sub_rule(['@Outeropen', self.size_sep], LEN_OCT * [('@Size', ['size-to-full-digit'])], []))
+		rules.append(chain_sub_rule(['@Outeropen'], self.len_oct * [('@Size', ['size-to-width-digit'])], []))
+		rules.append(chain_sub_rule(['@Outeropen', self.size_sep], self.len_oct * [('@Size', ['size-to-full-digit'])], []))
 		return name, rules, filt
 
 	def size_to_height_rules(self):
 		name, rules, filt = 'size-to-height', [], '@AuxSizeToHeight'
 		self.add_class(filt, ['@Outeropen', '@Size', self.size_sep, self.record_active])
-		rules.append(chain_sub_rule(['@Outeropen'], LEN_OCT * [('@Size', ['size-to-height-digit'])], []))
-		rules.append(chain_sub_rule(['@Outeropen', self.size_sep], LEN_OCT * [('@Size', ['size-to-full-digit'])], []))
+		rules.append(chain_sub_rule(['@Outeropen'], self.len_oct * [('@Size', ['size-to-height-digit'])], []))
+		rules.append(chain_sub_rule(['@Outeropen', self.size_sep], self.len_oct * [('@Size', ['size-to-full-digit'])], []))
 		return name, rules, filt
 
 	def reverse_pad_rules(self):
 		name, rules, filt = 'reverse-pad', [], '@AuxReversePad'
 		self.add_class(filt, [self.size_reverse_sep, '@Size', '@Posreverse'])
 		for d in all_digits:
-			for p in all_poss:
+			for p in self.all_poss:
 				rules.append(context_sub_rule([self.size_(d)] + p * ['@Size'] + [self.size_reverse_sep],
 					self.pos_reverse_(p), [], self.size_reverse_(d)))
 		return name, rules, filt
@@ -3523,7 +3518,7 @@ class UniOmniFontBuilder:
 	def clean_remain_rules(self):
 		name, rules, filt = 'clean-remain', [], '@AuxCleanRemain'
 		self.add_class(filt, [self.size_sep, '@Size', self.size_reverse_sep, '@Remain'])
-		rules.append(simple_sub_rule([self.size_sep] + LEN_OCT * ['@Size'], [self.nil]))
+		rules.append(simple_sub_rule([self.size_sep] + self.len_oct * ['@Size'], [self.nil]))
 		rules.append(simple_sub_rule(['@Remain'], [self.nil]))
 		return name, rules, filt
 
@@ -3537,7 +3532,7 @@ class UniOmniFontBuilder:
 		name, rules, filt = 'unreverse', [], '@AuxUnreverse'
 		self.add_class(filt, [self.size_unreverse_sep, '@Sizereverse', '@Posunreverse'])
 		for d in all_digits:
-			for p in all_poss:
+			for p in self.all_poss:
 				rules.append(context_sub_rule([self.size_reverse_(d)] + p * ['@Sizereverse'] + [self.size_unreverse_sep],
 					self.pos_unreverse_(p), [], self.size_(d)))
 		return name, rules, filt
@@ -3547,7 +3542,7 @@ class UniOmniFontBuilder:
 		self.add_class(filt, ['@Outer', self.size_sep, self.nil, self.size_reverse_sep, '@Size', '@Sizereverse'])
 		for level in 'hv':
 			rules.append(simple_sub_rule([self.open_outer_(level), self.size_sep, self.nil, self.size_reverse_sep] + \
-					LEN_OCT * [self.nil, '@Sizereverse', self.nil, self.nil], [self.open_outer_(level)]))
+					self.len_oct * [self.nil, '@Sizereverse', self.nil, self.nil], [self.open_outer_(level)]))
 		for level in all_levels:
 			rules.append(simple_sub_rule([self.open_outer_(level), self.size_sep], [self.open_outer_(level)]))
 		return name, rules, filt
@@ -3623,15 +3618,15 @@ class UniOmniFontBuilder:
 	def zero_rules(self):
 		name, rules, filt = 'zero', [], '@AuxZero'
 		self.add_class(filt, [self.inner_pad, self.first_pad, self.last_pad])
-		rules.append(simple_sub_rule([self.inner_pad], [self.size_sep] + LEN_OCT * [self.size_(0)]))
-		rules.append(simple_sub_rule([self.first_pad], [self.size_full_sep] + LEN_OCT * [self.size_full_(0)]))
+		rules.append(simple_sub_rule([self.inner_pad], [self.size_sep] + self.len_oct * [self.size_(0)]))
+		rules.append(simple_sub_rule([self.first_pad], [self.size_full_sep] + self.len_oct * [self.size_full_(0)]))
 		return name, rules, filt
 
 	def copy_full_size_rules(self):
 		name, rules, filt = 'copy-full-size', [], '@AuxCopyFullSize'
 		self.add_class(filt, ['@Outer', '@SizeFull'])
 		for d in all_digits:
-			rules.append(context_sub_rule([self.size_full_(d)] + (LEN_OCT-1) * ['@SizeFull'], \
+			rules.append(context_sub_rule([self.size_full_(d)] + (self.len_oct-1) * ['@SizeFull'], \
 					self.size_full_(0), [], self.size_full_(d)))
 		return name, rules, filt
 
@@ -3661,7 +3656,7 @@ class UniOmniFontBuilder:
 				[self.nil, self.size_unreverse_sep, '@Size'])
 		for level in 'hv':
 			rules.append(simple_sub_rule([self.open_outer_(level), self.nil, self.size_unreverse_sep] + \
-					LEN_OCT * ['@Size'], [self.open_outer_(level)]))
+					self.len_oct * ['@Size'], [self.open_outer_(level)]))
 		return name, rules, filt
 
 	def inner_full_size_rules(self):
@@ -3782,7 +3777,7 @@ class UniOmniFontBuilder:
 	def bracket_duplicate_subrules(self):
 		name, rules = 'bracket-duplicate', []
 		for bracket in self.brackets:
-			bracket_list = [self.pos_bracket_(i) for i in all_poss]
+			bracket_list = [self.pos_bracket_(i) for i in self.all_poss]
 			for sc in self.all_scales:
 				bracket_scaled = self.bracket_scale_to_bracket[(bracket, sc)]
 				size = self.to_octal_limit_height(SCALEDOWN ** sc * self.font_units)
@@ -3829,14 +3824,14 @@ class UniOmniFontBuilder:
 	def bracket_size_copy_rules(self):
 		name, rules, filt = 'bracket-size-copy', [], '@AuxBracketSizeCopy'
 		self.add_class(filt, ['@PosBracket', '@Bracket', '@HeightFullScaled'])
-		for p in all_poss:
-			follow_poss = [self.pos_bracket_(follow) for follow in range(p+1, LEN_OCT)]
+		for p in self.all_poss:
+			follow_poss = [self.pos_bracket_(follow) for follow in range(p+1, self.len_oct)]
 			for d in all_digits:
 				rules.append(context_sub_rule([], self.pos_bracket_(p), \
 					follow_poss + ['@OpenBracket'] + p * ['@HeightFullScaled'] + [self.height_full_scaled_(d)], \
 					self.size_(d)))
 			for d in all_digits:
-				rules.append(context_sub_rule([self.height_full_scaled_(d)] + (LEN_OCT-1-p) * ['@HeightFullScaled'], \
+				rules.append(context_sub_rule([self.height_full_scaled_(d)] + (self.len_oct-1-p) * ['@HeightFullScaled'], \
 					self.pos_bracket_(p), \
 					follow_poss + ['@CloseBracket'], self.size_(d)))
 		return name, rules, filt
@@ -3853,16 +3848,16 @@ class UniOmniFontBuilder:
 				else:
 					target = self.eq_(d1)
 				rules.append(context_sub_rule(
-						[self.size_(d1)] + (LEN_OCT-1) * ['@AuxBracketSizeCompare'], 
+						[self.size_(d1)] + (self.len_oct-1) * ['@AuxBracketSizeCompare'], 
 						self.limit_height_(d2), [], target))
 				rules.append(context_sub_rule(
-						[self.lt_(d1)] + (LEN_OCT-1) * ['@AuxBracketSizeCompare'], 
+						[self.lt_(d1)] + (self.len_oct-1) * ['@AuxBracketSizeCompare'], 
 						self.limit_height_(d2), [], target))
 				rules.append(context_sub_rule(
-						[self.gt_(d1)] + (LEN_OCT-1) * ['@AuxBracketSizeCompare'], 
+						[self.gt_(d1)] + (self.len_oct-1) * ['@AuxBracketSizeCompare'], 
 						self.limit_height_(d2), [], target))
 				rules.append(context_sub_rule(
-						[self.eq_(d1)] + (LEN_OCT-1) * ['@AuxBracketSizeCompare'], 
+						[self.eq_(d1)] + (self.len_oct-1) * ['@AuxBracketSizeCompare'], 
 						self.limit_height_(d2), [], target))
 		return name, rules, filt
 
@@ -3878,11 +3873,11 @@ class UniOmniFontBuilder:
 		name, rules, filt = 'big-bracket', [], '@AuxBigBracket'
 		self.add_class('@BracketCmp', [self.lt_(0), self.gt_(0), self.eq_(0)])
 		self.add_class(filt, ['@Size', '@BracketScaled', '@BracketCmp', self.nil_scale])
-		for p in all_poss:
+		for p in self.all_poss:
 			rules.append(chain_sub_rule([], [('@BracketScaledLarger', ['remove-bracket-cmp'])] + \
 					p * [('@BracketCmp', ['remove-bracket-cmp'])] + \
 					[(self.gt_(0), ['remove-bracket-cmp'])] + \
-					(LEN_OCT-p-1) * [(self.eq_(0), ['remove-bracket-cmp'])], []))
+					(self.len_oct-p-1) * [(self.eq_(0), ['remove-bracket-cmp'])], []))
 		rules.append(chain_sub_rule(['@Size', '@BracketScaled'], [(self.lt_(0), ['remove-bracket-cmp'])], []))
 		rules.append(chain_sub_rule(['@Size', '@BracketScaled'], [(self.gt_(0), ['remove-bracket-cmp'])], []))
 		rules.append(chain_sub_rule(['@Size', '@BracketScaled'], [(self.eq_(0), ['remove-bracket-cmp'])], []))
@@ -3899,7 +3894,7 @@ class UniOmniFontBuilder:
 		name, rules, filt = 'cleanup-size-copy2', [], '@AuxCleanupSizeCopy2'
 		self.add_class(filt, ['@Undone', self.nil, '@BracketScaled'])
 		for sc in range(self.n_scales-1, -1, -1):
-			l = LEN_OCT + sc * (1 + LEN_OCT)
+			l = self.len_oct + sc * (1 + self.len_oct)
 			rules.append(simple_sub_rule(l * [self.nil] + [self.nil_scale], [self.nil]))
 			rules.append(simple_sub_rule(l * [self.nil], [self.nil]))
 		return name, rules, filt
@@ -3975,47 +3970,47 @@ class UniOmniFontBuilder:
 	def damage_rules(self):
 		name, rules = 'damage', []
 
-		half_width = [self.half_right_shade_pos_(i) for i in all_poss]
-		half_width_last = [self.half_right_shade_pos_(all_poss[-1])]
-		half_height = [self.half_down_shade_pos_(j) for j in all_poss]
-		back_width = [self.left_shade_pos_(i) for i in all_poss[:-1]]
-		half_back_width = [self.half_left_shade_pos_(i) for i in all_poss[:-1]]
-		half_back_width_full = [self.half_left_shade_pos_(i) for i in all_poss]
+		half_width = [self.half_right_shade_pos_(i) for i in self.all_poss]
+		half_width_last = [self.half_right_shade_pos_(self.all_poss[-1])]
+		half_height = [self.half_down_shade_pos_(j) for j in self.all_poss]
+		back_width = [self.left_shade_pos_(i) for i in self.all_poss[:-1]]
+		half_back_width = [self.half_left_shade_pos_(i) for i in self.all_poss[:-1]]
+		half_back_width_full = [self.half_left_shade_pos_(i) for i in self.all_poss]
 
 		full = []
-		for j in all_poss:
+		for j in self.all_poss:
 			full.append(self.down_shade_pos_(j))
-			for i in all_poss:
+			for i in self.all_poss:
 				full.append(self.w_shade_pos_(i))
 				full.append(self.h_shade_pos_(j))
-			if j+1 < LEN_OCT:
+			if j+1 < self.len_oct:
 				full.extend(back_width)
 
 		quarter = []
-		for j in all_poss:
+		for j in self.all_poss:
 			quarter.append(self.half_down_shade_pos_(j))
-			for i in all_poss:
+			for i in self.all_poss:
 				quarter.append(self.half_w_shade_pos_(i))
 				quarter.append(self.half_h_shade_pos_(j))
-			if j+1 < LEN_OCT:
+			if j+1 < self.len_oct:
 				quarter.extend(half_back_width)
 
 		flat = []
-		for j in all_poss:
+		for j in self.all_poss:
 			flat.append(self.half_down_shade_pos_(j))
-			for i in all_poss:
+			for i in self.all_poss:
 				flat.append(self.w_shade_pos_(i))
 				flat.append(self.half_h_shade_pos_(j))
-			if j+1 < LEN_OCT:
+			if j+1 < self.len_oct:
 				flat.extend(back_width)
 			
 		narrow = []
-		for j in all_poss:
+		for j in self.all_poss:
 			narrow.append(self.down_shade_pos_(j))
-			for i in all_poss:
+			for i in self.all_poss:
 				narrow.append(self.half_w_shade_pos_(i))
 				narrow.append(self.h_shade_pos_(j))
-			if j+1 < LEN_OCT:
+			if j+1 < self.len_oct:
 				narrow.extend(half_back_width)
 
 		rules.append(simple_sub_rule([self.damaged[0]], quarter))
@@ -4040,102 +4035,102 @@ class UniOmniFontBuilder:
 	def damage_w_rules(self):
 		name, rules, filt = 'damage-w', [], '@AuxDamageW'
 		self.add_class(filt, ['@WidthFull', '@WShadePos'])
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
-				rules.append(context_sub_rule([self.width_full_(d)] + (LEN_OCT-1-p) * ['@WidthFull'], 
+				rules.append(context_sub_rule([self.width_full_(d)] + (self.len_oct-1-p) * ['@WidthFull'], 
 						self.left_shade_pos_(p), [], self.left_shade_(d, p)))
-				rules.append(context_sub_rule([self.width_full_(d)] + (LEN_OCT-1-p) * ['@WidthFull'], 
+				rules.append(context_sub_rule([self.width_full_(d)] + (self.len_oct-1-p) * ['@WidthFull'], 
 						self.w_shade_pos_(p), [], self.w_shade_(d, p)))
 				d_half = d // 2
 				d_half_carry = d // 2 + 4
 				d_half_ceil = d // 2 + 1
 				d_half_carry_ceil = (d // 2 + 4 + 1) % 8
-				if p+1 < LEN_OCT:
+				if p+1 < self.len_oct:
 					if d % 2 == 1:
 						rules.append(context_sub_rule(\
-								p * [self.width_full_(7)] + [self.width_full_(d)] + ['@WidthFullOdd'] + (LEN_OCT-2-p) * ['@WidthFull'], 
+								p * [self.width_full_(7)] + [self.width_full_(d)] + ['@WidthFullOdd'] + (self.len_oct-2-p) * ['@WidthFull'], 
 								self.half_left_shade_pos_(p), [], self.left_shade_(d_half_carry_ceil, p)))
 						rules.append(context_sub_rule(\
-								p * [self.width_full_(7)] + [self.width_full_(d)] + ['@WidthFullOdd'] + (LEN_OCT-2-p) * ['@WidthFull'], 
+								p * [self.width_full_(7)] + [self.width_full_(d)] + ['@WidthFullOdd'] + (self.len_oct-2-p) * ['@WidthFull'], 
 								self.half_right_shade_pos_(p), [], self.right_shade_(d_half_carry_ceil, p)))
 						rules.append(context_sub_rule(\
-								p * [self.width_full_(7)] + [self.width_full_(d)] + ['@WidthFullOdd'] + (LEN_OCT-2-p) * ['@WidthFull'], 
+								p * [self.width_full_(7)] + [self.width_full_(d)] + ['@WidthFullOdd'] + (self.len_oct-2-p) * ['@WidthFull'], 
 								self.half_w_shade_pos_(p), [], self.w_shade_(d_half_carry_ceil, p)))
-					rules.append(context_sub_rule([self.width_full_(d)] + ['@WidthFullOdd'] + (LEN_OCT-2-p) * ['@WidthFull'], 
+					rules.append(context_sub_rule([self.width_full_(d)] + ['@WidthFullOdd'] + (self.len_oct-2-p) * ['@WidthFull'], 
 							self.half_left_shade_pos_(p), [], self.left_shade_(d_half_carry, p)))
-					rules.append(context_sub_rule([self.width_full_(d)] + ['@WidthFullOdd'] + (LEN_OCT-2-p) * ['@WidthFull'], 
+					rules.append(context_sub_rule([self.width_full_(d)] + ['@WidthFullOdd'] + (self.len_oct-2-p) * ['@WidthFull'], 
 							self.half_right_shade_pos_(p), [], self.right_shade_(d_half_carry, p)))
-					rules.append(context_sub_rule([self.width_full_(d)] + ['@WidthFullOdd'] + (LEN_OCT-2-p) * ['@WidthFull'], 
+					rules.append(context_sub_rule([self.width_full_(d)] + ['@WidthFullOdd'] + (self.len_oct-2-p) * ['@WidthFull'], 
 							self.half_w_shade_pos_(p), [], self.w_shade_(d_half_carry, p)))
 				if d % 2 == 1:
 					rules.append(context_sub_rule(\
-							p * [self.width_full_(7)] + [self.width_full_(d)] + (LEN_OCT-1-p) * ['@WidthFull'], 
+							p * [self.width_full_(7)] + [self.width_full_(d)] + (self.len_oct-1-p) * ['@WidthFull'], 
 							self.half_left_shade_pos_(p), [], self.left_shade_(d_half_ceil, p)))
 					rules.append(context_sub_rule(\
-							p * [self.width_full_(7)] + [self.width_full_(d)] + (LEN_OCT-1-p) * ['@WidthFull'], 
+							p * [self.width_full_(7)] + [self.width_full_(d)] + (self.len_oct-1-p) * ['@WidthFull'], 
 							self.half_right_shade_pos_(p), [], self.right_shade_(d_half_ceil, p)))
 					rules.append(context_sub_rule(\
-							p * [self.width_full_(7)] + [self.width_full_(d)] + (LEN_OCT-1-p) * ['@WidthFull'], 
+							p * [self.width_full_(7)] + [self.width_full_(d)] + (self.len_oct-1-p) * ['@WidthFull'], 
 							self.half_w_shade_pos_(p), [], self.w_shade_(d_half_ceil, p)))
-				rules.append(context_sub_rule([self.width_full_(d)] + (LEN_OCT-1-p) * ['@WidthFull'], 
+				rules.append(context_sub_rule([self.width_full_(d)] + (self.len_oct-1-p) * ['@WidthFull'], 
 						self.half_left_shade_pos_(p), [], self.left_shade_(d_half, p)))
-				rules.append(context_sub_rule([self.width_full_(d)] + (LEN_OCT-1-p) * ['@WidthFull'], 
+				rules.append(context_sub_rule([self.width_full_(d)] + (self.len_oct-1-p) * ['@WidthFull'], 
 						self.half_right_shade_pos_(p), [], self.right_shade_(d_half, p)))
-				rules.append(context_sub_rule([self.width_full_(d)] + (LEN_OCT-1-p) * ['@WidthFull'], 
+				rules.append(context_sub_rule([self.width_full_(d)] + (self.len_oct-1-p) * ['@WidthFull'], 
 						self.half_w_shade_pos_(p), [], self.w_shade_(d_half, p)))
 		return name, rules, filt
 
 	def damage_h_rules(self):
 		name, rules, filt = 'damage-h', [], '@AuxDamageH'
 		self.add_class(filt, ['@HeightFull', '@HShadePos'])
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
-				rules.append(context_sub_rule([self.height_full_(d)] + (LEN_OCT-1-p) * ['@HeightFull'], 
+				rules.append(context_sub_rule([self.height_full_(d)] + (self.len_oct-1-p) * ['@HeightFull'], 
 						self.down_shade_pos_(p), [], self.down_shade_(d, p)))
-				rules.append(context_sub_rule([self.height_full_(d)] + (LEN_OCT-1-p) * ['@HeightFull'], 
+				rules.append(context_sub_rule([self.height_full_(d)] + (self.len_oct-1-p) * ['@HeightFull'], 
 						self.h_shade_pos_(p), [], self.h_shade_(d, p)))
 				d_half = d // 2
 				d_half_carry = d // 2 + 4
 				d_half_ceil = d // 2 + 1
 				d_half_carry_ceil = (d // 2 + 4 + 1) % 8
-				if p+1 < LEN_OCT:
+				if p+1 < self.len_oct:
 					if d % 2 == 1:
 						rules.append(context_sub_rule(\
-								p * [self.height_full_(7)] + [self.height_full_(d)] + ['@HeightFullOdd'] + (LEN_OCT-2-p) * ['@HeightFull'], 
+								p * [self.height_full_(7)] + [self.height_full_(d)] + ['@HeightFullOdd'] + (self.len_oct-2-p) * ['@HeightFull'], 
 								self.half_down_shade_pos_(p), [], self.down_shade_(d_half_carry_ceil, p)))
 						rules.append(context_sub_rule(\
-								p * [self.height_full_(7)] + [self.height_full_(d)] + ['@HeightFullOdd'] + (LEN_OCT-2-p) * ['@HeightFull'], 
+								p * [self.height_full_(7)] + [self.height_full_(d)] + ['@HeightFullOdd'] + (self.len_oct-2-p) * ['@HeightFull'], 
 								self.half_h_shade_pos_(p), [], self.h_shade_(d_half_carry_ceil, p)))
-					rules.append(context_sub_rule([self.height_full_(d)] + ['@HeightFullOdd'] + (LEN_OCT-2-p) * ['@HeightFull'], 
+					rules.append(context_sub_rule([self.height_full_(d)] + ['@HeightFullOdd'] + (self.len_oct-2-p) * ['@HeightFull'], 
 							self.half_down_shade_pos_(p), [], self.down_shade_(d_half_carry, p)))
-					rules.append(context_sub_rule([self.height_full_(d)] + ['@HeightFullOdd'] + (LEN_OCT-2-p) * ['@HeightFull'], 
+					rules.append(context_sub_rule([self.height_full_(d)] + ['@HeightFullOdd'] + (self.len_oct-2-p) * ['@HeightFull'], 
 							self.half_h_shade_pos_(p), [], self.h_shade_(d_half_carry, p)))
 				if d % 2 == 1:
 					rules.append(context_sub_rule(\
-							p * [self.height_full_(7)] + [self.height_full_(d)] + (LEN_OCT-1-p) * ['@HeightFull'], 
+							p * [self.height_full_(7)] + [self.height_full_(d)] + (self.len_oct-1-p) * ['@HeightFull'], 
 							self.half_down_shade_pos_(p), [], self.down_shade_(d_half_ceil, p)))
 					rules.append(context_sub_rule(\
-							p * [self.height_full_(7)] + [self.height_full_(d)] + (LEN_OCT-1-p) * ['@HeightFull'], 
+							p * [self.height_full_(7)] + [self.height_full_(d)] + (self.len_oct-1-p) * ['@HeightFull'], 
 							self.half_h_shade_pos_(p), [], self.h_shade_(d_half_ceil, p)))
-				rules.append(context_sub_rule([self.height_full_(d)] + (LEN_OCT-1-p) * ['@HeightFull'], 
+				rules.append(context_sub_rule([self.height_full_(d)] + (self.len_oct-1-p) * ['@HeightFull'], 
 						self.half_down_shade_pos_(p), [], self.down_shade_(d_half, p)))
-				rules.append(context_sub_rule([self.height_full_(d)] + (LEN_OCT-1-p) * ['@HeightFull'], 
+				rules.append(context_sub_rule([self.height_full_(d)] + (self.len_oct-1-p) * ['@HeightFull'], 
 						self.half_h_shade_pos_(p), [], self.h_shade_(d_half, p)))
 		return name, rules, filt
 
 	def damage_combine_rules(self):
 		name, rules = 'damage-combine', []
-		for p1 in all_poss:
+		for p1 in self.all_poss:
 			for d1 in all_digits:
 				w = d1 * 8**p1
-				for p2 in all_poss:
+				for p2 in self.all_poss:
 					for d2 in all_digits:
 						h = d2 * 8**p2
 						if w <= 1.5 * self.em and h <= 1.5 * self.em:
 							if d1 > 0 and d2 > 0:
 								rules.append(simple_sub_rule([self.w_shade_(d1, p1), self.h_shade_(d2, p2)], 
 										[self.shade_(d1, d2, p1, p2)]))
-							elif p1 + 1 < LEN_OCT:
+							elif p1 + 1 < self.len_oct:
 								rules.append(simple_sub_rule([self.w_shade_(d1, p1), self.h_shade_(d2, p2)], 
 										[self.right_shade_(d1, p1)]))
 							else:
@@ -4274,8 +4269,8 @@ class UniOmniFontBuilder:
 			y = round((h-self.margin/2)/2)
 			self.add_markclass('@SignScaled0Mark', [closing], x=x, y=y)
 		for lost, (w,h) in self.unscaled_lost_to_size.items():
-			x = round(w * self.em / 2) * RESOLUTION
-			y = round(h * self.em / 2) * RESOLUTION
+			x = round(w * self.em / 2) * self.resolution
+			y = round(h * self.em / 2) * self.resolution
 			self.add_markclass('@SignScaled0Mark', [lost], x=x, y=y)
 		for (sign, sc), scaled in self.name_scale_to_name.items():
 			factor = SCALEDOWN ** sc
@@ -4287,34 +4282,34 @@ class UniOmniFontBuilder:
 			for sc in self.all_scales:
 				scaled = self.cap_scale_to_cap[(opening, sc)]
 				factor = SCALEDOWN ** sc
-				x = -round(factor * self.margin / 2 / RESOLUTION) * RESOLUTION
-				y = round(factor * self.em) * RESOLUTION - self.enclosure_descent(sc)
+				x = -round(factor * self.margin / 2 / self.resolution) * self.resolution
+				y = round(factor * self.em) * self.resolution - self.enclosure_descent(sc)
 				self.add_markclass(f'@CapScaledMark', [scaled], x=x, y=y)
 		for closing in self.closings:
 			for sc in self.all_scales:
 				scaled = self.cap_scale_to_cap[(closing, sc)]
 				factor = SCALEDOWN ** sc
-				y = round(factor * self.em) * RESOLUTION - self.enclosure_descent(sc)
+				y = round(factor * self.em) * self.resolution - self.enclosure_descent(sc)
 				self.add_markclass(f'@CapScaledMark', [scaled], x=0, y=y)
 		for opening in self.openings_rot:
 			for sc in self.all_scales:
 				scaled = self.cap_rot_scale_to_cap[(opening, sc)]
 				factor = SCALEDOWN ** sc
 				(_, h) = self.unscaled_cap_rot_to_size[opening]
-				y = round(factor * (h + self.margin / 2) / RESOLUTION) * RESOLUTION
+				y = round(factor * (h + self.margin / 2) / self.resolution) * self.resolution
 				self.add_markclass(f'@CapRotScaledMark', [scaled], x=self.enclosure_descent(sc), y=y)
 		for closing in self.closings_rot:
 			for sc in self.all_scales:
 				scaled = self.cap_rot_scale_to_cap[(closing, sc)]
 				factor = SCALEDOWN ** sc
 				(_, h) = self.unscaled_cap_rot_to_size[closing]
-				y = round(factor * h / RESOLUTION) * RESOLUTION
+				y = round(factor * h / self.resolution) * self.resolution
 				self.add_markclass(f'@CapRotScaledMark', [scaled], x=self.enclosure_descent(sc), y=y)
 		for (lost, sc), scaled in self.lost_scale_to_lost.items():
 			factor = SCALEDOWN ** sc
 			(w, h) = self.unscaled_lost_to_size[lost]
-			x = round(factor * w * self.em / 2) * RESOLUTION
-			y = round(factor * h * self.em / 2) * RESOLUTION
+			x = round(factor * w * self.em / 2) * self.resolution
+			y = round(factor * h * self.em / 2) * self.resolution
 			self.add_markclass(f'@SignScaled{sc}Mark', [scaled], x=x, y=y)
 		self.add_class('@EnclosureScale', \
 				[self.enclosure_scale_(sc) for sc in self.all_scales] + \
@@ -4340,14 +4335,14 @@ class UniOmniFontBuilder:
 			self.add_markclass(f'@CapAnchorStart{depth}Mark', [self.cap_anchor_start_(depth)], x=0, y=0)
 			self.add_markclass(f'@CapAnchorEnd{depth}Mark', [self.cap_anchor_end_(depth)], x=0, y=0)
 		self.add_markclass('@AnchorGroupMark', \
-				list(set(self.anchor_pad_w_(d, p) for d in all_digits for p in all_poss)) + \
-				list(set(self.anchor_pad_h_(d, p) for d in all_digits for p in all_poss)) + \
+				list(set(self.anchor_pad_w_(d, p) for d in all_digits for p in self.all_poss)) + \
+				list(set(self.anchor_pad_h_(d, p) for d in all_digits for p in self.all_poss)) + \
 				[f'@AnchorEndAny{depth}' for depth in self.all_depths])
 		self.add_class('@AnchorSymbol', \
 				[self.anchor_start_(depth) for depth in self.all_depths] + ['@AnchorGroupMark'])
 		self.add_markclass('@MidMark', \
-				list(set(self.mid_w_(d, p) for d in all_digits for p in all_poss)) + \
-				list(set(self.mid_h_(d, p) for d in all_digits for p in all_poss)))
+				list(set(self.mid_w_(d, p) for d in all_digits for p in self.all_poss)) + \
+				list(set(self.mid_h_(d, p) for d in all_digits for p in self.all_poss)))
 		self.add_markclass('@AnchorInsertMidMark', [self.anchor_insert_mid_(depth) for depth in self.all_depths[:-1]])
 		self.add_markclass('@AnchorBasicMidMark', [self.anchor_basic_mid])
 		self.add_class('@AnchorStartInsert', [self.anchor_start_insert_(depth) for depth in self.all_depths])
@@ -4355,30 +4350,30 @@ class UniOmniFontBuilder:
 		for depth in self.all_depths:
 			self.add_markclass(f'@AnchorStartInsert{depth}Mark', [self.anchor_start_insert_(depth)])
 		self.add_markclass('@InsertMark', \
-				[self.insert_w_(d, p) for d in all_digits[1:] for p in all_poss] + \
-				[self.insert_h_(d, p) for d in all_digits[1:] for p in all_poss] + \
-				[self.insert_w_(-d, p) for d in all_digits[1:] for p in all_poss] + \
-				[self.insert_h_(-d, p) for d in all_digits[1:] for p in all_poss] + \
-				[self.insert_half_w_(d, p) for d in all_digits[1:] for p in all_poss] + \
-				[self.insert_half_h_(d, p) for d in all_digits[1:] for p in all_poss] + \
+				[self.insert_w_(d, p) for d in all_digits[1:] for p in self.all_poss] + \
+				[self.insert_h_(d, p) for d in all_digits[1:] for p in self.all_poss] + \
+				[self.insert_w_(-d, p) for d in all_digits[1:] for p in self.all_poss] + \
+				[self.insert_h_(-d, p) for d in all_digits[1:] for p in self.all_poss] + \
+				[self.insert_half_w_(d, p) for d in all_digits[1:] for p in self.all_poss] + \
+				[self.insert_half_h_(d, p) for d in all_digits[1:] for p in self.all_poss] + \
 				[self.anchor_end_insert_(depth) for depth in self.all_depths])
 		self.add_class('@Shade', \
 				[self.shade_(d1, d2, p1, p2) for (p1, d1, _, p2, d2, _) in self.shade_combinations])
 		self.add_markclass('@ShadeMark', \
-				[self.left_shade_(d, p) for d in all_digits for p in all_poss] + \
-				[self.right_shade_(d, p) for d in all_digits for p in all_poss] + \
-				[self.down_shade_(d, p) for d in all_digits for p in all_poss] + \
+				[self.left_shade_(d, p) for d in all_digits for p in self.all_poss] + \
+				[self.right_shade_(d, p) for d in all_digits for p in self.all_poss] + \
+				[self.down_shade_(d, p) for d in all_digits for p in self.all_poss] + \
 				['@Shade'])
 		self.add_class('@BracketAnchor', [self.bracket_anchor_(d) for d in self.all_depths])
 		for depth in self.all_depths:
 			self.add_markclass(f'@BracketAnchor{depth}Mark', [self.bracket_anchor_(depth)])
 		for sc in self.all_scales:
-			offset = round(SCALEDOWN ** sc * self.em) * RESOLUTION - self.enclosure_descent(sc)
+			offset = round(SCALEDOWN ** sc * self.em) * self.resolution - self.enclosure_descent(sc)
 			for d in all_digits[1:]:
-				for p in all_poss:
-					if p == LEN_OCT-1 and d > 1:
+				for p in self.all_poss:
+					if p == self.len_oct-1 and d > 1:
 						continue
-					size = int(d) * 8**p * RESOLUTION
+					size = int(d) * 8**p * self.resolution
 					self.add_markclass('@OutlineHorMark', [self.outline_(level, sc, 'hor', d, p) for level in 'pw'],
 							x=0, y=offset)
 					self.add_markclass('@OutlineVerMark', [self.outline_(level, sc, 'ver', d, p) for level in 'pw'],
@@ -4390,7 +4385,7 @@ class UniOmniFontBuilder:
 			rules.append(simple_sub_rule([self.open_inner_(level)], \
 					[self.open_inner_(level), self.anchor_start_insert_active]))
 		rules.append(simple_sub_rule([self.anchor_end_insert], + \
-				LEN_OCT * [self.inserted_width] + LEN_OCT * [self.inserted_height] + \
+				self.len_oct * [self.inserted_width] + self.len_oct * [self.inserted_height] + \
 				[self.anchor_end_insert_active, self.to_anchor_start]))
 		return name, rules
 
@@ -4399,7 +4394,7 @@ class UniOmniFontBuilder:
 		for level in all_levels:
 			rules.append(simple_sub_rule([self.open_inner_(level)], [self.open_inner_(level), self.to_anchor_start]))
 		rules.append(simple_sub_rule([self.record], \
-				LEN_OCT * [self.to_anchor_size] + [self.to_anchor_end, self.record]))
+				self.len_oct * [self.to_anchor_size] + [self.to_anchor_end, self.record]))
 		return name, rules
 
 	def anchor_init_rules(self):
@@ -4460,20 +4455,20 @@ class UniOmniFontBuilder:
 	def anchor_width_rules(self):
 		name, rules, filt = 'anchor-width', [], '@AuxAnchorWidth'
 		self.add_class(filt, ['@Inner', '@WidthFull', '@AnchorEndW', self.record, self.to_anchor_size])
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
-				rules.append(context_sub_rule([self.width_full_(d)] + (LEN_OCT - 1 - p) * ['@WidthFull'], \
-						self.to_anchor_size, (LEN_OCT - 1 - p) * [self.to_anchor_size] + ['@AnchorEndW'], \
+				rules.append(context_sub_rule([self.width_full_(d)] + (self.len_oct - 1 - p) * ['@WidthFull'], \
+						self.to_anchor_size, (self.len_oct - 1 - p) * [self.to_anchor_size] + ['@AnchorEndW'], \
 						self.anchor_pad_w_(d, p)))
 		return name, rules, filt
 
 	def anchor_height_rules(self):
 		name, rules, filt = 'anchor-height', [], '@AuxAnchorHeight'
 		self.add_class(filt, ['@Inner', '@HeightFull', '@AnchorEndH', self.record, self.to_anchor_size])
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
-				rules.append(context_sub_rule([self.height_full_(d)] + (LEN_OCT - 1 - p) * ['@HeightFull'], \
-						self.to_anchor_size, (LEN_OCT - 1 - p) * [self.to_anchor_size] + ['@AnchorEndH'], \
+				rules.append(context_sub_rule([self.height_full_(d)] + (self.len_oct - 1 - p) * ['@HeightFull'], \
+						self.to_anchor_size, (self.len_oct - 1 - p) * [self.to_anchor_size] + ['@AnchorEndH'], \
 						self.anchor_pad_h_(d, p)))
 		return name, rules, filt
 
@@ -4485,7 +4480,7 @@ class UniOmniFontBuilder:
 
 	def set_content_subrules(self, level, sc, direction):
 		name, rules = f'set-content-{level}-{sc}-{direction}', []
-		poss = [self.outline_pos_(level, sc, direction, p) for p in all_poss]
+		poss = [self.outline_pos_(level, sc, direction, p) for p in self.all_poss]
 		rules.append(simple_sub_rule([self.content_marker], poss))
 		return name, rules
 
@@ -4511,11 +4506,11 @@ class UniOmniFontBuilder:
 		self.add_class(filt, ['@Outer', '@Outlinepos', '@Width'])
 		for level in 'pw':
 			for sc in self.all_scales:
-				for p in all_poss:
-					rules.append(context_sub_rule([self.width_(0)] + (LEN_OCT-1-p) * ['@Width'],
+				for p in self.all_poss:
+					rules.append(context_sub_rule([self.width_(0)] + (self.len_oct-1-p) * ['@Width'],
 						self.outline_pos_(level, sc, 'hor', p), [], self.nil))
 					for d in all_digits[1:]:
-						rules.append(context_sub_rule([self.width_(d)] + (LEN_OCT-1-p) * ['@Width'],
+						rules.append(context_sub_rule([self.width_(d)] + (self.len_oct-1-p) * ['@Width'],
 							self.outline_pos_(level, sc, 'hor', p), [], self.outline_(level, sc, 'hor', d, p)))
 		return name, rules, filt
 
@@ -4524,11 +4519,11 @@ class UniOmniFontBuilder:
 		self.add_class(filt, ['@Outer', '@Outlinepos', '@Height'])
 		for level in 'pw':
 			for sc in self.all_scales:
-				for p in all_poss:
-					rules.append(context_sub_rule([self.height_(0)] + (LEN_OCT-1-p) * ['@Height'],
+				for p in self.all_poss:
+					rules.append(context_sub_rule([self.height_(0)] + (self.len_oct-1-p) * ['@Height'],
 						self.outline_pos_(level, sc, 'ver', p), [], self.nil))
 					for d in all_digits[1:]:
-						rules.append(context_sub_rule([self.height_(d)] + (LEN_OCT-1-p) * ['@Height'],
+						rules.append(context_sub_rule([self.height_(d)] + (self.len_oct-1-p) * ['@Height'],
 							self.outline_pos_(level, sc, 'ver', p), [], self.outline_(level, sc, 'ver', d, p)))
 		return name, rules, filt
 
@@ -4554,7 +4549,7 @@ class UniOmniFontBuilder:
 
 	def top_end_anchor_subrules(self):
 		name, rules, filt = 'top-end-anchor', [], '@Outer'
-		to_advance = [self.to_advance_(p) for p in all_poss]
+		to_advance = [self.to_advance_(p) for p in self.all_poss]
 		for level in all_levels:
 			rules.append(simple_sub_rule([self.close_outer_(level)], to_advance + [self.close_outer_(level)]))
 		return name, rules, filt
@@ -4570,7 +4565,7 @@ class UniOmniFontBuilder:
 	def width_active_rules(self):
 		name, rules, filt = 'width-active', [], '@AuxWidthActive'
 		self.add_class(filt, ['@Outer', '@Directionactive', '@WidthFull', self.record_active])
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
 				rules.append(context_sub_rule(['@Outeropen',  self.horizontal_active],
 						self.width_full_(d), [], self.width_full_scaled_(d)))
@@ -4579,7 +4574,7 @@ class UniOmniFontBuilder:
 	def height_active_rules(self):
 		name, rules, filt = 'height-active', [], '@AuxHeightActive'
 		self.add_class(filt, ['@Outer', '@Directionactive', '@HeightFull', self.record_active])
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
 				rules.append(context_sub_rule(['@Outeropen',  self.vertical_active],
 						self.height_full_(d), [], self.height_full_scaled_(d)))
@@ -4588,20 +4583,20 @@ class UniOmniFontBuilder:
 	def width_advance_rules(self):
 		name, rules, filt = 'width-advance', [], '@AuxWidthAdvance'
 		self.add_class(filt, ['@WidthFullScaled', '@ToAdvance'])
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
 				rules.append(context_sub_rule(\
-						[self.width_full_scaled_(d)] + (LEN_OCT - 1 - p) * ['@WidthFullScaled'], \
+						[self.width_full_scaled_(d)] + (self.len_oct - 1 - p) * ['@WidthFullScaled'], \
 						self.to_advance_(p), [], self.advance_w_(d, p)))
 		return name, rules, filt
 
 	def height_advance_rules(self):
 		name, rules, filt = 'height-advance', [], '@AuxHeightAdvance'
 		self.add_class(filt, ['@HeightFullScaled', '@ToAdvance'])
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
 				rules.append(context_sub_rule(\
-						[self.height_full_scaled_(d)] + (LEN_OCT - 1 - p) * ['@HeightFullScaled'], \
+						[self.height_full_scaled_(d)] + (self.len_oct - 1 - p) * ['@HeightFullScaled'], \
 						self.to_advance_(p), [], self.advance_h_(d, p)))
 		return name, rules, filt
 
@@ -4614,7 +4609,7 @@ class UniOmniFontBuilder:
 
 	def advance_base_rules(self):
 		name, rules = 'advance-base', []
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
 				if p > 0 and d == 0:
 					continue
@@ -4625,33 +4620,33 @@ class UniOmniFontBuilder:
 	def insertion_width_rules(self):
 		name, rules, filt = 'insertion-width', [], '@AuxInsertionWidth'
 		self.add_class(filt, [self.inserted_width, '@WidthFull'])
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits[1:]:
 				rules.append(context_sub_rule([], self.inserted_width, \
-						(LEN_OCT-1-p) * [self.inserted_width] + p * ['@WidthFull'] + [self.width_full_(d)], 
+						(self.len_oct-1-p) * [self.inserted_width] + p * ['@WidthFull'] + [self.width_full_(d)], 
 						self.insert_half_w_(d, p)))
 		return name, rules, filt
 
 	def insertion_height_rules(self):
 		name, rules, filt = 'insertion-height', [], '@AuxInsertionHeight'
 		self.add_class(filt, [self.inserted_height, '@HeightFull'])
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits[1:]:
 				rules.append(context_sub_rule([], self.inserted_height, \
-						(LEN_OCT-1-p) * [self.inserted_height] + p * ['@HeightFull'] + [self.height_full_(d)], 
+						(self.len_oct-1-p) * [self.inserted_height] + p * ['@HeightFull'] + [self.height_full_(d)], 
 						self.insert_half_h_(d, p)))
 		return name, rules, filt
 
 	def anchor_basic_insert_rules(self):
 		name, rules, filt = 'anchor-basic-insert', [], '@AuxAnchorBasicInsert'
 		self.add_class(filt, ['@Undone', '@WidthFull', '@HeightFull'])
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
 				for level in 'bihvo':
 					rules.append(context_sub_rule([self.open_(level)], self.width_full_(d), 
-						(LEN_OCT - 1 - p) * ['@WidthFull'], self.mid_w_(d, p)))
+						(self.len_oct - 1 - p) * ['@WidthFull'], self.mid_w_(d, p)))
 					rules.append(context_sub_rule([self.open_(level)], self.height_full_(d), 
-						(LEN_OCT - 1 - p) * ['@HeightFull'], self.mid_h_(d, p)))
+						(self.len_oct - 1 - p) * ['@HeightFull'], self.mid_h_(d, p)))
 		return name, rules, filt
 
 	def anchor_basic_mid_rules(self):
@@ -4672,7 +4667,7 @@ class UniOmniFontBuilder:
 	def duplicate_content_rules(self):
 		name, rules = 'duplicate-content', []
 		for d in all_digits[2:]:
-			p = LEN_OCT-1
+			p = self.len_oct-1
 			for sc in self.all_scales:
 				for level in 'pw':
 					for direction in ['hor', 'ver']:
@@ -4685,7 +4680,7 @@ class UniOmniFontBuilder:
 		self.add_class('@AuxInsertionDist', \
 			[self.insert_x_(d) for d in all_digits] + [self.insert_y_(d) for d in all_digits] + \
 			['@InsertW', '@InsertH', self.minus_insert, self.insert_sep])
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits[1:]:
 				rules.append(context_sub_rule([self.minus_insert, self.insert_sep] + p * ['@AuxInsertionDist'], self.insert_x_(d), [], self.insert_w_(-d, p)))
 				rules.append(context_sub_rule([self.minus_insert, self.insert_sep] + p * ['@AuxInsertionDist'], self.insert_y_(d), [], self.insert_h_(-d, p)))
@@ -4711,11 +4706,11 @@ class UniOmniFontBuilder:
 		self.add_class(filt, [self.start_hor, self.start_ver, '@AnchorSymbol'])
 		for depth in range(0, self.max_depth):
 			rules.append(mark_pos_rule(self.anchor_start_(depth), '@AnchorGroupMark', 0, 0))
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
 				if p > 0 and d == 0:
 					continue
-				adv = int(d * 8**p) * RESOLUTION
+				adv = int(d * 8**p) * self.resolution
 				rules.append(mark_pos_rule(self.anchor_pad_w_(d, p), '@AnchorGroupMark', adv, 0))
 				rules.append(mark_pos_rule(self.anchor_pad_h_(d, p), '@AnchorGroupMark', 0, -adv))
 		return name, rules, filt
@@ -4759,11 +4754,11 @@ class UniOmniFontBuilder:
 		rules.append(mark_pos_rule('@AnchorStart', '@MidMark', 0, 0))
 		rules.append(mark_pos_rule('@AnchorStart', '@AnchorBasicMidMark', 0, 0))
 		rules.append(mark_pos_rule('@AnchorStart', '@AnchorInsertMidMark', 0, 0))
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits:
 				if p > 0 and d == 0:
 					continue
-				adv = int(d * 8**p / 2) * RESOLUTION 
+				adv = int(d * 8**p / 2) * self.resolution 
 				rules.append(mark_pos_rule(self.mid_w_(d,p), '@MidMark', adv, 0))
 				rules.append(mark_pos_rule(self.mid_h_(d,p), '@MidMark', 0, -adv))
 				rules.append(mark_pos_rule(self.mid_w_(d,p), '@AnchorBasicMidMark', adv, 0))
@@ -4776,10 +4771,10 @@ class UniOmniFontBuilder:
 		name, rules, filt = 'anchor-insertion', [], '@AuxAnchorInsertion'
 		self.add_class(filt, ['@AnchorStartInsert', '@InsertMark'])
 		rules.append(mark_pos_rule('@AnchorStartInsert', '@InsertMark', 0, 0))
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits[1:]:
-				size = round(d * 8**p) * RESOLUTION
-				half_size = int(d * 8**p / 2) * RESOLUTION
+				size = round(d * 8**p) * self.resolution
+				half_size = int(d * 8**p / 2) * self.resolution
 				rules.append(mark_pos_rule(self.insert_w_(-d, p), '@InsertMark', -size, 0))
 				rules.append(mark_pos_rule(self.insert_h_(-d, p), '@InsertMark', 0, -size))
 				rules.append(mark_pos_rule(self.insert_w_(d, p), '@InsertMark', size, 0))
@@ -4801,23 +4796,23 @@ class UniOmniFontBuilder:
 		for (sign, sc), scaled in self.cap_scale_to_cap.items():
 			factor = SCALEDOWN ** sc
 			(_, h) = self.unscaled_cap_to_size[sign]
-			margin = -round(factor * self.margin / 2 / RESOLUTION) * RESOLUTION if sign in self.openings else 0
-			y = round(factor * h / RESOLUTION) * RESOLUTION
+			margin = -round(factor * self.margin / 2 / self.resolution) * self.resolution if sign in self.openings else 0
+			y = round(factor * h / self.resolution) * self.resolution
 			rules.append(mark_pos_rule(scaled, '@ShadeMark', margin, y))
 		for (sign, sc), scaled in self.cap_rot_scale_to_cap.items():
 			factor = SCALEDOWN ** sc
 			(_, h) = self.unscaled_cap_rot_to_size[sign]
 			margin = self.margin/2 if sign in self.openings_rot else 0
-			y = round(factor * (h+margin) / RESOLUTION) * RESOLUTION
+			y = round(factor * (h+margin) / self.resolution) * self.resolution
 			rules.append(mark_pos_rule(scaled, '@ShadeMark', 0, y))
-		for p in all_poss:
+		for p in self.all_poss:
 			for d in all_digits: 
-				adv = d * 8**p * RESOLUTION
+				adv = d * 8**p * self.resolution
 				rules.append(mark_pos_rule(self.left_shade_(d,p), '@ShadeMark', -adv, 0))
 				rules.append(mark_pos_rule(self.right_shade_(d,p), '@ShadeMark', adv, 0))
 				rules.append(mark_pos_rule(self.down_shade_(d,p), '@ShadeMark', 0, -adv))
 		for p1, d1, w, p2, d2, _ in self.shade_combinations:
-			adv = w * RESOLUTION if p1+1 < LEN_OCT else 0
+			adv = w * self.resolution if p1+1 < self.len_oct else 0
 			rules.append(mark_pos_rule(self.shade_(d1, d2, p1, p2), '@ShadeMark', adv, 0))
 		return name, rules, filt
 
@@ -4849,8 +4844,8 @@ class UniOmniFontBuilder:
 		for (sign, sc), scaled in self.cap_scale_to_cap.items():
 			factor = SCALEDOWN ** sc
 			(w, h) = self.unscaled_cap_to_size[sign]
-			x = round(factor * w / RESOLUTION) * RESOLUTION
-			y = round(factor * h / RESOLUTION) * RESOLUTION - self.enclosure_descent(sc)
+			x = round(factor * w / self.resolution) * self.resolution
+			y = round(factor * h / self.resolution) * self.resolution - self.enclosure_descent(sc)
 			for depth in range(1, self.max_depth):
 				rules.append(mark_pos_rule(scaled, f'@CapAnchorEnd{depth}Mark', x, y))
 		for (_, sc), scaled in self.cap_rot_scale_to_cap.items():
@@ -4869,12 +4864,12 @@ class UniOmniFontBuilder:
 		self.add_class(filt, ['@AnchorStart', '@OutlineHorMark'])
 		rules.append(mark_pos_rule('@AnchorStart', '@OutlineHorMark', 0, 0))
 		for sc in self.all_scales:
-			offset = round(SCALEDOWN ** sc * self.em) * RESOLUTION - self.enclosure_descent(sc)
+			offset = round(SCALEDOWN ** sc * self.em) * self.resolution - self.enclosure_descent(sc)
 			for d in all_digits[1:]:
-				for p in all_poss:
-					if p == LEN_OCT-1 and d > 1:
+				for p in self.all_poss:
+					if p == self.len_oct-1 and d > 1:
 						continue
-					size = int(d * 8**p * RESOLUTION)
+					size = int(d * 8**p * self.resolution)
 					x = size
 					y = offset
 					for level in 'pw':
@@ -4887,12 +4882,12 @@ class UniOmniFontBuilder:
 		self.add_class(filt, ['@AnchorStart', '@OutlineVerMark'])
 		rules.append(mark_pos_rule('@AnchorStart', '@OutlineVerMark', 0, 0))
 		for sc in self.all_scales:
-			offset = round(SCALEDOWN ** sc * self.em) * RESOLUTION - self.enclosure_descent(sc)
+			offset = round(SCALEDOWN ** sc * self.em) * self.resolution - self.enclosure_descent(sc)
 			for d in all_digits[1:]:
-				for p in all_poss:
-					if p == LEN_OCT-1 and d > 1:
+				for p in self.all_poss:
+					if p == self.len_oct-1 and d > 1:
 						continue
-					size = int(d) * 8**p * RESOLUTION
+					size = int(d) * 8**p * self.resolution
 					x = self.enclosure_descent(sc)
 					for level in 'pw':
 						rules.append(mark_pos_rule(self.outline_(level, sc, 'ver', d, p), 
