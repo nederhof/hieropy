@@ -129,6 +129,7 @@ class UniOmniFontBuilder:
 	def __init__(self, ndigits=3, sep=0.08, maxdepth=4, nscales=5,
 			signcolor='black', bracketcolor='black', shadecolor='black', shadealpha=255, shadepattern='diagonal', 
 			fontname=HIERO_FONT_OMNI_NAME, gap=0.1, debug=False, log=False):
+		self.ndigits = ndigits
 		self.len_oct = ndigits
 		self.max_octal_int = 8 ** self.len_oct - 1
 		self.all_poss = list(range(self.len_oct))
@@ -177,6 +178,7 @@ class UniOmniFontBuilder:
 		self.repeat_lookups_num = defaultdict(int)
 		self.lookup_to_marks = {}
 		self.sym = {}
+		self.mnemonic = {}
 		self.base = {}
 		self.make_chars()
 		self.make_controls()
@@ -217,6 +219,7 @@ class UniOmniFontBuilder:
 		else:
 			name_font = self.builder.add_aux(x_advance=x_advance, y_advance=y_advance, cls=cls)
 			self.sym[name] = name_font
+			self.mnemonic[name_font] = name
 			return name_font
 
 	def add_shade(self, w, h, name, label1, label2):
@@ -551,6 +554,9 @@ class UniOmniFontBuilder:
 			self.add_aux(f'depth_{depth}', f'd{depth}', '')
 			self.add_aux(f'depth_active_{depth}', f'd{depth}', 'ac')
 		self.nil = self.add_aux('nil', 'nil', '')
+		self.group_sep = self.add_aux('group_sep', 'gr', 'sep')
+		self.outer_p = self.add_aux('outer_p', 'out', 'p')
+		self.outer_w = self.add_aux('outer_w', 'out', 'w')
 		# for local analysis
 		self.record = self.add_aux('record', 'rec', '')
 		self.record_active = self.add_aux('record_active', 'rec', 'ac')
@@ -766,10 +772,11 @@ class UniOmniFontBuilder:
 				self.add_aux(f'advance_h_{adv}', f'{adv}', 'adh')
 				self.add_aux(f'advance_w_base_{adv}', f'{adv}', 'awb', cls=BASE, x_advance=adv_units)
 				self.add_aux(f'advance_h_base_{adv}', f'{adv}', 'ahb', cls=BASE, y_advance=adv_units)
-				self.add_aux(f'anchor_pad_w_{adv}', f'{adv}', 'w')
-				self.add_aux(f'anchor_pad_h_{adv}', f'{adv}', 'h')
 				self.add_aux(f'mid_w_{adv}', f'{adv}', 'mw')
 				self.add_aux(f'mid_h_{adv}', f'{adv}', 'mh')
+				for depth in self.all_depths:
+					self.add_aux(f'anchor_pad_w_{adv}_{depth}', f'{adv}', f'w{depth}')
+					self.add_aux(f'anchor_pad_h_{adv}_{depth}', f'{adv}', f'h{depth}')
 		for depth in self.all_depths:
 			self.add_aux(f'anchor_start_{depth}', f'a{depth}', 's')
 			self.add_aux(f'anchor_end_{depth}', f'a{depth}', 'e')
@@ -1059,18 +1066,18 @@ class UniOmniFontBuilder:
 	def advance_h_base_(self, d, p):
 		adv = d * 8**p
 		return self.sym[f'advance_h_base_{adv}']
-	def anchor_pad_w_(self, d, p):
-		adv = d * 8**p
-		return self.sym[f'anchor_pad_w_{adv}']
-	def anchor_pad_h_(self, d, p):
-		adv = d * 8**p
-		return self.sym[f'anchor_pad_h_{adv}']
 	def mid_w_(self, d, p):
 		adv = d * 8**p
 		return self.sym[f'mid_w_{adv}']
 	def mid_h_(self, d, p):
 		adv = d * 8**p
 		return self.sym[f'mid_h_{adv}']
+	def anchor_pad_w_depth_(self, d, p, depth):
+		adv = d * 8**p
+		return self.sym[f'anchor_pad_w_{adv}_{depth}']
+	def anchor_pad_h_depth_(self, d, p, depth):
+		adv = d * 8**p
+		return self.sym[f'anchor_pad_h_{adv}_{depth}']
 	def anchor_start_(self, depth):
 		return self.sym[f'anchor_start_{depth}']
 	def anchor_end_(self, depth):
@@ -1412,6 +1419,15 @@ class UniOmniFontBuilder:
 		self.add_sub_lookup(*self.add_record_subrules())
 		self.add_main_lookup(*self.record_rules())
 
+		if self.ndigits == 2:
+			self.add_sub_lookup(*self.group_sep_subrules())
+			self.add_sub_lookup(*self.outer_enclosure_subrules())
+			self.add_main_lookup(*self.top_enclosure_rules())
+			self.add_sub_lookup(*self.break_plain_subrules())
+			self.add_sub_lookup(*self.break_walled_subrules())
+			self.add_main_lookup(*self.enclosure_break_rules())
+			self.add_main_lookup(*self.del_group_sep_rules())
+
 	def sign_rules(self, i, signs):
 		name, rules = f'sign-{i}', []
 		for sign in signs:
@@ -1688,6 +1704,52 @@ class UniOmniFontBuilder:
 		for level in all_levels:
 			rules.append(chain_sub_rule([self.open_(level)], [('@Depth', ['add-record'])], []))
 		return name, rules, filt
+
+	def group_sep_subrules(self):
+		name, rules = 'group-sep', []
+		for level in all_levels:
+			rules.append(simple_sub_rule([self.open_(level)], [self.group_sep, self.open_(level)]))
+		return name, rules
+
+	def outer_enclosure_subrules(self):
+		name, rules = 'outer-enclosure', []
+		for level, outer in [('p', self.outer_p), ('w', self.outer_w)]:
+			rules.append(simple_sub_rule([self.open_(level)], [outer, self.open_(level)]))
+		return name, rules
+
+	def top_enclosure_rules(self):
+		name, rules = 'top-enclosure', []
+		rules.append(chain_sub_rule([self.depth_(1), '@Undoneclose'], [('@Undoneopen', ['group-sep'])], [self.depth_(1)]))
+		for level in 'pw':
+			rules.append(chain_sub_rule([], [(self.open_(level), ['outer-enclosure'])], [self.depth_(0)]))
+		return name, rules
+
+	def break_plain_subrules(self):
+		name, rules = 'break-plain', []
+		rules.append(simple_sub_rule([self.group_sep], \
+					[self.depth_(0), self.close_('p'), self.open_('p'), self.depth_(0), self.record]))
+		return name, rules
+
+	def break_walled_subrules(self):
+		name, rules = 'break-walled', []
+		rules.append(simple_sub_rule([self.group_sep], \
+					[self.depth_(0), self.close_('w'), self.open_('w'), self.depth_(0), self.record]))
+		return name, rules
+
+	def enclosure_break_rules(self):
+		name, rules, filt = 'enclosure-break', [], '@AuxEnclosureBreak'
+		self.add_class(filt, [self.outer_p, self.outer_w, self.group_sep, self.depth_(0)])
+		for outer, sub in [(self.outer_p, 'break-plain'), (self.outer_w, 'break-walled')]:
+			rules.append(chain_sub_rule([outer, self.depth_(0)], [(self.group_sep, [sub])], []))
+		return name, rules, filt
+
+	def del_group_sep_rules(self):
+		name, rules = 'del-group-sep', []
+		for level in all_levels:
+			rules.append(simple_sub_rule([self.group_sep, self.open_(level)], [self.open_(level)]))
+		for level in 'pw':
+			rules.append(simple_sub_rule([self.outer_p, self.open_(level)], [self.open_(level)]))
+		return name, rules
 
 	###### Local analysis
 
@@ -3284,8 +3346,6 @@ class UniOmniFontBuilder:
 				self.add_main_lookup(*self.size_full_rules())
 				self.add_main_lookup(*(self.width_diff_init_rules() if do_width else self.height_diff_init_rules()))
 				self.add_main_lookup(*self.diff_rules())
-				if do_width and d == 0:
-					pass
 				self.add_main_lookup(*self.nonnegative_rules())
 				self.add_main_lookup(*self.normalize_arithmetic_rules())
 				self.add_main_lookup(*(self.size_to_width_rules() if do_width else self.size_to_height_rules()))
@@ -4165,12 +4225,14 @@ class UniOmniFontBuilder:
 		insertion_dist: turn octal digits of insertions into distances.
 
 		anchor_start: connect to top of top-level group.
-		anchor_general: connect padding within group.
-		anchor_depth: connect neighboring groups.
-		anchor_depth_insert: connect starts of multiple inserted groups.
-		anchor_cross_depth: connect to deeper groups, including center of core group to first inserted group.
+		anchor_general: connect padding at one depth.
 		anchor_mid: connect to middle of basic group.
+		anchor_cross_depth: connect to deeper groups.
+		anchor_cross_insert_depth: connect to deeper groups, for insertions.
+		anchor_depth_insert: connect starts of multiple inserted groups.
 		anchor_insertion: connect positions of insertions.
+		anchor_open_cap: connect cap at start of enclosure
+		anchor_close_cap: connect cap at end of enclosure
 		anchor_scaled: connect middle to sign.
 		anchor_shade: connecting shading.
 		anchor_bracket: connecting bracket to anchor.
@@ -4193,8 +4255,8 @@ class UniOmniFontBuilder:
 			self.add_main_lookup(*self.outer_depth_rules(d-1))
 			self.add_main_lookup(*self.anchor_init_rules())
 			self.add_main_lookup(*self.anchor_rules(d))
-			self.add_main_lookup(*self.anchor_width_rules())
-			self.add_main_lookup(*self.anchor_height_rules())
+			self.add_main_lookup(*self.anchor_width_rules(d))
+			self.add_main_lookup(*self.anchor_height_rules(d))
 			self.add_main_lookup(*self.content_rules())
 			self.add_main_lookup(*self.set_content_rules())
 			self.add_main_lookup(*self.width_content_rules())
@@ -4222,24 +4284,26 @@ class UniOmniFontBuilder:
 		self.add_main_lookup(*self.rotate_enclosure_scale_rules())
 
 		self.add_pos_lookup(*self.anchor_start_rules())
-		self.add_pos_lookup(*self.anchor_general_rules())
+		self.add_pos_lookup(*self.anchor_general_rules(0))
+		self.add_pos_lookup(*self.anchor_mid_rules(0))
 		for depth in range(1, self.max_depth):
-			self.add_pos_lookup(*self.anchor_depth_rules(depth))
+			self.add_pos_lookup(*self.anchor_cross_depth_rules(depth))
+			self.add_pos_lookup(*self.anchor_cross_depth_insert_rules(depth))
 			self.add_pos_lookup(*self.anchor_depth_insert_rules(depth))
-		self.add_pos_lookup(*self.anchor_cross_depth_rules())
-		self.add_pos_lookup(*self.anchor_cross_depth_insert_rules())
-		self.add_pos_lookup(*self.anchor_mid_rules())
-		self.add_pos_lookup(*self.anchor_insertion_rules())
+			self.add_pos_lookup(*self.anchor_insertion_rules(depth))
+			self.add_pos_lookup(*self.anchor_open_cap_rules(depth))
+			self.add_pos_lookup(*self.anchor_general_rules(depth))
+			self.add_pos_lookup(*self.anchor_close_cap_rules(depth))
+			self.add_pos_lookup(*self.anchor_mid_rules(depth))
 		# the reason for distinguishing scales is because otherwise the mark
 		# class becomes too big.
 		for sc in self.all_scales:
 			self.add_pos_lookup(*self.anchor_scaled_rules(sc))
 		self.add_pos_lookup(*self.anchor_shade_rules())
-		self.add_pos_lookup(*self.anchor_bracket_rules())
+		self.add_pos_lookup(*self.anchor_bracket_cross_depth_rules())
 		for depth in range(1, self.max_depth):
 			self.add_pos_lookup(*self.anchor_bracket_depth_rules(depth))
-		self.add_pos_lookup(*self.anchor_bracket_cross_depth_rules())
-		self.add_pos_lookup(*self.anchor_cap_rules())
+		self.add_pos_lookup(*self.anchor_bracket_rules())
 		self.add_pos_lookup(*self.outline_hor_rules())
 		self.add_pos_lookup(*self.outline_ver_rules())
 
@@ -4334,12 +4398,11 @@ class UniOmniFontBuilder:
 					[self.anchor_end_(depth), self.anchor_end_w_(depth), self.anchor_end_h_(depth)])
 			self.add_markclass(f'@CapAnchorStart{depth}Mark', [self.cap_anchor_start_(depth)], x=0, y=0)
 			self.add_markclass(f'@CapAnchorEnd{depth}Mark', [self.cap_anchor_end_(depth)], x=0, y=0)
-		self.add_markclass('@AnchorGroupMark', \
-				list(set(self.anchor_pad_w_(d, p) for d in all_digits for p in self.all_poss)) + \
-				list(set(self.anchor_pad_h_(d, p) for d in all_digits for p in self.all_poss)) + \
-				[f'@AnchorEndAny{depth}' for depth in self.all_depths])
-		self.add_class('@AnchorSymbol', \
-				[self.anchor_start_(depth) for depth in self.all_depths] + ['@AnchorGroupMark'])
+		for depth in self.all_depths:
+			self.add_markclass(f'@AnchorGroup{depth}Mark', \
+					list(set(self.anchor_pad_w_depth_(d, p, depth) for d in all_digits for p in self.all_poss)) + \
+					list(set(self.anchor_pad_h_depth_(d, p, depth) for d in all_digits for p in self.all_poss)) + \
+					[f'@AnchorEndAny{depth}'])
 		self.add_markclass('@MidMark', \
 				list(set(self.mid_w_(d, p) for d in all_digits for p in self.all_poss)) + \
 				list(set(self.mid_h_(d, p) for d in all_digits for p in self.all_poss)))
@@ -4452,24 +4515,24 @@ class UniOmniFontBuilder:
 		rules.append(context_sub_rule([], self.anchor_start_insert_active, [], self.anchor_start_insert_(depth)))
 		return name, rules, filt
 
-	def anchor_width_rules(self):
-		name, rules, filt = 'anchor-width', [], '@AuxAnchorWidth'
+	def anchor_width_rules(self, depth):
+		name, rules, filt = f'anchor-width-{depth}', [], '@AuxAnchorWidth'
 		self.add_class(filt, ['@Inner', '@WidthFull', '@AnchorEndW', self.record, self.to_anchor_size])
 		for p in self.all_poss:
 			for d in all_digits:
 				rules.append(context_sub_rule([self.width_full_(d)] + (self.len_oct - 1 - p) * ['@WidthFull'], \
 						self.to_anchor_size, (self.len_oct - 1 - p) * [self.to_anchor_size] + ['@AnchorEndW'], \
-						self.anchor_pad_w_(d, p)))
+						self.anchor_pad_w_depth_(d, p, depth)))
 		return name, rules, filt
 
-	def anchor_height_rules(self):
-		name, rules, filt = 'anchor-height', [], '@AuxAnchorHeight'
+	def anchor_height_rules(self, depth):
+		name, rules, filt = f'anchor-height-{depth}', [], '@AuxAnchorHeight'
 		self.add_class(filt, ['@Inner', '@HeightFull', '@AnchorEndH', self.record, self.to_anchor_size])
 		for p in self.all_poss:
 			for d in all_digits:
 				rules.append(context_sub_rule([self.height_full_(d)] + (self.len_oct - 1 - p) * ['@HeightFull'], \
 						self.to_anchor_size, (self.len_oct - 1 - p) * [self.to_anchor_size] + ['@AnchorEndH'], \
-						self.anchor_pad_h_(d, p)))
+						self.anchor_pad_h_depth_(d, p, depth)))
 		return name, rules, filt
 
 	def content_marker_subrules(self):
@@ -4701,59 +4764,33 @@ class UniOmniFontBuilder:
 		rules.append(base_pos_rule(self.start_ver, '@AnchorStart0Mark', - self.font_units // 2, 0))
 		return name, rules, filt
 
-	def anchor_general_rules(self):
-		name, rules, filt = 'anchor-general', [], '@AuxAnchorGeneral'
-		self.add_class(filt, [self.start_hor, self.start_ver, '@AnchorSymbol'])
-		for depth in range(0, self.max_depth):
-			rules.append(mark_pos_rule(self.anchor_start_(depth), '@AnchorGroupMark', 0, 0))
+	def anchor_general_rules(self, depth):
+		name, rules, filt = f'anchor-general-{depth}', [], f'@AuxAnchorGeneral{depth}'
+		self.add_class(filt, ([self.start_hor, self.start_ver] if depth == 0 else [self.depth_(depth-1)]) + \
+			[self.anchor_end_insert_(depth), \
+			f'@AnchorStart{depth}Mark', f'@AnchorGroup{depth}Mark', \
+			f'@CapAnchorStart{depth}Mark', f'@CapAnchorEnd{depth}Mark'])
+		rules.append(mark_pos_rule(self.anchor_end_insert_(depth), f'@AnchorStart{depth}Mark', 0, 0))
+		rules.append(mark_pos_rule(f'@AnchorEndAny{depth}', f'@AnchorStart{depth}Mark', 0, 0))
+		rules.append(mark_pos_rule(f'@CapAnchorEnd{depth}Mark', f'@AnchorStart{depth}Mark', 0, 0))
+		rules.append(mark_pos_rule(self.anchor_start_(depth), f'@AnchorGroup{depth}Mark', 0, 0))
 		for p in self.all_poss:
 			for d in all_digits:
 				if p > 0 and d == 0:
 					continue
 				adv = int(d * 8**p) * self.resolution
-				rules.append(mark_pos_rule(self.anchor_pad_w_(d, p), '@AnchorGroupMark', adv, 0))
-				rules.append(mark_pos_rule(self.anchor_pad_h_(d, p), '@AnchorGroupMark', 0, -adv))
-		return name, rules, filt
-
-	def anchor_depth_rules(self, depth):
-		name, rules, filt = f'anchor-depth-{depth}', [], f'@AuxAnchorDepth{depth}'
-		self.add_class(filt, [self.depth_(depth-1), self.anchor_end_insert_(depth), \
-				f'@AnchorStart{depth}Mark', f'@AnchorEndAny{depth}', \
-				f'@CapAnchorStart{depth}Mark', f'@CapAnchorEnd{depth}Mark'])
-		rules.append(mark_pos_rule(self.anchor_end_insert_(depth), f'@AnchorStart{depth}Mark', 0, 0))
-		rules.append(mark_pos_rule(f'@AnchorEndAny{depth}', f'@AnchorStart{depth}Mark', 0, 0))
+				rules.append(mark_pos_rule(self.anchor_pad_w_depth_(d, p, depth), f'@AnchorGroup{depth}Mark', adv, 0))
+				rules.append(mark_pos_rule(self.anchor_pad_h_depth_(d, p, depth), f'@AnchorGroup{depth}Mark', 0, -adv))
 		rules.append(mark_pos_rule(f'@AnchorEndAny{depth}', f'@CapAnchorStart{depth}Mark', 0, 0))
-		rules.append(mark_pos_rule(f'@CapAnchorEnd{depth}Mark', f'@AnchorStart{depth}Mark', 0, 0))
 		rules.append(mark_pos_rule(f'@CapAnchorEnd{depth}Mark', f'@CapAnchorStart{depth}Mark', 0, 0))
 		return name, rules, filt
 
-	def anchor_depth_insert_rules(self, depth):
-		name, rules, filt = f'anchor-depth-insert-{depth}', [], f'@AuxAnchorDepthInsert{depth}'
-		self.add_class(filt, [self.depth_(depth-1), f'@AnchorStartInsert{depth}Mark'])
-		rules.append(mark_pos_rule(self.anchor_start_insert_(depth), f'@AnchorStartInsert{depth}Mark', 0, 0))
-		return name, rules, filt
-
-	def anchor_cross_depth_rules(self):
-		name, rules, filt = 'anchor-cross-depth', [], '@AuxAnchorCrossDepth'
-		self.add_class(filt, ['@AnchorStart', '@CapAnchorStart', '@AnchorStartInsert'])
-		for depth in range(1, self.max_depth):
-			rules.append(mark_pos_rule(self.anchor_start_(depth-1), f'@AnchorStart{depth}Mark', 0, 0))
-			rules.append(mark_pos_rule(self.anchor_start_(depth-1), f'@CapAnchorStart{depth}Mark', 0, 0))
-		return name, rules, filt
-
-	def anchor_cross_depth_insert_rules(self):
-		name, rules, filt = f'anchor-cross-depth-insert', [], f'@AuxAnchorCrossDepthInsert'
-		self.add_class(filt, ['@AnchorInsertMidMark', f'@AnchorStartInsert'])
-		for depth in range(1, self.max_depth):
-			rules.append(mark_pos_rule(self.anchor_insert_mid_(depth-1), f'@AnchorStartInsert{depth}Mark', 0, 0))
-		return name, rules, filt
-
-	def anchor_mid_rules(self):
-		name, rules, filt = 'anchor-mid', [], '@AuxAnchorMid'
+	def anchor_mid_rules(self, depth):
+		name, rules, filt = f'anchor-mid-{depth}', [], '@AuxAnchorMid'
 		self.add_class(filt, ['@AnchorStart', '@MidMark', '@AnchorBasicMidMark', '@AnchorInsertMidMark'])
-		rules.append(mark_pos_rule('@AnchorStart', '@MidMark', 0, 0))
-		rules.append(mark_pos_rule('@AnchorStart', '@AnchorBasicMidMark', 0, 0))
-		rules.append(mark_pos_rule('@AnchorStart', '@AnchorInsertMidMark', 0, 0))
+		rules.append(mark_pos_rule(self.anchor_start_(depth), '@MidMark', 0, 0))
+		rules.append(mark_pos_rule(self.anchor_start_(depth), '@AnchorBasicMidMark', 0, 0))
+		rules.append(mark_pos_rule(self.anchor_start_(depth), '@AnchorInsertMidMark', 0, 0))
 		for p in self.all_poss:
 			for d in all_digits:
 				if p > 0 and d == 0:
@@ -4767,10 +4804,29 @@ class UniOmniFontBuilder:
 				rules.append(mark_pos_rule(self.mid_h_(d,p), '@AnchorInsertMidMark', 0, -adv))
 		return name, rules, filt
 
-	def anchor_insertion_rules(self):
-		name, rules, filt = 'anchor-insertion', [], '@AuxAnchorInsertion'
+	def anchor_cross_depth_rules(self, depth):
+		name, rules, filt = f'anchor-cross-depth-{depth}', [], '@AuxAnchorCrossDepth'
+		self.add_class(filt, ['@AnchorStart', '@CapAnchorStart', '@AnchorStartInsert'])
+		rules.append(mark_pos_rule(self.anchor_start_(depth-1), f'@AnchorStart{depth}Mark', 0, 0))
+		rules.append(mark_pos_rule(self.anchor_start_(depth-1), f'@CapAnchorStart{depth}Mark', 0, 0))
+		return name, rules, filt
+
+	def anchor_cross_depth_insert_rules(self, depth):
+		name, rules, filt = f'anchor-cross-depth-insert-{depth}', [], f'@AuxAnchorCrossDepthInsert'
+		self.add_class(filt, ['@AnchorInsertMidMark', f'@AnchorStartInsert'])
+		rules.append(mark_pos_rule(self.anchor_insert_mid_(depth-1), f'@AnchorStartInsert{depth}Mark', 0, 0))
+		return name, rules, filt
+
+	def anchor_depth_insert_rules(self, depth):
+		name, rules, filt = f'anchor-depth-insert-{depth}', [], f'@AuxAnchorDepthInsert{depth}'
+		self.add_class(filt, [self.depth_(depth-1), f'@AnchorStartInsert{depth}Mark'])
+		rules.append(mark_pos_rule(self.anchor_start_insert_(depth), f'@AnchorStartInsert{depth}Mark', 0, 0))
+		return name, rules, filt
+
+	def anchor_insertion_rules(self, depth):
+		name, rules, filt = f'anchor-insertion-{depth}', [], '@AuxAnchorInsertion'
 		self.add_class(filt, ['@AnchorStartInsert', '@InsertMark'])
-		rules.append(mark_pos_rule('@AnchorStartInsert', '@InsertMark', 0, 0))
+		rules.append(mark_pos_rule(self.anchor_start_insert_(depth), '@InsertMark', 0, 0))
 		for p in self.all_poss:
 			for d in all_digits[1:]:
 				size = round(d * 8**p) * self.resolution
@@ -4781,6 +4837,42 @@ class UniOmniFontBuilder:
 				rules.append(mark_pos_rule(self.insert_h_(d, p), '@InsertMark', 0, size))
 				rules.append(mark_pos_rule(self.insert_half_w_(d, p), '@InsertMark', -half_size, 0))
 				rules.append(mark_pos_rule(self.insert_half_h_(d, p), '@InsertMark', 0, half_size))
+		return name, rules, filt
+
+	def anchor_open_cap_rules(self, depth):
+		name, rules, filt = f'anchor-open-cap-{depth}', [], '@AuxAnchorOpenCap'
+		self.add_class(filt, ['@Undone', '@CapAnchorStart', '@CapAnchorEnd', \
+				'@CapScaledMark', '@CapRotScaledMark', '@EnclosureScale'])
+		rules.append(mark_pos_rule(self.cap_anchor_start_(depth), '@CapScaledMark', 0, 0))
+		rules.append(mark_pos_rule(self.cap_anchor_start_(depth), '@CapRotScaledMark', 0, 0))
+		for (sign, sc), scaled in self.cap_scale_to_cap.items():
+			factor = SCALEDOWN ** sc
+			(w, h) = self.unscaled_cap_to_size[sign]
+			x = round(factor * w / self.resolution) * self.resolution
+			y = round(factor * h / self.resolution) * self.resolution - self.enclosure_descent(sc)
+			rules.append(mark_pos_rule(scaled, f'@CapAnchorEnd{depth}Mark', x, y))
+		for (_, sc), scaled in self.cap_rot_scale_to_cap.items():
+			rules.append(mark_pos_rule(scaled, f'@CapAnchorEnd{depth}Mark', self.enclosure_descent(sc), 0))
+		rules.append(mark_pos_rule(f'@CapAnchorEnd{depth}Mark', f'@CapAnchorStart{depth}Mark', 0, 0))
+		for sc in self.all_scales:
+			descent = self.enclosure_descent(sc)
+			rules.append(mark_pos_rule('@CapAnchorStart', f'@EnclosureScaleHorizontal{sc}Mark', 0, -descent))
+			rules.append(mark_pos_rule('@CapAnchorStart', f'@EnclosureScaleVertical{sc}Mark', descent, 0))
+		rules.append(mark_pos_rule('@EnclosureScale', f'@CapAnchorEnd{depth}Mark', 0, 0))
+		return name, rules, filt
+
+	def anchor_close_cap_rules(self, depth):
+		name, rules, filt = f'anchor-close-cap-{depth}', [], '@AuxAnchorCloseCap'
+		self.add_class(filt, ['@Undone', '@CapAnchorStart', '@CapAnchorEnd', \
+				'@CapScaledMark', '@CapRotScaledMark', '@EnclosureScale'])
+		rules.append(mark_pos_rule(self.cap_anchor_start_(depth), '@CapScaledMark', 0, 0))
+		rules.append(mark_pos_rule(self.cap_anchor_start_(depth), '@CapRotScaledMark', 0, 0))
+		for (sign, sc), scaled in self.cap_scale_to_cap.items():
+			factor = SCALEDOWN ** sc
+			(w, h) = self.unscaled_cap_to_size[sign]
+			x = round(factor * w / self.resolution) * self.resolution
+			y = round(factor * h / self.resolution) * self.resolution - self.enclosure_descent(sc)
+			rules.append(mark_pos_rule(scaled, f'@CapAnchorEnd{depth}Mark', x, y))
 		return name, rules, filt
 
 	def anchor_scaled_rules(self, sc):
@@ -4816,10 +4908,12 @@ class UniOmniFontBuilder:
 			rules.append(mark_pos_rule(self.shade_(d1, d2, p1, p2), '@ShadeMark', adv, 0))
 		return name, rules, filt
 
-	def anchor_bracket_rules(self):
-		name, rules = 'anchor-bracket', []
-		rules.append(mark_pos_rule(f'@BracketAnchor', '@BracketMark', 0, 0))
-		return name, rules
+	def anchor_bracket_cross_depth_rules(self):
+		name, rules, filt = 'anchor-bracket-cross-depth', [], '@AuxAnchorBracketCrossDepth'
+		self.add_class(filt, ['@AnchorStart', '@BracketAnchor'])
+		for depth in range(1, self.max_depth):
+			rules.append(mark_pos_rule(f'@AnchorStart{depth-1}Mark', f'@BracketAnchor{depth}Mark', 0, 0))
+		return name, rules, filt
 
 	def anchor_bracket_depth_rules(self, depth):
 		name, rules, filt = f'anchor-bracket-depth-{depth}', [], f'@AuxAnchorBracketDepth{depth}'
@@ -4828,36 +4922,10 @@ class UniOmniFontBuilder:
 		rules.append(mark_pos_rule(f'@BracketAnchor{depth}Mark', f'@BracketAnchor{depth}Mark', 0, 0))
 		return name, rules, filt
 
-	def anchor_bracket_cross_depth_rules(self):
-		name, rules, filt = 'anchor-bracket-cross-depth', [], '@AuxAnchorBracketCrossDepth'
-		self.add_class(filt, ['@AnchorStart', '@BracketAnchor'])
-		for depth in range(1, self.max_depth):
-			rules.append(mark_pos_rule(f'@AnchorStart{depth-1}Mark', f'@BracketAnchor{depth}Mark', 0, 0))
-		return name, rules, filt
-
-	def anchor_cap_rules(self):
-		name, rules, filt = 'anchor-cap', [], '@AuxAnchorCap'
-		self.add_class(filt, ['@CapAnchorStart', '@CapAnchorEnd', \
-				'@CapScaledMark', '@CapRotScaledMark', '@EnclosureScale'])
-		rules.append(mark_pos_rule(f'@CapAnchorStart', '@CapScaledMark', 0, 0))
-		rules.append(mark_pos_rule(f'@CapAnchorStart', '@CapRotScaledMark', 0, 0))
-		for (sign, sc), scaled in self.cap_scale_to_cap.items():
-			factor = SCALEDOWN ** sc
-			(w, h) = self.unscaled_cap_to_size[sign]
-			x = round(factor * w / self.resolution) * self.resolution
-			y = round(factor * h / self.resolution) * self.resolution - self.enclosure_descent(sc)
-			for depth in range(1, self.max_depth):
-				rules.append(mark_pos_rule(scaled, f'@CapAnchorEnd{depth}Mark', x, y))
-		for (_, sc), scaled in self.cap_rot_scale_to_cap.items():
-			for depth in range(1, self.max_depth):
-				rules.append(mark_pos_rule(scaled, f'@CapAnchorEnd{depth}Mark', self.enclosure_descent(sc), 0))
-		for sc in self.all_scales:
-			descent = self.enclosure_descent(sc)
-			rules.append(mark_pos_rule('@CapAnchorStart', f'@EnclosureScaleHorizontal{sc}Mark', 0, -descent))
-			rules.append(mark_pos_rule('@CapAnchorStart', f'@EnclosureScaleVertical{sc}Mark', descent, 0))
-		for depth in range(1, self.max_depth):
-			rules.append(mark_pos_rule('@EnclosureScale', f'@CapAnchorEnd{depth}Mark', 0, 0))
-		return name, rules, filt
+	def anchor_bracket_rules(self):
+		name, rules = 'anchor-bracket', []
+		rules.append(mark_pos_rule(f'@BracketAnchor', '@BracketMark', 0, 0))
+		return name, rules
 
 	def outline_hor_rules(self):
 		name, rules, filt = 'outline-hor', [], '@AuxOutlineHor'

@@ -35,6 +35,13 @@ def printables_of(builder):
 			for sc in builder.all_scales for d in all_digits[1:] for p in builder.all_poss \
 			for direction in ['hor', 'ver'] for level in 'pw')
 
+	if False:
+		chars.add(builder.start_hor)
+		for level in all_levels:
+			chars.add(builder.open_(level))
+		chars.add(builder.anchor_basic_mid)
+	# chars.add(builder.start_hor)
+	#chars.add(builder.open_('h'))
 	# chars.add(builder.anchor_start_insert_(1))
 	# chars.add(builder.anchor_insert_mid_(0))
 	# chars.add(builder.anchor_start_(0))
@@ -49,7 +56,7 @@ class TestOmni(unittest.TestCase):
 
 	@classmethod
 	def setUpClass(cls):
-		cls.builder = UniOmniFontBuilder(debug=False, log=True, maxdepth=3, nscales=3, ndigits=2, \
+		cls.builder = UniOmniFontBuilder(debug=False, log=True, maxdepth=3, nscales=4, ndigits=2, \
 					signcolor='black', bracketcolor='black', shadealpha=255, shadepattern='diagonal')
 		cls.builder.make_font_initial()
 		cls.builder.syntax_analysis()
@@ -76,16 +83,23 @@ class TestOmni(unittest.TestCase):
 		#encodings = ['𓑂⸣']
 		#encodings = ['𓑂⟧𓀀']
 		#encodings = ['𓍹𓐼𓀀𓐽𓍺']
-		encodings = ['𓀁𓐲𓉘𓑐𓐼𓀀𓑎𓐽𓍺']
+		encodings = ['𓀀𓐱𓀀𓐱𓀀𓐰𓀀𓐱𓀁']
 		#encodings = ['𓀀𓐳𓐷[𓐷𓀀𓐰𓀁𓐸𓐸']
+		encodings = ['𓀀𓐳𓀀']
+		encodings = ['𓐾𓐿𓊉𓐱𓐼𓐽𓉛']
+		encodings = ['𓐼𓀀𓀀𓐽𓉜']
 		make_page(FONTFILE, f'{DIR}/omnitest4.html', self.fontname, encodings, 'hlr', self.info)
 
 	def test_encodings(self):
 		encodings = sorted(self.various_encodings(), key=len)
 		#encodings = ['𓑂⟧𓀀']
 		#encodings = ['𓍹𓐼𓀀𓐽𓍺']
-		encodings = ['𓀁𓐲𓉘𓑐𓐼𓀀𓑎𓐽𓍺']
+		encodings = ['𓀀𓐱𓀀𓐱𓀀𓐰𓀀𓐱𓀁']
 		#encodings = ['𓀀𓐳𓐷[𓐷𓀀𓐰𓀁𓐸𓐸']
+		encodings = ['𓀀𓐳𓀀']
+		encodings = ['𓐾𓐿𓊉𓐱𓐼𓐽𓉛']
+		#encodings = ['𓀀𓐱𓐼𓀀𓐽𓉛']
+		encodings = ['𓐼𓀀𓀀𓐽𓉜']
 		for encoding in encodings:
 			if not self.compare(encoding, 'hlr'):
 				return
@@ -115,6 +129,8 @@ class TestOmni(unittest.TestCase):
 	
 	def compare(self, encoding, direction):
 		fragment = self.parser.parse(encoding)
+		if self.builder.ndigits == 2:
+			fragment = enclosure_breakup_fragment(fragment)
 		encoding = str(fragment)
 		depth = fragment_max_depth(fragment)
 		if depth > self.builder.max_depth:
@@ -132,13 +148,16 @@ class TestOmni(unittest.TestCase):
 				print("fragment_tree crashed")
 				exit(0)
 		_, poss_emulator = self.emulator.run(encoding, direction)
+		# print("all", self.to_mnemonics(poss_emulator))
 		poss_emulator = [tupl for tupl in poss_emulator if tupl[0] in self.printables]
-		# print(poss_emulator)
 		end_marker = [('end', 0, 0, 0, 0)]
 		poss_tree_ext = poss_tree + end_marker
 		poss_emulator_ext = poss_emulator + end_marker
 		i = first_difference(poss_tree + end_marker, poss_emulator + end_marker)
 		if i is not None:
+			poss_tree_ext = self.to_mnemonics(poss_tree_ext)
+			poss_tree = self.to_mnemonics(poss_tree)
+			poss_emulator = self.to_mnemonics(poss_emulator)
 			print(fragment)
 			print(poss_tree_ext[i])
 			print(poss_emulator_ext[i])
@@ -150,6 +169,13 @@ class TestOmni(unittest.TestCase):
 			return False
 		else:
 			return True
+
+	def to_mnemonics(self, glyphs):
+		mapped_glyphs = []
+		for (code, x, y, x_adv, y_adv) in glyphs:
+			mapped_code = self.builder.mnemonic.get(code, code)
+			mapped_glyphs.append((mapped_code, x, y, x_adv, y_adv))
+		return mapped_glyphs
 
 ##### positioning
 
@@ -573,3 +599,19 @@ def damage_rect(builder, x, y, w, h):
 			x_accum += int(dx) * 8 ** i * builder.resolution
 		y_accum -= height
 	return chars
+
+def enclosure_breakup_fragment(fragment):
+	groups = []
+	for g in fragment.groups:
+		groups.extend(enclosure_breakup_group(g))
+	return Fragment(groups)
+
+def enclosure_breakup_group(group):
+	if isinstance(group, Enclosure) and len(group.groups) > 1:
+		groups = [Enclosure(group.typ, [group.groups[0]], group.delim_open, group.damage_open, None, None)]
+		for i in range(1, len(group.groups)-1):
+			groups.append(Enclosure(group.typ, [group.groups[i]], None, None, None, None))
+		groups.append(Enclosure(group.typ, [group.groups[-1]], None, None, group.delim_close, group.damage_close))
+		return groups
+	else:
+		return [group]
