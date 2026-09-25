@@ -1,6 +1,6 @@
 [project]
 name = "hieropy"
-version = "0.1.9"
+version = "0.1.10"
 description = "Processing of ancient Egyptian hieroglyphic text"
 readme = "README.md"
 authors = [{ name = "Mark-Jan Nederhof", email = "markjan.nederhof@googlemail.com" }]
@@ -8,6 +8,7 @@ license-files = ["LICENSE"]
 requires-python = ">= 3.9"
 dependencies = [
 	"fonttools",
+	"fonttools[repacker]",
 	"numpy",
 	"odfpy",
 	"Pillow",

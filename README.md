@@ -449,7 +449,7 @@ For use in web pages, one would have a file `omni.css` such as:
 ```
 
 There are a number of caveats:
-* I have not been able to reliably compile NewGardinerOmni fonts for different versions of `fonttools`.
+* Compilation of fonts may fail, due to the `fonttools` package having unpredictable behaviour.
 * The shaping engine (HarfBuzz) present in most browsers and Word processors is incapable of handling the font built with the default parameters for encodings longer than one or two groups, due to the complexity of the font. Fonts built with `maxdepth=3` are easier to handle, but one commonly encounters groups with depth exceeding 3. An example of a group with depth 4 is: two signs next to one another, above another sign, and this within a cartouche. To be on the safe side and to be able to handle any text, one would probably want to set the bound at `maxdepth=6` or `maxdepth=7`, but I have yet to come across a shaping engine that could handle the resulting font.
 * What helps considerably is `ndigits=2`, and most browsers are then able to handle most texts with the compiled font. There are some complicated groups, for example involving nested enclosures, which cannot be handled with `ndigits=2`.
 * Also fonts built with `nscales=4` are easier to handle, but then the positioning may look somewhat wrong and signs may start to overlap. The appearance would have been even better with `nscales=6` or higher, but this won't compile due to inherent limitations of OpenType technology, allowing only up to 65,535 glyphs. That limit is reached with `nscales=5` unless one compromises and excludes certain signs from being mirrored and/or scaled. Incidentally, it was always a bad idea to include non-core signs in the Extended-A sign list and the issue of the ceiling of 65,535 glyphs in OpenType fonts confirms once more that it was the right decision to exclude non-core signs from the NewGardiner font.
@@ -529,9 +529,10 @@ venv\Scripts\activate
 
 ## Changelog
 
-### 0.1.10 (to be released)
+### 0.1.10
 
 * Added ndigits parameter to UniOmniFontBuilder.
+* Improved insertion.
 
 ### 0.1.9
 

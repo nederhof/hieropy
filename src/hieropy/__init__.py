@@ -10,4 +10,4 @@ from .uniomnifont import UniOmniFontBuilder
 from .uniextraction import UniExtractor
 from .custom import CustomSignList
 
-__version__ = '0.1.9'
+__version__ = '0.1.10'

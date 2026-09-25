@@ -329,8 +329,9 @@ class Horizontal(Group):
 		for g in self.groups:
 			g.resize(f)
 	def fit(self, options, w, h):
+		height = math.inf if len(self.proper_groups()) == 1 else 1
 		for g in self.groups:
-			g.fit(options, math.inf, 1)
+			g.fit(options, math.inf, height)
 		super().fit(options, w, h)
 	def format(self, options, x0, x1, x2, x3, y0, y1, y2, y3):
 		if self.alt:
@@ -529,6 +530,14 @@ class Enclosure(Group):
 				g.fit(options, inner_space, math.inf)
 		self.fit_open(options)
 		self.fit_close(options)
+		if options.h():
+			if self.kern_open_size() + self.inner_size(options)[0] + self.kern_close_size() < 0:
+				self.kern_open = 0
+				self.kern_close = 0
+		else:
+			if self.kern_open_size() + self.inner_size(options)[1] + self.kern_close_size() < 0:
+				self.kern_open = 0
+				self.kern_close = 0
 		super().fit(options, w, h)
 	def fit_open(self, options):
 		if self.delim_open and len(self.groups) > 0:
@@ -905,16 +914,29 @@ class Basic(Group):
 	def displacement(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale):
 		boost = max(1, round(max(*plane.im.size) / 30))
 		t, b, l, r = Basic.distances(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale)
+		if False:
+			if l > 0:
+				x = l if r >= l else None
+			elif r < 0:
+				x = r if l <= r else None
+			else:
+				x = 0
+			if t > 0:
+				y = t if b >= t else None
+			elif b < 0:
+				y = b if t <= b else None
+			else:
+				y = 0
 		if l > 0:
-			x = l if r >= l else None
+			x = min(l, r) if r >= 0 else None
 		elif r < 0:
-			x = r if l <= r else None
+			x = max(l, r) if l <= 0 else None
 		else:
 			x = 0
 		if t > 0:
-			y = t if b >= t else None
+			y = min(t, b) if b >= 0 else None
 		elif b < 0:
-			y = b if t <= b else None
+			y = max(t, b) if t <= 0 else None
 		else:
 			y = 0
 		if x is None:
@@ -942,26 +964,33 @@ class Basic(Group):
 		return x, y
 	@staticmethod
 	def distances(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale):
-		t = -sys.maxsize
-		b = sys.maxsize
-		l = -sys.maxsize
-		r = sys.maxsize
+		scale_factor = scale_prev / scale
+		t = -hull.dist
+		b = hull.dist
+		l = -hull.dist
+		r = hull.dist
+		x = round(hull_x)
+		x_min = -hull.dist-1
+		x_max = hull.w + hull.dist
+		y = round(hull_y)
+		y_min = -hull.dist-1
+		y_max = hull.h + hull.dist
 		t = Basic.distances_bottommost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, t, \
-			range(round(hull_x), hull.w + hull.dist))
+			range(x, x_max))
 		t = Basic.distances_bottommost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, t, \
-			range(round(hull_x)-1, -hull.dist-1, -1))
+			range(x-1, x_min, -1))
 		b = Basic.distances_topmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, b, \
-			range(round(hull_x), hull.w + hull.dist))
+			range(x, x_max))
 		b = Basic.distances_topmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, b, \
-			range(round(hull_x)-1, -hull.dist-1, -1))
+			range(x-1, x_min, -1))
 		l = Basic.distances_rightmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, l, \
-			range(round(hull_y), hull.h + hull.dist))
+			range(y, y_max))
 		l = Basic.distances_rightmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, l, \
-			range(round(hull_y)-1, -hull.dist-1, -1))
+			range(y-1, y_min, -1))
 		r = Basic.distances_leftmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, r, \
-			range(round(hull_y), hull.h + hull.dist))
+			range(y, y_max))
 		r = Basic.distances_leftmost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, r, \
-			range(round(hull_y)-1, -hull.dist-1, -1))
+			range(y-1, y_min, -1))
 		return t, b, l, r
 	@staticmethod
 	def distances_bottommost(plane, hull, plane_x, plane_y, hull_x, hull_y, scale_prev, scale, t, xs):
