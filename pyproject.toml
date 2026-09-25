@@ -8,7 +8,6 @@ license-files = ["LICENSE"]
 requires-python = ">= 3.9"
 dependencies = [
 	"fonttools",
-	"fonttools[repacker]",
 	"numpy",
 	"odfpy",
 	"Pillow",
@@ -22,6 +21,7 @@ dependencies = [
 	"svgwrite",
 	"tkhtmlview",
 	"tkinterweb",
+	"uharfbuzz",
 	"webcolors",
 ]
 
