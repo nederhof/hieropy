@@ -1,0 +1,387 @@
+# JSesh 7.9 codes that can reasonably be mapped to Unicode without losing information.
+# The information was checked against n5240-hieroglyphs-DB.pdf (referred to as the database).
+# Glyphs that appear to be incorrect are mapped to closest likely equivalent.
+
+# redraw
+A1A,0x1359D
+# redraw
+A4A,0x13476
+# meaningless variant
+A6D,0x13519
+# glyph appears to be slightly different (and less accurate) interpretation of the same token
+A6h,0x13513
+# glyph appears to be slightly different (and less accurate) interpretation of the same token
+A6L,0x13514
+# redraw
+A8A,0x13482
+# meaningless variant
+A13D,0x1300F
+# redraw
+A13h,0x135B1
+# redraw
+A14E,0x135D3
+# tokens seem to suggest other glyphs
+A14I,0x13010
+# tokens seem to suggest other glyph
+A14J,0x135CF
+# seem indistinguishable
+A17C,0x1361E
+# glyph appears to be misinterpretation
+A27A,0x1301E
+# glyph appears to be misinterpretation
+A31C,0x13022
+# glyph could be misinterpretation
+A33B,0x13566
+# seem indistinguishable
+A34A,0x13027
+# meaningless variant
+A34B,0x13027
+# glyph could be misinterpretation
+A35D,0x13028
+# small variation
+A36B,0x1353F
+# most uses seem to be mistakes
+A40C,0x13659
+# do not seem worth distinguishing
+A40D,0x13031
+# redraw
+A40G,0x13660
+# seem indistinguishable
+A40I,0x1303A
+# glyph is not attested, and the Unicode form is the closest form
+A58B,0x13043
+# do not seem worth distinguishing
+A62,0x13047
+# based on hieratic, could be transcribed differently
+A67,0x13023
+# redraw
+A72,0x13469
+# redraw
+A76D,0x1359F
+# seems an omission, although admittedly, the JSesh form seem incorrect (should be depicted naked)
+A82,0x135E7
+# redraw
+A83,0x1349C
+# listed as fallback
+A90B,0x1356E
+# do not seem worth distinguishing
+A90C,0x134AC
+# seems an omission
+A104A,0x136C7
+# redraw
+A112,0x134DA
+# do not seem worth distinguishing
+A117,0x134E1
+# redraw
+A121B,0x134EE
+# meaningless distinction
+A133,0x13007
+# distinction not supported by evidence
+A133A,0x13007
+# redraw
+A143,0x1352E
+# distinction not supported by evidence
+A158C,0x1353A
+# redraw
+A179,0x13578
+# redraw
+A202,0x13597
+# listed as fallback
+A212,0x135AB
+# meaningless variants
+A219A,0x135BE
+A219B,0x135BE
+# meaningless distinction
+A222,0x135CB
+# distinction not supported by evidence
+A237,0x135E2
+# redraw
+A242,0x13578
+# listed as fallback
+A243,0x135FC
+# meaningless distinction
+A276,0x1361E
+# based on hieratic, could be transcribed differently
+A280,0x1361E
+# distinction not supported by evidence
+A285A,0x13648
+# may be misreading
+A296G,0x13667
+# listed as fallback
+A299B,0x13681
+# distinction not supported by evidence
+A321,0x13018
+# glyph could be mistake
+A333,0x136BD
+# glyph could be mistake
+A352,0x13054
+# listed as fallback
+A358,0x137D3
+# distinction not supported by evidence
+A364,0x135E0
+# based on hieratic, could be transcribed differently
+A368,0x1301E
+# distinction not supported by evidence
+A375,0x134BC
+# listed as fallback
+A392,0x1362C
+# glyph could be mistake
+A394,0x1304B
+# glyph could be mistake
+A395,0x1350A
+# redraw
+A399,0x1350D
+# seem indistinguishable
+A409,0x135E9
+# redraw
+A421,0x1352A
+# duplicate
+A464,0x1380A
+# distinction not supported by evidence
+A484,0x1360D
+# glyph could be mistake
+A510,0x13584
+# glyph could be mistake
+A511,0x13068
+# the following two are swapped in Unikemet, originally caused by mistake in JSesh 7.6.1, corrected in 7.9
+# see https://jsesh.qenherkhopeshef.org/signdiffs/release-7.9
+B1J,0x136E8
+B1K,0x136E9
+# distinction not supported by evidence
+B6C,0x13056
+# based on hieratic, could be transcribed differently
+B7A,0x13058
+# redraw
+B7B,0x136D9
+# do not seem worth distinguishing
+B8C,0x13058
+# do not seem worth distinguishing
+B8G,0x13058
+# redraw
+B23,0x13708
+# distinction not supported by evidence
+B30,0x138AA
+# redraw
+B31,0x13729
+# redraw
+B36,0x1371B
+# distinction not supported by evidence
+B36B,0x13745
+# redraw
+B37,0x13744
+# glyph could be mistake
+B48,0x135FB
+# glyph could be mistake
+B48A,0x135FC
+# distinction not supported by evidence
+B49,0x13721
+# tokens suggest form is incorrect
+B56A,0x136DB
+# distinction not supported by evidence
+B73,0x136BD
+# redraw
+B77A,0x13726
+# glyph could be mistake
+B100,0x13721
+# virtually identical
+B102,0x136BB
+# GID B106 in database is completely different glyph, while JSesh 7.9 B106 is duplicate of B104
+B106,0x13055
+# meaningless variant
+C8A,0x13064
+# the filename in JSesh is C9H, and HG calls it C9H, but the hieroglyphic palette calls it C9h
+C9H,0x13884
+# redraw
+C11I,0x137EE
+# distinction not supported by evidence
+C11K,0x13068
+# difference only in the beard
+C14,0x1306B
+# difference only in the beard
+C16,0x1306D
+# distinction not supported by evidence
+C17D,0x1306E
+# redraw
+C18,0x1306F
+# redraw
+C18A,0x1385C
+# for the following four, distinction not supported by evidence
+C22,0x13774
+C22D,0x13774
+C22E,0x13774
+C22F,0x13774
+C22G,0x13777
+# the filename in JSesh is C22H, and HG calls it C22H, but the hieroglyphic palette calls it C22h
+C22H,0x13785
+# distinction not supported by evidence
+C22I,0x13778
+# redraw
+C26A,0x1377E
+# distinction not supported by evidence
+C26B,0x1377E
+# redraw
+C36,0x1381A
+# distinction not supported by evidence
+C46B,0x137B6
+# distinction not supported by evidence
+C52,0x137C1
+# redraw
+C55,0x137C7
+# redraw
+C56,0x137C8
+# redraw
+C56A,0x137C9
+# distinction not supported by evidence
+C61,0x137D0
+# distinction not supported by evidence
+C71A,0x137DF
+# distinction not supported by evidence
+C77A,0x137E7
+# meaningless distinction according to the database
+C78G,0x137F9
+# redraw
+C95A,0x1382D
+# redraw
+C97,0x1382E
+# glyph could be mistake
+C98D,0x1385E
+# unconfirmed glyph that is virtually identical
+E72,0x13A5C
+# glyph appears to be slightly different interpretation of same tokens
+E92B,0x13B44
+# seem indistinguishable
+E92D,0x130D4
+# unconfirmed glyph that is virtually identical
+E94B,0x13B48
+# redraw
+C98E,0x13836
+# distinction not supported by evidence
+C99,0x13831
+# indistinguishable
+C103,0x13678
+# redraw
+C104,0x13793
+# redraw
+C104A,0x13794
+# looks indistinguishable to me
+C105A,0x1384F
+# distinction not supported by evidence
+C108,0x13856
+# redraw
+C124,0x13753
+# distinction not supported by evidence
+C131,0x1375C
+# redraw
+C152,0x1388E
+# redraw
+C154,0x13895
+# redraw
+C155,0x1389C
+# redraw
+C166,0x138C3
+# duplicates
+C180A,0x136F8
+# distinction not supported by evidence
+C180C,0x138D7
+# redraw
+C185E,0x138E9
+# distinction not supported by evidence
+C190A,0x138F2
+# practically duplicates
+C232,0x138AE
+# redraw
+C250,0x13788
+# distinction not supported by evidence
+C255,0x13921
+# duplicates
+C288,0x138B2
+# duplicates
+C288A,0x138B4
+# redraw
+C311,0x1376C
+# redraw
+D1A,0x1392E
+# meaningless variant
+D3B,0x1396A
+# glyph appears to be misinterpretation
+D21A,0x13079
+# redraw
+D34,0x1309A
+# duplicates
+D63D,0x13A23
+# meaningless variant
+D63G,0x13A23
+# redraw
+D78,0x13944
+# distinction not supported by evidence
+D82,0x1393D
+# meaningless variant
+D83,0x13943
+# distinction not supported by evidence
+D106,0x1394D
+# meaningless variant
+D120,0x13942
+# meaningless variant
+D130A,0x13078
+# glyph appears to be misinterpretation
+D133,0x14342
+# distinction not supported by evidence
+D221,0x130C8
+# distinction not supported by evidence
+D229A,0x139D0
+# may be misreading
+D230,0x130A5
+# distinction not supported by evidence
+D236,0x139DC
+# meaningless variant
+D239,0x130A6
+# may be misreading
+D240,0x130A6
+# meaningless variant
+D241,0x130A6
+# may be misreading
+D248,0x139DE
+# merged following the database
+E100C,0x130DC
+# distinction not supported by evidence
+F97A,0x13B9D
+# distinction not supported by evidence
+F98,0x13B97
+# unconfirmed glyph that is virtually identical
+G179A,0x13D00
+# merged following the database
+G279,0x13C9E
+# meaningless variant
+H7A,0x13186
+# meaningless distinction according to the database
+I4A,0x1318B
+# unconfirmed glyph that does not seem worth distinguishing
+M20A,0x131CF
+# unconfirmed glyph that does not seem worth distinguishing
+M20B,0x131CF
+# seems an omission
+M22B,0x131D2
+# the following two are meaningless variants
+M176,0x131EE
+M189,0x131EE
+# unconfirmed and seems very similar
+N8C,0x13EDF
+# seems an omission
+N16D,0x13EFB
+# distinction not supported by evidence
+O36A,0x13285
+# redraw
+O36B,0x13F76
+# meaningless variant
+S27A,0x132F2
+# meaningless variant
+U10A,0x1333E
+# seems an omission
+Z5A,0x133F0
+# the following 4 are not in the database; seem obvious equivalents
+Ff301,0x133FA
+Ff302,0x133FB
+Ff303,0x133FC
+Ff304,0x133FD
+# not in the database; seems meaningless variant
+O1VARA,0x13250
