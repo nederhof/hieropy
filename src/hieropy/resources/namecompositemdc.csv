@@ -91,7 +91,10 @@ D213,𓊹𓐶𓂠
 D222,𓂡𓐺𓌪
 D223,𓇓𓐶𓂥
 D247,𓧬𓑀
+D265,𓯖︃𓐶𓂧
 D270,𓊹𓐶𓂧
+# according to database, but this seems rather far-fetched
+D293,𔎆𓐵𓐷𓂾𓐱𓂾𓐸
 D296,𓃀𓐶𓐷𓂝𓐰𓂝𓐸
 D297,𓃀𓐶𓐷𓂝𓐰𓄏𓐸
 D298,𓐷𓃀𓐱𓃀𓐸𓐶𓂝
@@ -113,8 +116,12 @@ D315,𓃀𓐶𓐷𓍿𓐰𓂻𓐸
 D320,𓨣𓐹𓂻
 D321,𓨣𓐶𓍽
 D322,𓨣𓐹𓇼
-D322A,𓨣𓐹𓇼
 D325A,𓨭𓐹𓂻
+# according to database
+D327,𓋸︂
+# according to database
+D328,𓋸︂
+# according to database
 D330,𓦯𓐻𓆇
 D332,𓂓𓐹𓁷
 D335,𓦬𓐹𓏌
@@ -122,6 +129,7 @@ D340,𓃂𓐹𓈘
 D342,𓃂𓐹𓐷𓏏𓐱𓏤𓐸
 D343,𓃂𓐹𓏭
 D344,𓃂𓐹𓉐
+D345,𓂝𓐺𓎼
 D347,𓂓𓐹𓐷𓊹𓐳𓄹𓐸
 D348,𓃀𓐶𓊃
 D349,𓂓𓐹𓍘
@@ -130,6 +138,10 @@ D351,𓂓𓐹𓄹𓑀
 D352,𔉴︅𓑀𓐶𓂡
 D353,𓂓𓐹𓏲
 D355,𓂓𓐹𓃒
+# according to database
+D356,𓌘𓐶𓥶
+D356A,𓌘𓐶𓁹
+D356B,𓌘𓐶𓁹
 D357,𓂓𓐹𓈅
 D359,𓂓𓐹𓆇
 D362,𓃂𓐹𓍱
@@ -141,6 +153,8 @@ D367,𓂓𓐹𓊪
 D373A,𓐷𔈺𓐱𔈺𓐸𓐶𓍽
 D374,𓦬𓐹𓂀
 D376,𓂓𓐺𓌸
+# may be misreading according to database
+D378,𓯩︀
 D379,𓂓𓐺𓎝
 D381,𓂓𓐺𓎛
 D384,𓃂𓐹𓏏
@@ -161,10 +175,47 @@ D410A,𓋴𓐶𓂸︃
 D415,𓃂𓐹𓈛
 D416,𓐷𓃀𓐱𓃀𓐸𓐶𓐷𓎡𓐰𓎡𓐸
 E91,𓪣︀
+E112A,𓎿𓐶𓃬
+E113,𓎿𓐶𓃬
+E192,𓃬𓐶𔇌𓑀
+E230,𓪄𓐳𓌓︂𓐵𓌙
+# decomposition following database
+E277,𓌐𓐶𓃬
 F38B,𓯥𓑀
 F50A,𓋴𓐶𓄳
-F64,𓄈𓐶𓄑
-F65,𓄈𓐶𓎡
+# decomposition following database
+F16A,𓄏𓑀
+# decomposition following database
+F29A,𓄜𓑀𓐶𔈌
+# decomposition following database
+F29B,𓄜𓑀𓐶𔉁
+# decomposition following database of next 11 signs
+F37A,𓄧︀
+F37C,𓄧︃
+F37D,𓯨︀
+F37E,𓯩︀
+F37G,𓯪︀
+F37I,𓯨︃
+F37J,𓯨︀
+F37K,𓯨︀
+F37L,𓄧︀
+F37N,𓯪︃
+F37h,𓯩︀
+# decomposition following database
+F38A,𓯤𓑀
+F51B,𓄹︀𓑀
+F51C,𓄹︀𓑀
+F51D,𓄹︅𓑀
+F51F,𓄹︆
+# decomposition following database
+F64,𓄉𓐶𓄑
+F65,𓮂𓐶𓎡
+# may be misreading according to database
+F67,𓭷𓑀
+# according to database
+F67E,𓭸𓑀
+F68,𓭽𓐶𓌉︅
+F68A,𓭽𓑀𓐶𓌉︀
 F72,𓮅𓐶𓂋
 F72A,𓮁𓐶𓂋
 F73,𓮅𓐶𓐷𓂋𓐰𓂋𓐸
@@ -180,10 +231,14 @@ F77A,𓮁𓐶𓂡
 F91,𓄂𓐶𓅱𓐳𓏏𓐵𓏭
 F101,𓄋𓐺𓋑
 F104,𓄋𓐺𓐷𓊹𓐱𓊹𓐸
+# decomposition following database
+F105,𓄋𓑀𓐺𓊽
 F110,𓄱𓐶𓄏
 F129,𓊹𓐶𓄡
 F134,𓄤𓐶𓍃
 F135,𓄥𓐶𓐝
+# according to database, this may be misreading
+F135A,𓄥𓐶𓐝
 F136,𓄥𓐶𓆑
 F137,𓄥𓐶𓂸
 F149,𓄥𓐶𓌴
@@ -191,20 +246,29 @@ F150,𓄋𓐹𓵹
 F152,𓄟𓐶𓄡
 F153,𓄋𓐹𓐷𓇼𓐰𓏤𓐸
 F155,𓄋𓐹𓊪
-F156,𓄥𓐶𓈀
+F156,𓄥𓐶𓇿
 F156A,𓄥𓐶𓻽
+F157,𓄥𓐳𓇿𓐵𓇿
 F159,𓄋𓐹𓌆
 F160,𓄋𓐹𓂋
-F163,𓮅𓐶𓂝
+F163,𓄊𓐶𓂝
 F163A,𓮁𓐶𓂝
 F165,𓮅𓐶𓄂
 F165A,𓮁𓐶𓄂
 F167,𓄋𓐹𓈅
 F168,𓄋𓐹𓻳
 F169,𓄋𓐹𓐷𓎆𓐱𓎆𓐰𓏮𓐸
+F171,𓄋𓐺𓆄
 F174,𓄋𓐹𓇳
 F175,𓄋𓐹𓍢
+# as suggested by database
+F176,𓄏︃𓐱𓄏︃𓐰𓇿
+F179,𓄥𓐶𓇿
+F180,𓄥𓐶𓐷𓇿𓐰𓇿𓐸
 F184,𓄾𓐶𓂞
+# as suggested by database
+G3A,𓄿𓐶𓌳𓑀
+G3B,𓄿𓐶𓌳𓐲𓌳𓑀
 G20A,𓰮𓐶𓂝
 G20B,𓰯𓐶𓂝
 G26B,𓅝𓐳𓏏𓐵𓏭
@@ -217,6 +281,9 @@ G60,𓄿𓐶𓎡
 G60A,𓄿𓐶𓎡𓑀
 G61,𓄿𓐶𓂧
 G62,𓄿𓐶𓂡
+G70,𔎆𓐶𓅭
+# as suggested by database
+G72A,𓻣𓐹𓰙
 G78,𓰠︀
 G86,𓅔𓐶𓂝
 G87,𓅓𓐶𓂡
@@ -236,9 +303,19 @@ G96C,𓅓𓐶𔉴︆
 G96D,𓰮𓐶𔉴𓑀
 G97,𓅓𓐶𓌪𓑀
 G98,𓅓𓐶𓂟
+# as suggested by database
 G127A,𓲎𓐴𓏤
 G127B,𓲐𓐴𓏤
+# as suggested by database
 G127D,𓲍𓐴𓏤
+# as suggested by database
+G129D,𓽻𓐹𓅃
+# as suggested by database
+G226,𓅡𓐰𓎡𓑀
+# as suggested by database
+G231,𓅷𓐶𓂸
+# database suggests there may not be overlapping
+G239,𓅱𓐱𓅱𓐱𓅱
 G240,𓅱𓐶𓆑
 G241,𓅱𓐶𓂸
 G242,𓅱𓐶𓂋
@@ -251,24 +328,57 @@ G259,𓄿𓐶𓈖
 G261,𓅱𓐶𓂢
 G268,𓅓𓐶𓇯
 G271,𓴎𓐶𓐝
+G289,𓅆𓐲𓍱
+# as suggested by database
+G313,𓅓𓐶𓄗
+# database suggests sign is same as H5 (but still needs mirroring)
+H5A,𓆃𓑀
+# as suggested by database
+H6B,𓆄︆
+H6C,𓆅︆
+H43,𓆄𓐶𓇿
+H47,𓴞𓐶𓄏𓑀
+# as suggested by database
+I32,𓵧𓐹𓀿𓑀
+I32A,𓵧︂𓐹𓀿︀𓑀
+I32B,𓵧𓐹𓀿
+I34,𓃀𓐶𓆓
+I36,𓎛𓐶𓆓
+I37,𓄥𓐶𓆓
+I39,𓋴𓐶𓐷𓆓𓐰𓆓𓐸
 I86D,𓷃𓑀
+# as suggested by database
+I94,𓏲𓐱𓵊
 I100,𓎗𓐶𓆓
 I102,𓌃𓐶𓆓
 I111,𓵹𓐶𓄡
+I115,𓵚𓑀𓐶𓐷𓆑𓑀𓐰𓆑𓑀𓐰𓆑𓑀𓐸
 I132,𓆗𓐶𓄡
+I135,𓏳𓐹𓐷𓆍𓐱𓌻𓐸
 K16,𓍷𓐹𓆟
 L3,𓆦︁
+# as suggested by database
 L20,𓮂𓐶𓷲
 L21,𓮂𓐶𓆫︂
 L22,𓮁𓐶𓷲
 L22A,𓄊𓐶𓷲
+# as suggested by database
 L24,𓌂𓐶𓷲
+L26,𓷴𓐶𓆑
+L31,𓈀𓐰𓆣
 L35,𓌂𓐶𓷲
+M2A,𓆰︀𓑀
 M2B,𓸍︀
+M3C,𓆱︆
+M3D,𓆱︃
 M14A,𓹦𓐶𓆓
 M46A,𓸃𓐶𓆱
 M50,𓷻𓐶𓆱
 M78,𓸿𓐶𓍽
+M98,𓆼𓐶𓍢
+M98A,𓆼𓐶𓍢𓑀
+M98B,𓹜𓐶𓍢
+M98C,𓹜𓐶𓍢𓑀
 M100,𓆼𓐶𓂝
 M100A,𓹜𓐶𓂝
 M101,𓆼𓐶𓍼
@@ -285,7 +395,7 @@ M158,𓇓𓐶𓂋
 M159,𓇓𓐶𓂝
 M160,𓇓𓐶𓐷𓂝𓐰𓂝𓐸
 M161,𓺓𓐶𓂝
-M187,𓸕𓑀
+M187,𓸕︁𓑀
 M204,𓆼𓐶𓐷𓂋𓐰𓆑𓐸
 M205,𓇟𓐶𓎡
 M207,𓺕𓐶𓂝
@@ -307,6 +417,7 @@ N33AV,𓈓︂
 N35B,𓈖︂𓑀
 N35C,𓈖︃
 N55A,𓻣︀
+N55B,𓻣𓐹𓊪
 N66,𓊹𓐶𓇿
 N67,𓋑𓐶𓇿
 N68,𓺕𓐶𓇿
@@ -329,6 +440,7 @@ O13A,𓉧𓐻𓎺
 O13B,𓉧𓑀𓐹𓎺
 O13C,𓽭𓐹𓎺
 O13D,𓽬𓐻𓎺
+O30u,𓉽︁
 O35A,𓂻𓐶𓊃
 O36h,𓊅︀
 O38A,𓊋︀𓑀
@@ -450,6 +562,7 @@ O279,𓽤𓐶𓉻
 O284,𓾷𓐹𓐷𓇺︁𓐰𓄋𓐸
 O288,𓿢𓐶𓆑
 O289,𓉗𓐶𓆓
+O290,𓉐𓐹𓋋
 O291,𓉐𓐹𓏛
 O292,𓉐𓐻𓇼
 O293,𓉐𓐹𓋑
@@ -489,11 +602,103 @@ O348,𓾷𓐹𓐷𓂂𓐰𓏭𓐸
 O354,𓊅𓐶𓂝
 O355,𓾝𓐹𓌉
 P2I,𔁂𓑀
+P79,𓊢𓐶𓐷𓂝𓐰𓂻𓐸
+P82,𓊢𓐶𓵔
+P84,𓊢𓐶𓎡
+P85,𓊤𓐶𓐝
 P97A,𔁴𓑀
+Q40,𓊹𓐶𔂫
+R24v,𓋋︀
+R57,𔄕𓐶𓆑
+R64,𓋀𓐶𓆑
+R67,𓋀𓑀𓐶𓂢
+R73,𔄨𓐶𓂝
+R74,𔄩𓐶𓆑
+R75,𔄫𓐶𓆑
+R77,𔄫𓐶𓴦
+R78,𔄫𓐶𓂝
+R79,𔄨𓐶𓎡
+R87,𓵹𓐶𓋋
+R110,𔄟𓐶𓁹
+R111,𔄨𓐶𓁹
+S13A,𓃀𓐶𔆕
+S14B,𓌉𓐶𔆕
+S14C,𓌀𓐶𔆕
+S28A,𓋴𓑀𓐶𓏠
+S30A,𓋴𓑀𓐶𓆑
+S121,𓋴𓐶𓎡
+S144,𓋽𓐶𓂡
+S145,𓋽𓐶𓆑
+S145A,𔇒𓑀𓐶𓆑
+S147,𓋾𓐶𓆑
+S148,𓌀𓐶𓐝
+S149,𓌀𓐶𓂋
+S158,𓌂𓐶𓐝
+S159,𓌂𓐶𓂡
+S169,𓌂𓐶𓆑
+S170,𓌂𓐶𓂤
+S175,𓌀𓐶𓂡
+S178,𓌂𓐶𓧐
+S202,𓌂𓐶𓆓
+T37,𓌉𓐶𓍽
+T38,𓌉𓐶𔀒
+T39,𓌉𓐶𓌴
+T40,𓌉𓐶𓌕𓑀
+T41,𓌉𓐶𓐷𓍽𓐰𔀑𓐸
+T42,𓌉𓐶𓆑
+T69,𓌙𓐶𓂝
+T70,𓌙𓐶𓵹
+T77,𔈻𓐶𓆑
+T96,𔉴𓐶𓎀
+T98,𓌙𓐶𔉴
+T99,𔉴𓐶𓐝
+T100,𔉴︂𓑀𓐶𓆱
+T100A,𔉴𓐶𓆱
 T88B,𔉙𓑀
 T106,𔊉︀
 U13A,𔊜𓑀
+U60,𓅓𓐶𓍃
+U67,𓎛𓐶𓍉
+U68,𓎃𓐶𓍉
+U81,𓍑𓐶𓍽
+U82,𓍑𓐶𓂝
+U83,𓍑𓐶𓂋
+U84,𓍑𓐶𓆑
+U85,𓍑𓐶𓐝
+V40,𓏲𓐶𓂝
+V41,𓏲𓐶𓂞
+V42,𓏲𓐶𓂡
+V67,𓇓𓐶𓎔
+V68,𓎛𓐶𓎖
+V72,𓎛𓐶𓐷𓂝𓐰𓂝𓐸
+V73,𓎛𓐶𓴦
+V74,𓎛𓐶𓂡
+V75,𓎛𓐶𓆑
+V76,𓎛𓐶𓈖
+V77,𓎛𓐶𓂋
+V78,𓎛𓐶𓌴
+V79,𓎛𓐶𓂺
+V80,𓎛𓐶𓍃
+# according to database
+V81,𔍀𓐶𓎡
+V92,𔍀𓐶𓂡
+V93,𔍀𓐶𓆑
+V99,𔍊𓐶𓂸
+# according to database
+V116,𔍀𓐶𓎡
+V118,𔍀𓐶𓎡
+V138,𓎝𓐶𓍼
+W102,𓏇𓐶𓂧
+W103,𓎿𓐶𓁻
+W108,𓎿𓐶𓆑
 Y2v,𓏝︂
+Aa44,𔌗𓐶𓂝
+Aa45,𔌗𓐶𓆑
+Aa46,𔌗𓐶𓆓
+Aa47,𔌗𓐶𓍽
+Aa48,𔌗𓐶𓐷𓂝𓐰𓍽𓐸
+Aa49,𔌗𓐶𓂡
+Aa49A,𓐩𓐶𓂡
 qnbt,𓊋𓐵𓏏
 2,𓏮
 3,𓏦

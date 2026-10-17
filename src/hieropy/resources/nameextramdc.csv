@@ -341,20 +341,365 @@ D240,0x130A6
 D241,0x130A6
 # may be misreading
 D248,0x139DE
+# distinction not supported by evidence
+D252,0x139E1
+# redraw
+D258,0x139EA
+# distinction not supported by evidence
+D322A,0x13A29
+# distinction not supported by evidence
+D323,0x13A2B
+# distinction not supported by evidence
+D326,0x13A2D
+# distinction not supported by evidence
+D336,0x139EB
+# distinction not supported by evidence
+D346,0x139C0
+# may be misreading
+D354,0x1309B
+# may be misreading
+D360,0x13A2F
+# virtually identical
+D375,0x13097
+# distinction not supported by evidence
+D391,0x139C0
+# may be misreading
+D397,0x1308F
+# redraw
+E1B,0x13B30
+# distinction not supported by evidence
+E3A,0x130D4
+# distinction not supported by evidence
+E9B,0x13A7A
+# distinction not supported by evidence
+E14A,0x130E1
+# duplicates
+E14C,0x130E1
+# may be misreading
+E21A,0x130DB
+# distinction not supported by evidence
+E25A,0x130EF
+# distinction not supported by evidence
+E30A,0x13A5F
+# not worth distinguishing
+E31,0x130F6
+# duplicate
+E31A,0x130F6
+# meaningless distinction
+E31B,0x130F6
+# may be misreading
+E41,0x13AF4
+# may be misreading
+E44,0x13AF4
+# may be misreading
+E54,0x13B00
+# may be misreading
+E58A,0x13B07
+# may be misreading
+E59,0x13AEA
+# unconfirmed glyph that does not seem worth distinguishing
+E68A,0x13B11
+# redraw
+E70,0x13B12
+# meaningless variant
+E73B,0x13A5E
+# distinction not supported by evidence
+E75,0x130F6
+# meaningless variant
+E80B,0x13AAF
+# may be misreading
+E86,0x13A9A
+# redraw
+E89,0x13AA0
+# redraw
+E99,0x13B53
+# meaningless variant
+E100B,0x13B39
 # merged following the database
 E100C,0x130DC
+# distinction not supported by evidence
+E102B,0x13B51
+# distinction not supported by evidence
+E107,0x130EC
+# distinction not supported by evidence
+E108A,0x13AC7
+# redraw
+E145A,0x13A91
+# unconfirmed glyph that does not seem worth distinguishing
+E145B,0x13248
+# redraw
+E148N,0x13A44
+# glyph may be from iconography
+E164,0x130D2
+# distinction not supported by evidence
+E164A,0x13B2B
+# glyph may be from iconography
+E170,0x13B49
+# distinction not supported by evidence
+E174C,0x13B37
+# meaningless variant
+E174F,0x13B39
+# redraw
+E177A,0x13B75
+# distinction not supported by evidence
+E183,0x13A70
+# distinction not supported by evidence
+E185,0x130D9
+# redraw
+E193,0x13A73
+# duplicates
+E199,0x1322A
+# distinction not supported by evidence
+E199A,0x13B54
+# distinction not supported by evidence
+E200,0x13AC4
+# meaningless variant
+E201A,0x1322B
+# seems an omission
+E207A,0x13B3F
+# distinction not supported by evidence
+E208,0x13B40
+# meaningless variant
+E211,0x13B56
+# duplicates
+E211A,0x1322C
+# may be misreading
+E216K,0x13A42
+# meaningless variant
+E216h,0x13A45
+# redraw
+E251,0x136C7
+# duplicate
+E252,0x13B28
+# duplicate
+E254A,0x1322C
+# duplicate
+E280,0x13B2E
+# redraw
+E282,0x13AE7
+# meaningless variant
+F19C,0x13BB2
+# meaningless variant
+F31A,0x1311F
+# may be misreading
+F36C,0x13BE3
+# may be misreading
+F39B,0x13BEF
+# meaningless variant
+F40D,0x1312B
+# meaningless variant
+F46C,0x13133
+# may be misreading
+F62,0x132CF
+# may be misreading
+F66,0x132CF
+# distinction not supported by evidence
+F70A,0x13B7F
+# meaningless variant
+F70B,0x13B7F
+# may be misreading
+F70C,0x13B7F
+# may be misreading
+F70D,0x13B7F
+# duplicate
+F87,0x13B82
+# may be misreading
+F89,0x13104
 # distinction not supported by evidence
 F97A,0x13B9D
 # distinction not supported by evidence
 F98,0x13B97
+# distinction not supported by evidence
+F114A,0x13BB9
+# may be misreading
+F118B,0x13BC3
+# may be misreading
+F132C,0x143B8
+# meaningless variant
+F143B,0x133AA
+# meaningless variant
+F158,0x13221
+# may be misreading
+F183,0x132CF
+# Result of signs being swapped to original position
+G7E,0x1324A
+# meaningless variant
+G15A,0x13151
+# seems an omission
+G23A,0x13CF7
+# moved
+G28A,0x13C46
+# redraw
+G43A,0x13CF3
+# may be misreading
+G47A,0x13CBF
+# redraw
+G49,0x13179
+# redraw
+G49D,0x13CEE
+# may be overinterpretation
+G64,0x13CBF
+# listed as fallback
+G74A,0x13C1C
+# unconfirmed and seems very similar
+G75,0x13C1C
+# may be misreading, considering G111A below
+G111,0x13C7A
+# may be misreading
+G111A,0x13C7B
+# may be misreading
+G115,0x13C85
+# unconfirmed glyph that is virtually identical
+G122,0x13C8C
+# unconfirmed glyph that does not seem worth distinguishing
+G144B,0x13CAD
+# may be misreading
+G146,0x1316E
+# meaningless variant
+G148A,0x13249
+# listed as fallback
+G152B,0x13CB3
+# distinction not supported by evidence
+G160,0x13CC3
+# redraw
+G162A,0x13CC7
+# may be misreading
+G164,0x1314F
+# may be misreading
+G166,0x13160
+# meaningless variant
+G167,0x1317A
 # unconfirmed glyph that is virtually identical
 G179A,0x13D00
+# distinction not supported by evidence
+G176,0x13CFE
+# unconfirmed glyph that does not seem worth distinguishing
+G182A,0x13D03
+# may be misreading
+G191B,0x13C5E
+# meaningless variant
+G212A,0x13163
+# distinction not supported by evidence
+G216,0x13164
+# not worth distinguishing
+G219,0x13CF0
+# not worth distinguishing
+G222,0x13C34
+# may be misreading
+G224,0x13CF6
+# may be misreading
+G233,0x13CEA
+# meaningless variant
+G234,0x13CED
+# not worth distinguishing
+G235,0x13CE5
+# meaningless variant
+G251,0x13CD4
+# meaningless variant
+G253,0x13161
+# unconfirmed glyph that does not seem worth distinguishing
+G255,0x13C34
+# duplicates
+G256,0x1316C
+# duplicates
+G264,0x13222
+# duplicates
+G266,0x1323A
+# seems an omission
+G266A,0x13C8C
+# may be misreading
+G269,0x13C54
+# redraw
+G276,0x13C13
 # merged following the database
 G279,0x13C9E
+# redraw
+G280,0x13CA1
+# may be misreading
+G287,0x13C6F
+# may be misreading
+G288,0x13C92
+# may be misreading
+G296,0x13C74
+# meaningless variant
+G297,0x13CF5
+# meaningless variant
+G298,0x1315D
+# listed as fallback
+G308,0x13CE0
 # meaningless variant
 H7A,0x13186
+# may be misreading
+H15A,0x13D15
+# may be misreading
+H23,0x13CE5
 # meaningless distinction according to the database
 I4A,0x1318B
+# unconfirmed glyph that does not seem worth distinguishing
+I6B,0x1318E
+# unconfirmed glyph that does not seem worth distinguishing
+I6C,0x13D4C
+# two unconfirmed glyphs that do not seem worth distinguishing
+I25,0x13D55
+I25B,0x13D55
+# meaningless variant
+I31B,0x1323F
+# meaningless variant
+I41A,0x13D78
+# meaningless variant of I47A
+I47,0x13D79
+# may be misreading
+I47A,0x13D79
+# may be misreading
+I51,0x13D82
+# meaningless variant
+I52,0x13D84
+# listed as fallback
+I53,0x13D87
+# unconfirmed glyph that does not seem worth distinguishing
+I69,0x13D8D
+# seems an omission, possibly as a result of a mistake in an earlier version of JSesh
+I70B,0x13D9A
+# meaningless distinction
+I54,0x13D87
+# meaningless distinction
+I76,0x13DA0
+# may be misreading
+I79,0x13DA5
+# unconfirmed glyph that does not seem worth distinguishing
+I89,0x13DB2
+# redraw
+I90,0x13DA8
+# may be misreading
+I95,0x13B69
+# redraw
+I103,0x13DB3
+# duplicates
+I106A,0x1323B
+# unconfirmed glyph that does not seem worth distinguishing
+I128,0x13D90
+# meaningless distinction
+I137,0x13D4B
+# distinction not supported by evidence
+K12,0x131A2
+# distinction not supported by evidence
+K23,0x13DDF
+# distinction not supported by evidence
+K24,0x13DDF
+# may be misreading
+K26,0x13A34
+# distinction not supported by evidence
+L28,0x13DF4
+# meaningless variant
+M3E,0x131B1
+# redraw
+M8D,0x13E36
+# unconfirmed glyph that does not seem worth distinguishing
+M8F,0x13E2F
+# the name in JSesh is currently M8I, but the database and Unikemet call it M8i
+M8I,0x13E35
+# meaningless variant
+M8J,0x13E2D
 # unconfirmed glyph that does not seem worth distinguishing
 M20A,0x131CF
 # unconfirmed glyph that does not seem worth distinguishing
@@ -372,6 +717,10 @@ N16D,0x13EFB
 O36A,0x13285
 # redraw
 O36B,0x13F76
+# redraw
+R18C,0x1413C
+# distinction not supported by evidence
+R18F,0x14138
 # meaningless variant
 S27A,0x132F2
 # meaningless variant
