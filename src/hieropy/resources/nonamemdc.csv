@@ -7,6 +7,7 @@ I86D
 L3
 M2B
 M233
+N51
 N55A
 P2I
 P97A
@@ -18,3 +19,5 @@ B1J
 B1K
 # Result of signs being swapped to original position
 G7E
+# Was changed to different shape in 7.9
+N36D

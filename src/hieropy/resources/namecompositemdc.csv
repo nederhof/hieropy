@@ -1,7 +1,7 @@
 # n5240-hieroglyphs-DB.pdf is referred to as the database
 
 A80A,𓒋𓐺𓏏𓐻𓏤
-A80B,𓒋𓐺𓄹
+A80B,𓒋𓐺𓄹︀𓑀
 # as suggested by database
 A105,𓁃︂
 A137,𓀠𓐶𓂝
@@ -15,7 +15,6 @@ A403,𓓽𓐶𓆑
 A404,𓔄𓐶𓆑
 A405,𓔇𓐶𓆑
 A476,𔀰𓐺𓀔
-B3C,𓆓𓐻𓜹
 # composition according to database, although it doesn't mention B59.
 B60,𓏏𓐱𓛻
 C181,𓵔𓐰𓛰
@@ -24,7 +23,7 @@ C202,𓣼𓐹𓐷𓏏𓐰𓆇𓐸
 C203,𓣽𓐹𓐷𓆣𓐰𓈅𓐸
 C204,𓣽𓐹𓐷𓀔𓐱𓇶𓐸
 C296,𓣼𓐹𓇳
-C297,𓣼𓐹𓻡
+C297,𓣼𓐹𓻡︃
 D7B,𓁾︁𓑀
 D10C,𓂀𓑀𓐱𓂀
 D52A,𓂸︃
@@ -49,7 +48,6 @@ D170A,𓂸𓐶𓂓
 D172,𓂓𓐹𓃿
 D173,𓂓𓐹𓐷𓃿𓐰𓏦𓐸
 D174,𓂓𓐹𓄊
-D175,𓂓𓐹𓸿
 D176A,𓂓𓐹𓇓
 D177,𓂓𓐹𓏓︀
 D177A,𓂓𓐹𓏓
@@ -80,21 +78,17 @@ D193,0x𓂘𓐰𓏓
 D195,𓂘𓐹𓀔
 D196,𓂘𓐹𓎿
 D199,𓦬𓐹𓏤
-D201,𓦬𓐹𔃆
-D202,𓦬𓐹𔃈
 D203,𓦬𓐹𓎿
 D204,𓦬𓐹𓥺
 D205,𓂝𓐶𓌪︃
 D206,𓏲𓐶𓂝
 D208,𓋹𓐶𓂢
 D213,𓊹𓐶𓂠
-D222,𓂡𓐺𓌪
 D223,𓇓𓐶𓂥
 D247,𓧬𓑀
 D265,𓯖︃𓐶𓂧
 D270,𓊹𓐶𓂧
 # according to database, but this seems rather far-fetched
-D293,𔎆𓐵𓐷𓂾𓐱𓂾𓐸
 D296,𓃀𓐶𓐷𓂝𓐰𓂝𓐸
 D297,𓃀𓐶𓐷𓂝𓐰𓄏𓐸
 D298,𓐷𓃀𓐱𓃀𓐸𓐶𓂝
@@ -129,17 +123,16 @@ D340,𓃂𓐹𓈘
 D342,𓃂𓐹𓐷𓏏𓐱𓏤𓐸
 D343,𓃂𓐹𓏭
 D344,𓃂𓐹𓉐
-D345,𓂝𓐺𓎼
-D347,𓂓𓐹𓐷𓊹𓐳𓄹𓐸
+D347,𓂓𓐹𓐷𓊹𓐳𓄹︃𓑀𓐸
 D348,𓃀𓐶𓊃
 D349,𓂓𓐹𓍘
 D350,𓄱𓐶𓂠
-D351,𓂓𓐹𓄹𓑀
+D351,𓂓𓐹𓄹︀
 D352,𔉴︅𓑀𓐶𓂡
 D353,𓂓𓐹𓏲
 D355,𓂓𓐹𓃒
 # according to database
-D356,𓌘𓐶𓥶
+D356,𓌙𓐶𓥶
 D356A,𓌘𓐶𓁹
 D356B,𓌘𓐶𓁹
 D357,𓂓𓐹𓈅
@@ -178,7 +171,7 @@ E91,𓪣︀
 E112A,𓎿𓐶𓃬
 E113,𓎿𓐶𓃬
 E192,𓃬𓐶𔇌𓑀
-E230,𓪄𓐳𓌓︂𓐵𓌙
+E230,𓪄𓐳𓌔︂𓐵𓌙
 # decomposition following database
 E277,𓌐𓐶𓃬
 F38B,𓯥𓑀
@@ -190,8 +183,7 @@ F29A,𓄜𓑀𓐶𔈌
 # decomposition following database
 F29B,𓄜𓑀𓐶𔉁
 # decomposition following database of next 11 signs
-F37A,𓄧︀
-F37C,𓄧︃
+F37A,𓄧︀︃
 F37D,𓯨︀
 F37E,𓯩︀
 F37G,𓯪︀
@@ -204,18 +196,15 @@ F37h,𓯩︀
 # decomposition following database
 F38A,𓯤𓑀
 F51B,𓄹︀𓑀
-F51C,𓄹︀𓑀
 F51D,𓄹︅𓑀
 F51F,𓄹︆
 # decomposition following database
 F64,𓄉𓐶𓄑
-F65,𓮂𓐶𓎡
 # may be misreading according to database
 F67,𓭷𓑀
 # according to database
 F67E,𓭸𓑀
 F68,𓭽𓐶𓌉︅
-F68A,𓭽𓑀𓐶𓌉︀
 F72,𓮅𓐶𓂋
 F72A,𓮁𓐶𓂋
 F73,𓮅𓐶𓐷𓂋𓐰𓂋𓐸
@@ -244,10 +233,9 @@ F137,𓄥𓐶𓂸
 F149,𓄥𓐶𓌴
 F150,𓄋𓐹𓵹
 F152,𓄟𓐶𓄡
-F153,𓄋𓐹𓐷𓇼𓐰𓏤𓐸
+F153,𓄋𓐹𓐷𓇼𓐻𓏤𓐸
 F155,𓄋𓐹𓊪
 F156,𓄥𓐶𓇿
-F156A,𓄥𓐶𓻽
 F157,𓄥𓐳𓇿𓐵𓇿
 F159,𓄋𓐹𓌆
 F160,𓄋𓐹𓂋
@@ -284,7 +272,6 @@ G62,𓄿𓐶𓂡
 G70,𔎆𓐶𓅭
 # as suggested by database
 G72A,𓻣𓐹𓰙
-G78,𓰠︀
 G86,𓅔𓐶𓂝
 G87,𓅓𓐶𓂡
 G87A,𓰮𓐶𓂡
@@ -305,7 +292,6 @@ G97,𓅓𓐶𓌪𓑀
 G98,𓅓𓐶𓂟
 # as suggested by database
 G127A,𓲎𓐴𓏤
-G127B,𓲐𓐴𓏤
 # as suggested by database
 G127D,𓲍𓐴𓏤
 # as suggested by database
@@ -347,8 +333,6 @@ I36,𓎛𓐶𓆓
 I37,𓄥𓐶𓆓
 I39,𓋴𓐶𓐷𓆓𓐰𓆓𓐸
 I86D,𓷃𓑀
-# as suggested by database
-I94,𓏲𓐱𓵊
 I100,𓎗𓐶𓆓
 I102,𓌃𓐶𓆓
 I111,𓵹𓐶𓄡
@@ -365,16 +349,21 @@ L22A,𓄊𓐶𓷲
 # as suggested by database
 L24,𓌂𓐶𓷲
 L26,𓷴𓐶𓆑
-L31,𓈀𓐰𓆣
 L35,𓌂𓐶𓷲
-M2A,𓆰︀𓑀
-M2B,𓸍︀
 M3C,𓆱︆
 M3D,𓆱︃
+# as suggested by database
+M11B,𓹚𓑀
 M14A,𓹦𓐶𓆓
+M34A,𓇣𓐶𓍢𓑀
 M46A,𓸃𓐶𓆱
 M50,𓷻𓐶𓆱
-M78,𓸿𓐶𓍽
+# as suggested by database
+M77,𓆸︀
+# as suggested by database
+M77B,𓆻︀𓑀
+# as suggested by database
+M82,𓆩︂𓑀
 M98,𓆼𓐶𓍢
 M98A,𓆼𓐶𓍢𓑀
 M98B,𓹜𓐶𓍢
@@ -382,9 +371,12 @@ M98C,𓹜𓐶𓍢𓑀
 M100,𓆼𓐶𓂝
 M100A,𓹜𓐶𓂝
 M101,𓆼𓐶𓍼
+M111A,𓹣𓑀
 M120,𓇅𓐶𓂋
 M121,𓇅𓐶𓐷𓆓𓐰𓆓𓐸
 M122,𓇅𓐶𓐷𔀰𓐰𔀰𓐸
+# as suggested by database
+M133,𓆸︀𓑀
 M128,𓇕𓐶𓆑
 M143,𓇋𓐶𓂝
 M144,𓇋𓐶𓆑
@@ -395,7 +387,12 @@ M158,𓇓𓐶𓂋
 M159,𓇓𓐶𓂝
 M160,𓇓𓐶𓐷𓂝𓐰𓂝𓐸
 M161,𓺓𓐶𓂝
+# as suggested by database
+M166,𓺚𓐶𓂝
 M187,𓸕︁𓑀
+# as suggested by database, for following two
+M196,𓦖︄
+M197,𓦖︃
 M204,𓆼𓐶𓐷𓂋𓐰𓆑𓐸
 M205,𓇟𓐶𓎡
 M207,𓺕𓐶𓂝
@@ -407,25 +404,53 @@ M218,𓆭𓐶𓂝
 M219,𓷺𓐶𓍽
 M220,𓇅𓐶𓆑
 M221,𓐷𓇅𓐱𓇅𓐸𓐶𓆓
+# distinction not supported by evidence
+M228,𓹒𓑀
 M227,𓹁𓐶𓍽
 M233,𓺅𓑀
 M234,𓇋𓐶𔉴
 M241,𓺕𓐶𓂝
 M241A,𓺖𓐶𓂝
+M242,𓺘𓐶𓂝
 M243,𓹳𓐶𓂡
-N33AV,𓈓︂
+# as suggested by database
+N10A,𓇸︁
+# as suggested by database
+N21A,𓈅𓑀
+N33Av,𓈓︂
 N35B,𓈖︂𓑀
 N35C,𓈖︃
+# as suggested by database
+N51,𓻕𓑀
+N53,𓻘𓐻𓀵
+N53A,𓻚𓐻𓀵
+N54,𓻚𓐻𓞖
 N55A,𓻣︀
 N55B,𓻣𓐹𓊪
+# as suggested by database
+N62A,𓇺︁
 N66,𓊹𓐶𓇿
 N67,𓋑𓐶𓇿
 N68,𓺕𓐶𓇿
 N69,𓇈𓐶𓇿
 N70,𓋔𓐶𓇿
+# as suggested by database
+N75,𓉌𓑀
+# as suggested by database
+N79,𔄭𓐳𓏏𓐵𓏏
+N80,𔄭𓐶𓆑
+N81,𓼖𓐶𓈖𓐲𓈎𓐳𓏏𓐴𓊪𓐵𓏏
 N84,𓅱𓐶𓈋
 N86,𓉼𓐶𓈋𓐳𓏏𓐵𓊖
+N87,𔄩𓐳𓏏𓐵𓏏
 N91,𓈌𓐹𓀭
+N97A,𓽃𓑀
+N102B,𓈀𓑀𓐹𓐷𓈖𓐰𓈖𓐸
+N105,𓇹︁
+N109,𓼚𓐳𓏏𓐵𓏏
+N110,𓻚𓐻𓡿
+# as suggested by database
+N116,𓇵𓐰𓍅
 N128,𓋴𓐶𓇯
 N136,𓈌𓐹𓀔
 O2A,𓌉𓐶𓉐
@@ -627,14 +652,22 @@ S14C,𓌀𓐶𔆕
 S28A,𓋴𓑀𓐶𓏠
 S30A,𓋴𓑀𓐶𓆑
 S121,𓋴𓐶𓎡
+S126,𓋴𓑀𓐶𔉴
+S127,𓄿𓐶𓋷
 S144,𓋽𓐶𓂡
 S145,𓋽𓐶𓆑
 S145A,𔇒𓑀𓐶𓆑
 S147,𓋾𓐶𓆑
 S148,𓌀𓐶𓐝
 S149,𓌀𓐶𓂋
+# the following two as suggested by database
+S155,𓌂𓐶𓍼
+S156,𓌂𓐶𓍼
 S158,𓌂𓐶𓐝
 S159,𓌂𓐶𓂡
+S160,𓌂𓐶𓂝
+S161,𓌂𓐶𓂢
+S162,𓌃𓐶𓆑
 S169,𓌂𓐶𓆑
 S170,𓌂𓐶𓂤
 S175,𓌀𓐶𓂡
@@ -646,29 +679,50 @@ T39,𓌉𓐶𓌴
 T40,𓌉𓐶𓌕𓑀
 T41,𓌉𓐶𓐷𓍽𓐰𔀑𓐸
 T42,𓌉𓐶𓆑
+# the following two as suggested by database
+T58,𔈐𓐹𔈌
+T58B,𔆪𓐹𔈌
 T69,𓌙𓐶𓂝
 T70,𓌙𓐶𓵹
+T71,𓌙𓐶𓍢
 T77,𔈻𓐶𓆑
+# as suggested by database
+T80A,𔉉︂
+T81,𔉌𓐶𓂝
+T88B,𔉙𓑀
 T96,𔉴𓐶𓎀
 T98,𓌙𓐶𔉴
 T99,𔉴𓐶𓐝
 T100,𔉴︂𓑀𓐶𓆱
 T100A,𔉴𓐶𓆱
-T88B,𔉙𓑀
 T106,𔊉︀
+T119,𔉌𓐶𓆓
+T119A,𔉋𓐶𓆓
+T127,𔉉︂𓐶𓆓
+T139,𓌉𓐶𓐷𓍽𓐰𓆑𓐸
 U13A,𔊜𓑀
+# as suggested by database
+U43,𓌴𓐲𓐷𓂂𓐱𓂂𓐸
+U44,𓌴𓐶𔉴︅
+U44A,𓌴𓐶𔉴︅𓑀
+U44B,𓌴𓐶𔉴
 U60,𓅓𓐶𓍃
+U66,𓌙𓐶𓍉
 U67,𓎛𓐶𓍉
 U68,𓎃𓐶𓍉
+U70,𔊲𓐶𓆑
 U81,𓍑𓐶𓍽
 U82,𓍑𓐶𓂝
 U83,𓍑𓐶𓂋
 U84,𓍑𓐶𓆑
 U85,𓍑𓐶𓐝
+U87,𓍛𓐶𓆓
+U120,𓌴𓐲𓏏
+U132,𓌴𓐶𓏲
 V40,𓏲𓐶𓂝
 V41,𓏲𓐶𓂞
 V42,𓏲𓐶𓂡
-V67,𓇓𓐶𓎔
+V67,𓇓𓐶𓎕
 V68,𓎛𓐶𓎖
 V72,𓎛𓐶𓐷𓂝𓐰𓂝𓐸
 V73,𓎛𓐶𓴦
@@ -681,17 +735,63 @@ V79,𓎛𓐶𓂺
 V80,𓎛𓐶𓍃
 # according to database
 V81,𔍀𓐶𓎡
+V82,𓂔𓐺𓎛
 V92,𔍀𓐶𓂡
 V93,𔍀𓐶𓆑
 V99,𔍊𓐶𓂸
+# following 7 according to database
+V103,𔍖𓐹𓥺
+V103A,𔍖𓐹𓁹
+V104,𔍖𓐹𓂀
+V105,𔍖𓐹𓐷𓥺𓐰𓈓𓐸
+V106,𔍖𓐹𓐷𓂃𓐰𓼟𓐸
+V106A,𔍖𓐹𓐷𓂃𓐰𓼟︁𓐸
+# presumably misreading if V108 is misreading
+V107,𔍖𓐹𓐷𓂃𓐰𓥴𓐸
+# may be misreading
+V108,𔍖𓐹𓂀
+V109,𔍖𓐹𓐷𓂃𓐰𓂇𓐰𓼟𓐸
 # according to database
+V123,𓍷︀𓐹𓵹
+# with three loops according to database
 V116,𔍀𓐶𓎡
 V118,𔍀𓐶𓎡
+# following 2 according to database
+V127,𓍷𓐹𓆑
+V128,𓍷𓐹𓊃
+V129,𔌥︂
+# according to database
+V133,𔍖𓐹𓐷𓂃𓐰𓋉𓐰𓂇𓐸
+V134,𔍖𓐹𓐷𓂃𓐰𓋉𓐸
+V135,𔍖𓐹𓐷𓈒𓐱𓈒𓐸
+V136,𔍖𓐹𓐷𓂃𓐰𓈒𓐱𓈒𓐸
+V137,𔍖𓐹𓐷𓂃𓐰𓈒𓐱𓈒𓐱𓈒𓐰𓈒𓐱𓈒𓐸
 V138,𓎝𓐶𓍼
+V140,𔍖𓐹𓐷𓂀𓐰𓈓𓐸
+# according to database
+V141,𔍖𓐹𓼟
+W44,𓎿𓐶𓌸︆
+W49,𓏇𓐶𓂝
+W99,𔍯𓐹𓈘
 W102,𓏇𓐶𓂧
 W103,𓎿𓐶𓁻
 W108,𓎿𓐶𓆑
 Y2v,𓏝︂
+# according to database
+Y4A,𔏒𓑀
+Y19,𔏥𓐶𓐝
+Y20,𔏢𓐶𓄡
+Y26,𔏥𓐶𓄡
+# according to database
+Z1A,𓏤︀
+# according to database
+Z4B,𓏮︀
+Z40,𓨳𓐹𓐷𓏏𓐰𓊖𓐸
+Aa32A,𓐮𓑀
+Aa32h,𓐮︂𓑀
+Aa35,𓄱𓐶𓐝
+Aa36,𓐢𓐶𓂝
+Aa37,𓐢𓐶𓂋
 Aa44,𔌗𓐶𓂝
 Aa45,𔌗𓐶𓆑
 Aa46,𔌗𓐶𓆓
@@ -699,6 +799,21 @@ Aa47,𔌗𓐶𓍽
 Aa48,𔌗𓐶𓐷𓂝𓐰𓍽𓐸
 Aa49,𔌗𓐶𓂡
 Aa49A,𓐩𓐶𓂡
+# according to database
+Aa57,𓄱𓐶𓂝
+# according to database
+Aa58,𓄱𓐶𓂸
+Aa59,𓄱𓐶𓆓
+# according to database
+Aa60,𓄱𓐶𓌳
+# according to database
+Aa68,𓄱𓐶𓆑
+Aa74,𓐝𓐹𓏏
+# according to database
+Aa77,𓄱𓐶𓂡
+# not in database
+US1O124VARA,𓉗𓑀𓐹𓊹
+# from original MdC documentation
 qnbt,𓊋𓐵𓏏
 2,𓏮
 3,𓏦

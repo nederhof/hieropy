@@ -706,13 +706,102 @@ M20A,0x131CF
 M20B,0x131CF
 # seems an omission
 M22B,0x131D2
+# meaningless variant
+M28,0x131D9
+# do not seem worth distinguishing
+M36B,0x131E7
+# unconfirmed glyph that does not seem worth distinguishing
+M40B,0x13EB3
+# redraw
+M43B,0x13EB8
+# redraw
+M55,0x13E09
+# unconfirmed glyph that does not seem worth distinguishing
+M64,0x13E23
+# unconfirmed glyph that does not seem worth distinguishing
+M69,0x13E2A
+# may be misreading
+M75,0x13E0D
+# unconfirmed glyph that does not seem worth distinguishing
+M77A,0x13E41
+# distinction not supported by evidence
+M85,0x13E0D
+# may be misinterpretation
+M86A,0x13E4E
+# meaningless variant
+M86C,0x13E4E
+# unconfirmed glyph that does not seem worth distinguishing
+M90A,0x13E52
+# may be misreading
+M103,0x13E5C
+# duplicates
+M108,0x14323
+# close variants
+M111B,0x13E63
+# unconfirmed glyph that does not seem worth distinguishing
+M131,0x131C5
+# meaningless variant
+M134,0x13E3C
+# meaningless variant
+M139C,0x131C8
+# unconfirmed glyph that does not seem worth distinguishing
+M174,0x131E3
+# meaningless variant
+M185A,0x13EB5
 # the following two are meaningless variants
 M176,0x131EE
 M189,0x131EE
+# distinction not supported by evidence
+M198,0x13E40
+# variant not worth distinguishing
+M203,0x13EBB
+# variant not worth distinguishing
+M208,0x131D5
+# distinction not supported by evidence
+M224,0x13E4F
+# redraw
+M238,0x13E4C
+# distinction not supported by evidence
+M239,0x13E53
+# may be misinterpretation
+N4A,0x14199
+# distinction not supported by evidence
+N4C,0x14197
 # unconfirmed and seems very similar
 N8C,0x13EDF
 # seems an omission
 N16D,0x13EFB
+# meaningless variant
+N24C,0x13208
+# two meaningless variants
+N28A,0x1320D
+N28B,0x1320D
+# meaningless variant
+N31E,0x13210
+# change in JSesh 7.9, used to be N36D
+N36C,0x13F34
+# unconfirmed glyph that does not seem worth distinguishing
+N36D,0x13F36
+# distinction not supported by evidence
+N58C,0x13EEE
+# not worth distinguishing
+N73A,0x1422D
+# duplicates
+N89,0x13376
+# not worth distinguishing relative to other circles, took generic circle
+N90,0x133F8
+# seems an omission
+N97,0x13F28
+# seems an omission
+N97B,0x13F00
+# seems an omission
+N97C,0x13F33
+# seems an omission
+N102,0x13201
+# not worth distinguishing
+N104B,0x13F44
+# meaningless variant
+N112,0x13244
 # distinction not supported by evidence
 O36A,0x13285
 # redraw
@@ -725,12 +814,24 @@ R18F,0x14138
 S27A,0x132F2
 # meaningless variant
 U10A,0x1333E
+# may be misinterpretation
+V6A,0x133A4
 # seems an omission
 Z5A,0x133F0
+# meaningless variant
+Aa54,0x13130
+# meaningless variant
+US1E31VARA,0x13AAA
+# not in the database; seems meaningless variant
+D26VARA,0x1399C
+# not in the database; seems meaningless variant
+US1F132VARA,0x13BD8
+# not in the database; seems meaningless variant
+O1VARA,0x13250
+# not in the database; seems meaningless variant
+US1A33VARA,0x13569
 # the following 4 are not in the database; seem obvious equivalents
 Ff301,0x133FA
 Ff302,0x133FB
 Ff303,0x133FC
 Ff304,0x133FD
-# not in the database; seems meaningless variant
-O1VARA,0x13250

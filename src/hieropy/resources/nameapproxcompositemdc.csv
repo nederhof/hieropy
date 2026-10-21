@@ -1,0 +1,39 @@
+# JSesh 7.9 codes that could be approximated in Unicode with the help of control characters.
+# Consulted was n5240-hieroglyphs-DB.pdf (referred to as the database).
+# However, in many cases one cannot be sure that the approximation is
+# accurate, as many codes come without any documentation.
+
+B3C,𓆓𓐻𓜹
+D175,𓂓𓐹𓸿
+D201,𓦬𓐹𔃆
+D202,𓦬𓐹𔃈
+D222,𓂡𓐺𓌪
+D293,𔎆𓐵𓐷𓂾𓐱𓂾𓐸
+D345,𓂝𓐺𓎼
+F37C,𓄧
+F51C,𓄹︀𓑀
+F65,𓮂𓐶𓎡
+F68A,𓭽𓑀𓐶𓌉︀
+F156A,𓄥𓐶𓻽
+G78,𓰠︀
+G127B,𓲐𓐴𓏤
+# as suggested by database
+I94,𓏲𓐱𓵊
+L31,𓈀𓐰𓆣
+M2A,𓆰︀𓑀
+M2B,𓸍︀
+M11C,𓹚︁
+M78,𓹁𓐶𓍽
+M79,𓹁︁𓐶𓇿
+M80,𓹁𓐶𓐝
+M81,𓹀︂
+M99,𓆼𓐶𓇿
+N24A,𓼆︃𓑀
+N59A,𓻪𓑀
+N62B,𓇺︁
+N67B,𓋑𓐶𓇿
+N93,𓈌𓐹𓿬
+N94,𓈌𓐹𓃻
+N98,𓈀𓑀𓐹𓈘
+U73,𔋅𓐶𓐝
+V2A,𓍬︆
