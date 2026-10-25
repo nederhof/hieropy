@@ -15,6 +15,8 @@ F51C,𓄹︀𓑀
 F65,𓮂𓐶𓎡
 F68A,𓭽𓑀𓐶𓌉︀
 F156A,𓄥𓐶𓻽
+# composition according to https://jsesh.qenherkhopeshef.org/news/news20240508
+F200,𓇓𓐰𓄟
 G78,𓰠︀
 G127B,𓲐𓐴𓏤
 # as suggested by database
@@ -35,5 +37,34 @@ N67B,𓋑𓐶𓇿
 N93,𓈌𓐹𓿬
 N94,𓈌𓐹𓃻
 N98,𓈀𓑀𓐹𓈘
+N131,𓈌𓐹𓆣
+O100,𓽧𓐶𓂝
+O103,𓽥𓐹𓊹
+O104,𓽥𓐹𓌉
+O122B,𓽵𓑀𓐹𓎺
+O124A,𓽵𓑀𓐹𓊹
+O124B,𓉗𓑀𓐹𓊹
+# as suggested in database
+O125,𓽱𓐹𓐷𓽥𓐹𓊹𓐸
+O126,𓽱𓐹𓠾
+# as suggested by database, the feather may not even be there
+O143,𓾒𓐹𓏙
+O170,𓾷𓐹𓏏
+O188,𓿖𓐹𓃒
+O216B,𓽚𓑀
+O221A,𓃀𓐶𓊄
+O223,𓐷𓃀𓐱𓃀𓐸𓐶𓊄
+# uncertain is which oval is the correct one
+O239,𓏳𓐹𓊃
+O252,𓇋𓐰𓉐
+O260A,𓽥𓐹𓊹
+O299,𓉐𓐹𓪸
+O311,𓉕𓐻𓁷
+O339,𓿖𓐹𓅣
+O341,𓿖𓐹𓏏
+O343,𓿖𓐹𓏏
+O350,𔂸𓐹𓐷𓋋𓐰𓏏𓐱𓆇𓐸
+P7A,𓊡𓐶𓂝
+T24D,𓌤𓑀
 U73,𔋅𓐶𓐝
 V2A,𓍬︆

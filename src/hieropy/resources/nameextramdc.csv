@@ -245,6 +245,9 @@ C95A,0x1382D
 C97,0x1382E
 # glyph could be mistake
 C98D,0x1385E
+# the filename in JSesh is C159H, and HG calls it C159H, but the hieroglyphic palette calls it C159h
+# not core sign anyway, so commented out
+# C159H,0x138A2
 # unconfirmed glyph that is virtually identical
 E72,0x13A5C
 # glyph appears to be slightly different interpretation of same tokens
@@ -680,6 +683,8 @@ I106A,0x1323B
 I128,0x13D90
 # meaningless distinction
 I137,0x13D4B
+# just another snake according to https://jsesh.qenherkhopeshef.org/news/news20240508
+I200,0x13DB8
 # distinction not supported by evidence
 K12,0x131A2
 # distinction not supported by evidence
@@ -802,24 +807,200 @@ N102,0x13201
 N104B,0x13F44
 # meaningless variant
 N112,0x13244
+# meaningless variant
+N133A,0x13EE8
+# duplicates
+NU15,0x13246
+# may be misreading
+O6D,0x13F78
+# unconfirmed glyph that does not seem worth distinguishing
+O9E,0x13F61
+# unconfirmed glyph that does not seem worth distinguishing
+O14B,0x13268
+# correction
+O16,0x1326A
+# redraw
+O16C,0x13F9A
+# unconfirmed glyph that does not seem worth distinguishing
+O21A,0x13FAE
+# meaningless variant
+O22D,0x13FBE
+# distinction not supported by evidence
+O23A,0x13273
+# meaningless variant
+O23F,0x13FCE
+# meaningless variant
+O23Q,0x13FCF
+# duplicates
+O23R,0x13FC4
+# meaningless variant
+O23S,0x13FCF
+# meaningless variant
+O23T,0x13FCF
+# redraw
+O28A,0x13FE0
+# meaningless variant
+O32A,0x13F92
 # distinction not supported by evidence
 O36A,0x13285
 # redraw
 O36B,0x13F76
+# meaningless variant
+O40A,0x1328D
+# unconfirmed glyph that does not seem worth distinguishing
+O42D,0x13FF6
+# meaningless variant
+O42K,0x13FFA
+# meaningless variant
+O48A,0x13299
+# virtually duplicate
+O48B,0x13295
+# variant that would cause confusion
+O49A,0x13296
+# unconfirmed glyph that does not seem worth distinguishing
+O51C,0x14002
+# seems an omission
+O54,0x13251
+# meaningless variant
+O71A,0x13F4F
+# seems an omission
+O86,0x1325D
+# virtually a duplicate
+O121A,0x13220
+# unconfirmed glyph that does not seem worth distinguishing
+O139,0x13F8B
+# unconfirmed glyph that does not seem worth distinguishing
+O146,0x1326B
+# unconfirmed glyph that does not seem worth distinguishing
+O150,0x13FA2
+# unconfirmed glyph that does not seem worth distinguishing
+O153,0x13FAE
+# unconfirmed glyph that does not seem worth distinguishing
+O153A,0x13FA5
+# unconfirmed glyph that does not seem worth distinguishing
+O153B,0x13FA5
+# meaningless variant
+O160A,0x13FAB
+# meaningless variant
+O166,0x13271
+# unconfirmed glyph that does not seem worth distinguishing
+O168,0x13FAE
+# may be misinterpretation
+O199,0x132E6
+# practically duplicate
+O208,0x13FE7
+# unconfirmed glyph that does not seem worth distinguishing
+O212,0x13FE7
+# may be misinterpretation
+O217A,0x13ADE
+# practically duplicate
+O224,0x13EC5
+# unconfirmed glyph that does not seem worth distinguishing
+O226,0x1328D
+# unconfirmed glyph that does not seem worth distinguishing
+O229,0x14005
+# meaningless variant
+O230,0x1328C
+# unconfirmed glyph that does not seem worth distinguishing
+O250,0x13FFF
+# unconfirmed glyph that does not seem worth distinguishing
+O304,0x13F75
+# may be misinterpretation
+O325,0x13F8D
+# unconfirmed glyph that does not seem worth distinguishing
+O326,0x1326D
+# meaningless variant
+O333,0x13F8B
+# duplicates
+O335,0x13C92
+# meaningless variant
+Q6G,0x132AD
+# meaningless variant
+Q7B,0x140C6
+# practically duplicates
+Q7h,0x132AE
+# duplicates
+P1C,0x14026
+# meaningless variant
+P2I,0x1329D
+# redraw
+P4D,0x14079
+# unconfirmed glyph that does not seem worth distinguishing
+P4E,0x14079
+# meaningless variant
+P5C,0x1407D
+# meaningless variant
+P5D,0x14084
+# meaningless variant
+P5N,0x14082
+# meaningless variant
+P5O,0x14082
+# meaningless variant
+P5Q,0x14080
+# unconfirmed glyph that does not seem worth distinguishing
+P6A,0x1408D
+# meaningless variant
+P6B,0x132A2
+# meaningless variant
+P8A,0x132A4
+# listed as fallback
+P10B,0x13D16
+# unconfirmed glyph that does not seem worth distinguishing
+P26,0x14027
+# unconfirmed glyph that does not seem worth distinguishing
+P27,0x1402F
+# introduced as part of construct, otherwise not worth distinguishing
+P33,0x14032
+# unconfirmed glyph that does not seem worth distinguishing
+P76,0x1408D
+# unconfirmed glyph that does not seem worth distinguishing
+R3T,0x140E3
+# meaningless variant
+R7G,0x132B8
 # redraw
 R18C,0x1413C
 # distinction not supported by evidence
 R18F,0x14138
 # meaningless variant
+S34A,0x132F9
+# is variant according to https://jsesh.qenherkhopeshef.org/news/news20240508; seems hardly worth distinguishing
+S23A,0x132EC
+# meaningless variant
 S27A,0x132F2
+# unconfirmed glyph that does not seem worth distinguishing
+S124B,0x141BA
+# unconfirmed glyph that does not seem worth distinguishing
+S124C,0x141BD
+# unconfirmed glyph that does not seem worth distinguishing
+T28A,0x13328
+# unconfirmed glyph that does not seem worth distinguishing
+T29A,0x13329
+# unconfirmed glyph that does not seem worth distinguishing
+T29B,0x14283
+# variant that causes confusion with Z6a3C
+T33A,0x1332E
 # meaningless variant
 U10A,0x1333E
+# meaningless variant
+U49,0x14297
+# meaningless variant
+U49A,0x14297
+# meaningless variant
+U50,0x14297
 # may be misinterpretation
 V6A,0x133A4
 # seems an omission
 Z5A,0x133F0
 # meaningless variant
+Aa3C,0x1340F
+# the filename in JSesh is Aa5a, but the palette and Unikemet call it Aa5A
+Aa5a,0x14095
+# the filename in JSesh is Aa18A and the palette calls it that, but Unikemet calls it Aa18a
+Aa18A,0x14220
+# meaningless variant
 Aa54,0x13130
+# not in the database; seems meaningless variant
+US1A33VARA,0x13569
 # meaningless variant
 US1E31VARA,0x13AAA
 # not in the database; seems meaningless variant
@@ -827,9 +1008,11 @@ D26VARA,0x1399C
 # not in the database; seems meaningless variant
 US1F132VARA,0x13BD8
 # not in the database; seems meaningless variant
-O1VARA,0x13250
+M43VARA,0x131ED
 # not in the database; seems meaningless variant
-US1A33VARA,0x13569
+O1VARA,0x13250
+# is variant according to https://jsesh.qenherkhopeshef.org/news/news20240508; seems hardly worth distinguishing
+US22S25A,0x132EE
 # the following 4 are not in the database; seem obvious equivalents
 Ff301,0x133FA
 Ff302,0x133FB
