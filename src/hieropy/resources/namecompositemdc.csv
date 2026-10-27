@@ -658,6 +658,10 @@ P7B,𔂍𓐶𓂝
 P8h,𓊤︂
 # as suggested by database
 P30A,𔀫𓑀
+P53A,𔀰𓐺𓬲
+P53B,𔀰𓐺𓃒
+P58,𔁣𓑀
+P75,𔂂𓐶𓌴𓑀
 P79,𓊢𓐶𓐷𓂝𓐰𓂻𓐸
 P82,𓊢𓐶𓵔
 P84,𓊢𓐶𓎡
@@ -666,6 +670,8 @@ P85,𓊤𓐶𓐝
 P81,𓊢𓐶𓆝
 # as suggested by database
 P88,𔉴︅𓑀𓐶𓆱
+# misinterpretation according to database
+P95,𓂎︃
 P97A,𔁴𓑀
 P103,𔂂𓐶𓆑
 Q9,𓊨𓐶𓇯

@@ -952,7 +952,33 @@ P27,0x1402F
 # introduced as part of construct, otherwise not worth distinguishing
 P33,0x14032
 # unconfirmed glyph that does not seem worth distinguishing
+P39A,0x14048
+# redraw
+P61,0x14071
+# unconfirmed glyph that does not seem worth distinguishing
+P61A,0x14075
+# seems an omission
+P63,0x1406B
+# unconfirmed glyph that does not seem worth distinguishing
+P65A,0x1406E
+# redraw
+P72,0x14020
+# unconfirmed glyph that does not seem worth distinguishing
 P76,0x1408D
+# meaningless variant
+P78,0x132A1
+# too similar to L6
+P92,0x131A9
+# may be misinterpretation
+P93,0x131B1
+# meaningless variant
+P97,0x14074
+# not worth distinguishing
+P97B,0x14075
+# listed as fallback
+P108,0x1405A
+# redraw
+P120,0x14272
 # unconfirmed glyph that does not seem worth distinguishing
 R3T,0x140E3
 # meaningless variant
