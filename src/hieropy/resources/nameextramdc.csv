@@ -980,13 +980,93 @@ P108,0x1405A
 # redraw
 P120,0x14272
 # unconfirmed glyph that does not seem worth distinguishing
+Q2A,0x140A1
+# unconfirmed glyph that does not seem worth distinguishing
+Q6F,0x140C1
+# unconfirmed glyph that does not seem worth distinguishing
+Q12B,0x1409C
+# not worth distinguishing
+Q24A,0x140B0
+# redraw
+Q28,0x140B3
+# redraw
+Q36,0x140CC
+# may be misreading
+Q41,0x13CCC
+# unconfirmed glyph that does not seem worth distinguishing
+R1A,0x132B1
+# meaningless variant
+R1C,0x132B1
+# meaningless variant
+R3B,0x132B2
+# meaningless variant
+R3C,0x140DC
+# meaningless variant
+R3F,0x140DC
+# unconfirmed glyph that does not seem worth distinguishing
+R3K,0x132B2
+# meaningless variant
+R3Q,0x132B2
+# unconfirmed glyph that does not seem worth distinguishing
+R3S,0x140DC
+# unconfirmed glyph that does not seem worth distinguishing
 R3T,0x140E3
 # meaningless variant
+R3U,0x140DC
+# meaningless variant
+R3X,0x140DC
+# meaningless variant
+R3v,0x140DC
+# unconfirmed glyph that does not seem worth distinguishing
+R3AA,0x140DC
+# unconfirmed glyph that does not seem worth distinguishing
+R3AB,0x140DC
+# may be misreading
+R7A,0x131E8
+# meaningless variant
+R7B,0x132B8
+# meaningless variant
 R7G,0x132B8
+# may be misreading
+R10A,0x1410C
+# unconfirmed glyph that does not seem worth distinguishing
+R10B,0x1410B
+# unconfirmed glyph that does not seem worth distinguishing
+R10C,0x1410E
+# unconfirmed glyph that does not seem worth distinguishing
+R10F,0x1410B
+# unconfirmed glyph that does not seem worth distinguishing
+R10h,0x14109
+# meaningless variant
+R12O,0x132B5
+# duplicate
+R16B,0x132C3
+# meaningless variant
+R17C,0x132C4
+# redraw
+R17D,0x14136
 # redraw
 R18C,0x1413C
 # distinction not supported by evidence
 R18F,0x14138
+# introduced as part of construct, otherwise not worth distinguishing
+R23B,0x132CA
+# meaningless variant
+R36A,0x140EA
+# may be misreading
+R47,0x132BA
+# unconfirmed glyph that does not seem worth distinguishing
+R65,0x14124
+# unconfirmed glyph that does not seem worth distinguishing
+R65A,0x14124
+# may be misinterpretation
+R125,0x132C0
+# may be misinterpretation
+R126,0x140ED
+# meaningless variant
+R127,0x132C1
+# meaningless variant
+R127A,0x132C1
 # meaningless variant
 S34A,0x132F9
 # is variant according to https://jsesh.qenherkhopeshef.org/news/news20240508; seems hardly worth distinguishing
@@ -1027,10 +1107,16 @@ Aa18A,0x14220
 Aa54,0x13130
 # not in the database; seems meaningless variant
 US1A33VARA,0x13569
+# the filename in JSesh is US0E16AEXTU but elsewhere it is called E16AEXTU
+US0E16AEXTU,0x130E4
 # meaningless variant
 US1E31VARA,0x13AAA
 # not in the database; seems meaningless variant
 D26VARA,0x1399C
+# not in the database; seems meaningless variant
+US22E255VARA,0x13B4C
+# not in the database; seems meaningless variant
+US1F53VARA,0x13B5D
 # not in the database; seems meaningless variant
 US1F132VARA,0x13BD8
 # not in the database; seems meaningless variant

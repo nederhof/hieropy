@@ -675,7 +675,12 @@ P95,𓂎︃
 P97A,𔁴𓑀
 P103,𔂂𓐶𓆑
 Q9,𓊨𓐶𓇯
+Q46,𔂷𓐹𓆣
 Q40,𓊹𓐶𔂫
+# introduced as part of construct, otherwise not worth distinguishing
+R3G,𔃣𓑀
+# listed as fallback, but mirrored
+R3Z,𔃦𓑀
 R24v,𓋋︀
 R54,𓊽𓐶𓂓
 R57,𔄕𓐶𓆑
@@ -686,12 +691,20 @@ R73,𔄨𓐶𓂝
 R74,𔄩𓐶𓆑
 R75,𔄫𓐶𓆑
 R77,𔄫𓐶𓴦
-R78,𔄫𓐶𓂝
+R78,𔄫𓐶𓂣
 R79,𔄨𓐶𓎡
 R87,𓵹𓐶𓋋
+# introduced as part of construct, otherwise not worth distinguishing
+R92,𔄘𓑀
+# listed as fallback
+R93,𔏘︁
 R102,𔂸𓐹𓃻
+# according to database not connected
+R105,𓊹𓐰𓎟
 R110,𔄟𓐶𓁹
 R111,𔄨𓐶𓁹
+# according to database not connected
+R119,𓊵𓐰𓊳
 S13A,𓃀𓐶𔆕
 S14B,𓌉𓐶𔆕
 S14C,𓌀𓐶𔆕
