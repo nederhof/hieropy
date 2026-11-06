@@ -1067,6 +1067,16 @@ R126,0x140ED
 R127,0x132C1
 # meaningless variant
 R127A,0x132C1
+# overinterpretation
+S9A,0x132DB
+# meaningless variant
+S13A,0x132DF
+# meaningless variant
+S14B,0x132E0
+# meaningless variant
+S14C,0x132E1
+# unconfirmed glyph that does not seem worth distinguishing
+S18B,0x14207
 # meaningless variant
 S34A,0x132F9
 # is variant according to https://jsesh.qenherkhopeshef.org/news/news20240508; seems hardly worth distinguishing
@@ -1074,17 +1084,131 @@ S23A,0x132EC
 # meaningless variant
 S27A,0x132F2
 # unconfirmed glyph that does not seem worth distinguishing
+S36D,0x141CD
+# may be misreading
+S37B,0x141D0
+# meaningless variant
+S43C,0x141DB
+# meaningless variant
+S47B,0x14152
+# meaningless variant
+S47C,0x14152
+# unconfirmed glyph that does not seem worth distinguishing
+S59,0x14162
+# unconfirmed glyph that does not seem worth distinguishing
+S60,0x14169
+# seems omission
+S60A,0x14169
+# unconfirmed glyph that does not seem worth distinguishing
+S65,0x14174
+# unconfirmed glyph that does not seem worth distinguishing
+S65A,0x14174
+# unconfirmed glyph that does not seem worth distinguishing
+S71,0x1416F
+# introduced as part of construct, otherwise not worth distinguishing
+S78,0x1417E
+# meaningless variant
+S78B,0x1417E
+# unconfirmed glyph that does not seem worth distinguishing
+S90,0x132DD
+# unconfirmed glyph that does not seem worth distinguishing
+S100,0x141A4
+# unconfirmed glyph that does not seem worth distinguishing
 S124B,0x141BA
 # unconfirmed glyph that does not seem worth distinguishing
 S124C,0x141BD
+# duplicate
+S146,0x13E61
+# may be misreading
+S163,0x132A4
+# unconfirmed glyph that does not seem worth distinguishing
+S185,0x1415B
+# meaningless variant
+S186,0x14166
+# meaningless variant
+S188,0x14187
+# unconfirmed glyph that does not seem worth distinguishing
+S188A,0x14187
+# unconfirmed glyph that does not seem worth distinguishing
+S188B,0x14187
+# unconfirmed glyph that does not seem worth distinguishing
+S188C,0x132DD
+# may be misinterpretation
+S194,0x132EB
+# may be misinterpretation
+S194A,0x132EB
+# duplicate
+S199,0x141DF
+# duplicate
+S199A,0x13304
+# may be misinterpretation
+T3A,0x13398
+# may be misinterpretation
+T3B,0x13309
+# unconfirmed glyph that does not seem worth distinguishing
+T3D,0x13309
+# may be misinterpretation
+T3E,0x141FB
+# meaningless variant
+T9C,0x14209
+# misinterpretation
+T11A,0x13300
+# meaningless variant
+T14B,0x13319
+# redraw
+T22C,0x1424A
+# meaningless variant
+T25A,0x14261
+# meaningless variant
+T25D,0x14261
+# meaningless variant
+T26B,0x14268
+# meaningless variant
+T26C,0x14269
+# meaningless variant
+T26E,0x1426C
 # unconfirmed glyph that does not seem worth distinguishing
 T28A,0x13328
 # unconfirmed glyph that does not seem worth distinguishing
 T29A,0x13329
 # unconfirmed glyph that does not seem worth distinguishing
 T29B,0x14283
+# meaningless variant
+T31A,0x1332B
+# unconfirmed glyph that does not seem worth distinguishing
+T32A,0x1332C
+# meaningless variant
+T32B,0x14287
 # variant that causes confusion with Z6a3C
 T33A,0x1332E
+# overinterpretation
+T46,0x1330E
+# meaningless variant
+T55,0x13360
+# seems omission
+T60,0x13316
+# based on hieratic, could be transcribed differently
+T63A,0x14214
+# meaningless variant
+T63B,0x1421F
+# meaningless variant
+T64A,0x13224
+# meaningless variant
+T64B,0x13224
+# listed as fallback
+T67B,0x141E4
+# meaningless variant
+T76A,0x1423B
+# unconfirmed glyph that does not seem worth distinguishing
+T84,0x14253
+# unconfirmed glyph that does not seem worth distinguishing
+T84C,0x14256
+# unconfirmed glyph that does not seem worth distinguishing
+T84D,0x14253
+# meaningless variant
+T101,0x1427A
+# listed as fallback
+T103,0x1427D
 # meaningless variant
 U10A,0x1333E
 # meaningless variant
@@ -1093,8 +1217,14 @@ U49,0x14297
 U49A,0x14297
 # meaningless variant
 U50,0x14297
+# meaningless variant
+V2B,0x1336C
 # may be misinterpretation
 V6A,0x133A4
+# meaningless variant
+V62,0x1337E
+# meaningless variant
+V84,0x1433C
 # seems an omission
 Z5A,0x133F0
 # meaningless variant
@@ -1103,6 +1233,8 @@ Aa3C,0x1340F
 Aa5a,0x14095
 # the filename in JSesh is Aa18A and the palette calls it that, but Unikemet calls it Aa18a
 Aa18A,0x14220
+# seems omission
+Aa31,0x1342D
 # meaningless variant
 Aa54,0x13130
 # not in the database; seems meaningless variant
