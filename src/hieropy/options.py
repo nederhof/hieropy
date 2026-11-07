@@ -1,3 +1,5 @@
+from copy import copy
+
 # imagetype: 'pil', 'pdf', 'svg'
 # shadealpha: number between 0 and 255
 # shadepattern: 'diagonal' or 'uniform'
@@ -33,6 +35,12 @@ class Options:
 
 	def rl(self):
 		return self.direction in ['hrl', 'vrl']
+
+	def modified(self, **kwargs):
+		modified_copy = copy(self)
+		for k, v in kwargs.items():
+			setattr(modified_copy, k, v)
+		return modified_copy
 
 class MeasureOptions(Options):
 	def __init__(self, options):

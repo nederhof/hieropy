@@ -783,6 +783,8 @@ T100,𔉴︂𓑀𓐶𓆱
 T100A,𔉴𓐶𓆱
 T105,𓐷𓉽𓐱𓉽𓐸𓐶𓌪
 T106,𔊉︀
+# unconfirmed glyph that does seem worth distinguishing (from a sign that is virtually mirror image)
+T111,𔉇𓑀
 T115,𓌉𓑀𓐶𓇿𓐳𓈅𓑀𓐵𓈅
 T118,𓌉𓑀𓐶𓇿
 T119,𔉌𓐶𓆓
@@ -791,6 +793,8 @@ T127,𔉉︂𓐶𓆓
 T139,𓌉𓐶𓐷𓍽𓐰𓆑𓐸
 U13A,𔊜𓑀
 U35A,𔋞𓐶𓆑
+# database suggests it is duplicate, but it appears mirrored
+U37A,𓌲𓑀
 # as suggested by database
 U43,𓌴𓐲𓐷𓂂𓐱𓂂𓐸
 U44,𓌴𓐶𔉴︅
@@ -802,15 +806,28 @@ U66,𓌙𓐶𓍉
 U67,𓎛𓐶𓍉
 U68,𓎃𓐶𓍉
 U70,𔊲𓐶𓆑
+U76,𔋔𓐶𓆑
+# with Z7 according to database
+U77,𔋔𓐶𓏲
 U81,𓍑𓐶𓍽
 U82,𓍑𓐶𓂝
 U83,𓍑𓐶𓂋
 U84,𓍑𓐶𓆑
 U85,𓍑𓐶𓐝
 U87,𓍛𓐶𓆓
+# redraw according to database
+U88,𔋟︀
+# indistinguishable from rotated moon
+U104,𓇺︀
 U120,𓌴𓐲𓏏
+# according to database
+U121,𔇌𓐶𓆑
+# according to database
+U130,𔇌𓐶𓐷𓆑𓐰𓂡𓐸
 U132,𓌴𓐶𓏲
 V5A,𓍰︆
+# according to database may be misreading
+V32A,𓎰︂
 V40,𓏲𓐶𓂝
 V41,𓏲𓐶𓂞
 V42,𓏲𓐶𓂡
@@ -829,8 +846,6 @@ V77,𓎛𓐶𓂋
 V78,𓎛𓐶𓌴
 V79,𓎛𓐶𓂺
 V80,𓎛𓐶𓍃
-# according to database
-V81,𔍀𓐶𓎡
 V82,𓂔𓐺𓎛
 V85,𔌼𓐶𓂡
 V86,𔌼𓐶𓂝
@@ -850,16 +865,20 @@ V107,𔍖𓐹𓐷𓂃𓐰𓥴𓐸
 # may be misreading
 V108,𔍖𓐹𓂀
 V109,𔍖𓐹𓐷𓂃𓐰𓂇𓐰𓼟𓐸
-# according to database
-V123,𓍷︀𓐹𓵹
 # with three loops according to database
 V116,𔍀𓐶𓎡
-V118,𔍀𓐶𓎡
+V118,𓎝𓐶𓂋
+# meaningless variant according to database, but rotated
+V122,𓍷︀
+# according to database
+V123,𓍷︀𓐹𓵹
 V125,𔍖𓐹𓏏
 # following 2 according to database
 V127,𓍷𓐹𓆑
 V128,𓍷𓐹𓊃
 V129,𔌥︂
+# according to database, may be misreading
+V130,𓺢𓑀
 # according to database
 V133,𔍖𓐹𓐷𓂃𓐰𓋉𓐰𓂇𓐸
 V134,𔍖𓐹𓐷𓂃𓐰𓋉𓐸
@@ -867,9 +886,12 @@ V135,𔍖𓐹𓐷𓈒𓐱𓈒𓐸
 V136,𔍖𓐹𓐷𓂃𓐰𓈒𓐱𓈒𓐸
 V137,𔍖𓐹𓐷𓂃𓐰𓈒𓐱𓈒𓐱𓈒𓐰𓈒𓐱𓈒𓐸
 V138,𓎝𓐶𓍼
+V139,𔍀𓐶𓌪
 V140,𔍖𓐹𓐷𓂀𓐰𓈓𓐸
 # according to database
 V141,𔍖𓐹𓼟
+# according to database
+W31,𔍠︀
 W44,𓎿𓐶𓌸︆
 W49,𓏇𓐶𓂝
 W99,𔍯𓐹𓈘
@@ -886,8 +908,22 @@ Y26,𔏥𓐶𓄡
 Z1A,𓏤︀
 # according to database
 Z4B,𓏮︀
+Z13,𓏶𓐶𓆑
+# one of the options suggested by the database
+Z20,𓇮︁
+Z21,𓇮︁𓐶𓆑
+# according to database
+Z22,𓈅︃
+# according to database
+Z23,𓈅︆
+# as suggested by database
+Z26,𓉘𓐼𓑂𓐽𓉝
+# according to database introduced as construct and misused
+Z31,𓉐︁
 Z40,𓨳𓐹𓐷𓏏𓐰𓊖𓐸
 Aa1B,𓐍︄
+# according to database, meaningless variant, but is mirrored
+Aa5C,𔂕𓑀
 Aa11v,𓐙︂
 Aa30h,𓐬︂
 Aa32A,𓐮𓑀

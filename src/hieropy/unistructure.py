@@ -1184,6 +1184,7 @@ class Overlay(Group):
 		for lit in self.lits2:
 			lit.resize(f)
 	def format(self, options, x0, x1, x2, x3, y0, y1, y2, y3):
+		options_middle = options.modified(align='middle')
 		if self.alt:
 			self.format_ligature(options, x0, x1, x2, x3, y0, y1, y2, y3)
 			return
@@ -1200,7 +1201,7 @@ class Overlay(Group):
 			else:
 				x5 = x2 - buf_x
 				x6 = x3
-			group.format(options, x4, x, x5, x6, y0, y1, y2, y3)
+			group.format(options_middle, x4, x, x5, x6, y0, y1, y2, y3)
 			x = x5
 			x4 = x6
 		y4 = y0
@@ -1212,7 +1213,7 @@ class Overlay(Group):
 			else:
 				y5 = y2 - buf_y
 				y6 = y3
-			group.format(options, x0, x1, x2, x3, y4, y, y5, y6)
+			group.format(options_middle, x0, x1, x2, x3, y4, y, y5, y6)
 			y = y5
 			y4 = y6
 	def format_ligature(self, options, x0, x1, x2, x3, y0, y1, y2, y3):
