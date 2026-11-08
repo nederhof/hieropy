@@ -29,7 +29,7 @@ D10C,𓂀𓑀𓐱𓂀
 D52A,𓂸︃
 D53A,𓂺︃
 D57A,𓂾𓐶𔉴︁
-D57B,𓂾𓐶𔉴︂𓑀
+D57B,𓂾𓐶𔉴︆𓑀
 D74,𓁷𓐶𓂋
 D151,𓋴𓐶𓂋
 D151A,𓋴𓐶𓂋
@@ -295,8 +295,6 @@ G127A,𓲎𓐴𓏤
 # as suggested by database
 G127D,𓲍𓐴𓏤
 # as suggested by database
-G129D,𓽻𓐹𓅃
-# as suggested by database
 G226,𓅡𓐰𓎡𓑀
 # as suggested by database
 G231,𓅷𓐶𓂸
@@ -352,6 +350,8 @@ L26,𓷴𓐶𓆑
 L35,𓌂𓐶𓷲
 M3C,𓆱︆
 M3D,𓆱︃
+# seems meaningless variant (after mirroring)
+M3G,𓸑𓑀
 # as suggested by database
 M11B,𓹚𓑀
 M14A,𓹦𓐶𓆓
@@ -426,6 +426,7 @@ N53,𓻘𓐻𓀵
 N53A,𓻚𓐻𓀵
 N54,𓻚𓐻𓞖
 N55A,𓻣︀
+# uncertain whether dots have same function
 N55B,𓻣𓐹𓊪
 # as suggested by database
 N62A,𓇺︁
@@ -950,19 +951,22 @@ Aa68,𓄱𓐶𓆑
 Aa74,𓐝𓐹𓏏
 # according to database
 Aa77,𓄱𓐶𓂡
+# dotted enclosure; https://jsesh.qenherkhopeshef.org/signdiffs/release-8.0.8
+# potentially this is misuse for oval that may not have same function
+Z102,𓻣︀
 # not in database
 US1O124VARA,𓉗𓑀𓐹𓊹
 # from original MdC documentation
 qnbt,𓊋𓐵𓏏
-2,𓏮
-3,𓏦
-4,𓏽
-5,𓐃
-20,𓎏
-30,𓎐
-40,𓎑
-50,𓎒
-200,𓍣
-300,𓍤
-400,𓍥
-500,𓍫
+#2,𓏮
+#3,𓏦
+#4,𓏽
+#5,𓐃
+#20,𓎏
+#30,𓎐
+#40,𓎑
+#50,𓎒
+#200,𓍣
+#300,𓍤
+#400,𓍥
+#500,𓍫

@@ -9,17 +9,12 @@ M2B
 M233
 N51
 N55A
+N97A
 N142
 O84
 P2I
 P97A
 T88B
 T106
-U13A
-# Two swapped signs:
-B1J
-B1K
 # Result of signs being swapped to original position
 G7E
-# Was changed to different shape in 7.9
-N36D

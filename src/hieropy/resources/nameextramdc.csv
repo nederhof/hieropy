@@ -4,6 +4,8 @@
 
 # redraw
 A1A,0x1359D
+# listed as fallback
+A3A,0x1346C
 # redraw
 A4A,0x13476
 # meaningless variant
@@ -143,12 +145,10 @@ A484,0x1360D
 A510,0x13584
 # glyph could be mistake
 A511,0x13068
-# the following two are swapped in Unikemet, originally caused by mistake in JSesh 7.6.1, corrected in 7.9
-# see https://jsesh.qenherkhopeshef.org/signdiffs/release-7.9
-B1J,0x136E8
-B1K,0x136E9
 # distinction not supported by evidence
 B6C,0x13056
+# difference is only uraeus, which was erroneously removed from Unicode and then added again
+B7,0x13057
 # based on hieratic, could be transcribed differently
 B7A,0x13058
 # redraw
@@ -159,6 +159,8 @@ B8C,0x13058
 B8G,0x13058
 # redraw
 B23,0x13708
+# it seems a redraw was done with regard to orientation of hands
+B28,0x13713
 # distinction not supported by evidence
 B30,0x138AA
 # redraw
@@ -390,6 +392,8 @@ E31,0x130F6
 E31A,0x130F6
 # meaningless distinction
 E31B,0x130F6
+# duplicates
+E34B,0x13246
 # may be misreading
 E41,0x13AF4
 # may be misreading
@@ -430,8 +434,6 @@ E108A,0x13AC7
 E145A,0x13A91
 # unconfirmed glyph that does not seem worth distinguishing
 E145B,0x13248
-# redraw
-E148N,0x13A44
 # glyph may be from iconography
 E164,0x130D2
 # distinction not supported by evidence
@@ -458,8 +460,6 @@ E199A,0x13B54
 E200,0x13AC4
 # meaningless variant
 E201A,0x1322B
-# seems an omission
-E207A,0x13B3F
 # distinction not supported by evidence
 E208,0x13B40
 # meaningless variant
@@ -528,8 +528,6 @@ F183,0x132CF
 G7E,0x1324A
 # meaningless variant
 G15A,0x13151
-# seems an omission
-G23A,0x13CF7
 # moved
 G28A,0x13C46
 # redraw
@@ -608,8 +606,6 @@ G256,0x1316C
 G264,0x13222
 # duplicates
 G266,0x1323A
-# seems an omission
-G266A,0x13C8C
 # may be misreading
 G269,0x13C54
 # redraw
@@ -636,6 +632,9 @@ H7A,0x13186
 H15A,0x13D15
 # may be misreading
 H23,0x13CE5
+# the database says that the shape should be changed to the JSesh form with "a straight neck"
+# and subsequently JSesh 7.9 changes the neck to be curved
+H44,0x13D1F
 # meaningless distinction according to the database
 I4A,0x1318B
 # unconfirmed glyph that does not seem worth distinguishing
@@ -661,10 +660,12 @@ I52,0x13D84
 I53,0x13D87
 # unconfirmed glyph that does not seem worth distinguishing
 I69,0x13D8D
-# seems an omission, possibly as a result of a mistake in an earlier version of JSesh
-I70B,0x13D9A
 # meaningless distinction
 I54,0x13D87
+# unconfirmed glyph that does not seem worth distinguishing
+I70C,0x13D9A
+# unconfirmed glyph that does not seem worth distinguishing
+I70D,0x13D9A
 # meaningless distinction
 I76,0x13DA0
 # may be misreading
@@ -695,22 +696,16 @@ K24,0x13DDF
 K26,0x13A34
 # distinction not supported by evidence
 L28,0x13DF4
-# meaningless variant
-M3E,0x131B1
 # redraw
 M8D,0x13E36
 # unconfirmed glyph that does not seem worth distinguishing
 M8F,0x13E2F
-# the name in JSesh is currently M8I, but the database and Unikemet call it M8i
-M8I,0x13E35
 # meaningless variant
 M8J,0x13E2D
 # unconfirmed glyph that does not seem worth distinguishing
 M20A,0x131CF
 # unconfirmed glyph that does not seem worth distinguishing
 M20B,0x131CF
-# seems an omission
-M22B,0x131D2
 # meaningless variant
 M28,0x131D9
 # do not seem worth distinguishing
@@ -774,8 +769,6 @@ N4A,0x14199
 N4C,0x14197
 # unconfirmed and seems very similar
 N8C,0x13EDF
-# seems an omission
-N16D,0x13EFB
 # meaningless variant
 N24C,0x13208
 # two meaningless variants
@@ -783,8 +776,6 @@ N28A,0x1320D
 N28B,0x1320D
 # meaningless variant
 N31E,0x13210
-# change in JSesh 7.9, used to be N36D
-N36C,0x13F34
 # unconfirmed glyph that does not seem worth distinguishing
 N36D,0x13F36
 # distinction not supported by evidence
@@ -798,19 +789,11 @@ N90,0x133F8
 # seems an omission
 N97,0x13F28
 # seems an omission
-N97B,0x13F00
-# seems an omission
-N97C,0x13F33
-# seems an omission
 N102,0x13201
-# not worth distinguishing
-N104B,0x13F44
 # meaningless variant
 N112,0x13244
 # meaningless variant
 N133A,0x13EE8
-# duplicates
-NU15,0x13246
 # may be misreading
 O6D,0x13F78
 # unconfirmed glyph that does not seem worth distinguishing
@@ -957,8 +940,6 @@ P39A,0x14048
 P61,0x14071
 # unconfirmed glyph that does not seem worth distinguishing
 P61A,0x14075
-# seems an omission
-P63,0x1406B
 # unconfirmed glyph that does not seem worth distinguishing
 P65A,0x1406E
 # redraw
@@ -1097,8 +1078,6 @@ S47C,0x14152
 S59,0x14162
 # unconfirmed glyph that does not seem worth distinguishing
 S60,0x14169
-# seems omission
-S60A,0x14169
 # unconfirmed glyph that does not seem worth distinguishing
 S65,0x14174
 # unconfirmed glyph that does not seem worth distinguishing
@@ -1185,8 +1164,6 @@ T33A,0x1332E
 T46,0x1330E
 # meaningless variant
 T55,0x13360
-# seems omission
-T60,0x13316
 # based on hieratic, could be transcribed differently
 T63A,0x14214
 # meaningless variant
@@ -1295,8 +1272,6 @@ V84,0x1433C
 V110A,0x14357
 # may be misreading
 V126,0x13FF6
-# https://jsesh.qenherkhopeshef.org/news/news20240508
-V300,0x133A5
 # practically duplicate
 W1A,0x14359
 # redraw
@@ -1305,8 +1280,6 @@ W5A,0x14364
 W6A,0x143A7
 # redraw
 W9B,0x14367
-# seems an omission
-W17C,0x1437A
 # meaningless variant
 W18A,0x1437D
 # meaningless variant
@@ -1389,8 +1362,6 @@ Z32,0x13EC2
 Aa3C,0x1340F
 # the filename in JSesh is Aa5a, but the palette and Unikemet call it Aa5A
 Aa5a,0x14095
-# the filename in JSesh is Aa18A and the palette calls it that, but Unikemet calls it Aa18a
-Aa18A,0x14220
 # unconfirmed glyph that does not seem worth distinguishing
 Aa23B,0x1430B
 # unconfirmed glyph that does not seem worth distinguishing
@@ -1462,3 +1433,16 @@ Ff301,0x133FA
 Ff302,0x133FB
 Ff303,0x133FC
 Ff304,0x133FD
+# numerals
+2,0x133EE
+3,0x133E6
+4,0x133FD
+5,0x13403
+20,0x1338F
+30,0x13390
+40,0x13391
+50,0x13392
+200,0x13363
+300,0x13364
+400,0x13365
+500,0x1336B

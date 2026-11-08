@@ -5,7 +5,6 @@
 
 # cursive form of same sign
 A1B,0x13000
-A3A,0x1346C
 A6C,0x1351C
 A6F,0x1351C
 A6I,0x13518
@@ -264,7 +263,12 @@ G204,0x13CDC
 G212,0x13163
 G217B,0x13C57
 G225,0x13C3C
+G236,0x13CE5
 G293A,0x13CBE
+G249,0x0x13171
+# quail chick with liquid flowing from the neck; https://jsesh.qenherkhopeshef.org/news/news20240508
+G1000,0x13171
+H19A,0x13D1C
 I3D,0x13D3F
 I3F,0x13D3D
 I3I,0x13D3B
@@ -279,15 +283,17 @@ I15D,0x13DB7
 I15E,0x13DB7
 I15F,0x13DB7
 I22,0x13193
+I40B,0x13D76
 I40E,0x13D76
+I40G,0x13D76
 I52A,0x13D82
 I53A,0x13D87
-I70C,0x13D9A
-I70D,0x13D9A
-I71A,0x13D9D
+I61,0x13D8D
+I70A,0x13D99
+I71A,0x13D99
 I72,0x13D9A
-I73,0x13D9A
-I75,0x13D9A
+I73,0x13D98
+I75,0x13D98
 I84,0x13DC0
 I86,0x13DC0
 I86C,0x13DC0
@@ -344,6 +350,7 @@ N36B,0x1321B
 N36E,0x13219
 N58B,0x13EE7
 N60B,0x13EEC
+N104A,0x13A0E
 # database associates following two signs
 N114,0x13245
 N114A,0x13245
@@ -407,6 +414,8 @@ O313,0x13FA2
 O349,0x13FD6
 # O500 Heb festival race boundary-marker; see https://jsesh.qenherkhopeshef.org/news/news20240508
 # O501 vault; see https://jsesh.qenherkhopeshef.org/news/news20240508
+# Not sure this is really the same thing as O175C as suggested by Unikemet 18.
+# Then again, the shapes are indistinguishable.
 # O501A vault; see https://jsesh.qenherkhopeshef.org/news/news20240508
 P2C,0x14040
 P2D,0x14041
@@ -510,6 +519,7 @@ T121,0x1423A
 T123,0x1426C
 T128A,0x13228
 U16C,0x13344
+U23A,0x1334B
 U24F,0x142C7
 U24L,0x142C7
 U36A,0x1335B
