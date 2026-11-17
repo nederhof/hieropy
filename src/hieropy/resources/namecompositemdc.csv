@@ -97,7 +97,8 @@ D301,𓃂𓐹𓐷𓏏𓐰𓍱𓐸
 D302,𓃀𓐶𓄏
 D303,𓐷𓃀𓐱𓃀𓐸𓐶𓄏𓐲𓎼
 D304,𓃀𓐶𓄡
-D305,𓃀𓐶𓍢
+# assuming it is Z7, not V1
+D305,𓃀𓐶𓏲
 D306,𓃀𓐶𓐷𓈖𓐰𓈖𓐸
 D307,𓃀𓐶𓂋
 D308,𓃀𓐶𓄑
@@ -106,7 +107,7 @@ D311,𓐷𓃀𓐱𓃀𓐸𓐶𓼼
 D312,𓃀𓐶𓂧
 D313,𓃀𓐶𓎡
 D314,𓃀𓐶𓍿
-D315,𓃀𓐶𓐷𓍿𓐰𓂻𓐸
+D315,𓃀𓐶𓎁
 D320,𓨣𓐹𓂻
 D321,𓨣𓐶𓍽
 D322,𓨣𓐹𓇼
@@ -145,20 +146,20 @@ D366,𓃂𓐹𓏤
 D367,𓂓𓐹𓊪
 D373A,𓐷𔈺𓐱𔈺𓐸𓐶𓍽
 D374,𓦬𓐹𓂀
-D376,𓂓𓐺𓌸
+D376,𓂓𓐹𓌸
 # may be misreading according to database
 D378,𓯩︀
 D379,𓂓𓐺𓎝
 D381,𓂓𓐺𓎛
 D384,𓃂𓐹𓏏
-D386,𓂓𓐺𓮷
+D386,𓂓𓐹𓮷
 D387,𓍯𓐶𓂝
 D388,𓂓𓐺𓄤
 D389,𓂓𓐺𓆣
 D398,𓂓𓐹𓁐
 D399,𓂓𓐹𓞫
 D400,𓂓𓐹𓆟︃
-D401,𓂓𓐺𓮷
+D401,𓂓𓐹𓮷
 D403,𓂘𓐹𓈖︂𓑀
 D404,𓦬𓐹𓏲
 D407,𓆄𓐶𓂠
@@ -183,7 +184,7 @@ F29A,𓄜𓑀𓐶𔈌
 # decomposition following database
 F29B,𓄜𓑀𓐶𔉁
 # decomposition following database of next 11 signs
-F37A,𓄧︀︃
+F37A,𓄧︀
 F37D,𓯨︀
 F37E,𓯩︀
 F37G,𓯪︀
@@ -209,7 +210,7 @@ F72,𓮅𓐶𓂋
 F72A,𓮁𓐶𓂋
 F73,𓮅𓐶𓐷𓂋𓐰𓂋𓐸
 F73A,𓮁𓐶𓐷𓂋𓐰𓂋𓐸
-F74,𓮅𓐶𓐷𓂋𓐰𓂡𓐸
+F74,𓄊𓐶𓐷𓂋𓐰𓂡𓐸
 F74A,𓮁𓐶𓐷𓂋𓐰𓂡𓐸
 F75,𓮅𓐶𓆑
 F75A,𓮁𓐶𓆑
@@ -329,7 +330,7 @@ I32B,𓵧𓐹𓀿
 I34,𓃀𓐶𓆓
 I36,𓎛𓐶𓆓
 I37,𓄥𓐶𓆓
-I39,𓋴𓐶𓐷𓆓𓐰𓆓𓐸
+I39,𓋴𓑀𓐶𓐷𓆓𓐰𓆓𓐸
 I86D,𓷃𓑀
 I100,𓎗𓐶𓆓
 I102,𓌃𓐶𓆓
@@ -355,7 +356,7 @@ M3G,𓸑𓑀
 # as suggested by database
 M11B,𓹚𓑀
 M14A,𓹦𓐶𓆓
-M34A,𓇣𓐶𓍢𓑀
+M34A,𓇣𓐶𓍢︆𓑀
 M46A,𓸃𓐶𓆱
 M50,𓷻𓐶𓆱
 # as suggested by database
@@ -364,10 +365,10 @@ M77,𓆸︀
 M77B,𓆻︀𓑀
 # as suggested by database
 M82,𓆩︂𓑀
-M98,𓆼𓐶𓍢
-M98A,𓆼𓐶𓍢𓑀
-M98B,𓹜𓐶𓍢
-M98C,𓹜𓐶𓍢𓑀
+M98,𓆼𓐶𓍢︆
+M98A,𓆼𓐶𓍢︆𓑀
+M98B,𓹜𓐶𓍢︆
+M98C,𓹜𓐶𓍢︆𓑀
 M100,𓆼𓐶𓂝
 M100A,𓹜𓐶𓂝
 M101,𓆼𓐶𓍼
@@ -375,6 +376,7 @@ M111A,𓹣𓑀
 M120,𓇅𓐶𓂋
 M121,𓇅𓐶𓐷𓆓𓐰𓆓𓐸
 M122,𓇅𓐶𓐷𔀰𓐰𔀰𓐸
+M124,𓇅𓐶𓽊
 # as suggested by database
 M133,𓆸︀𓑀
 M128,𓇕𓐶𓆑
@@ -809,7 +811,7 @@ U68,𓎃𓐶𓍉
 U70,𔊲𓐶𓆑
 U76,𔋔𓐶𓆑
 # with Z7 according to database
-U77,𔋔𓐶𓏲
+U77,𔋔𓐶𓏲︆
 U81,𓍑𓐶𓍽
 U82,𓍑𓐶𓂝
 U83,𓍑𓐶𓂋
@@ -951,6 +953,9 @@ Aa68,𓄱𓐶𓆑
 Aa74,𓐝𓐹𓏏
 # according to database
 Aa77,𓄱𓐶𓂡
+# ḥr=f m sḏ.t ; https://jsesh.qenherkhopeshef.org/news/news20240508
+# potentially this is misuse of oval for different purpose than intended
+D500,𓻣𓐹𓁷
 # dotted enclosure; https://jsesh.qenherkhopeshef.org/signdiffs/release-8.0.8
 # potentially this is misuse for oval that may not have same function
 Z102,𓻣︀
