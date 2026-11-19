@@ -350,6 +350,8 @@ D248,0x139DE
 D252,0x139E1
 # redraw
 D258,0x139EA
+# unconfirmed glyph that does not seem worth distinguishing
+D277,0x13A03
 # distinction not supported by evidence
 D322A,0x13A29
 # distinction not supported by evidence

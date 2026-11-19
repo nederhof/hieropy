@@ -1,10 +1,12 @@
 from . import unisyntax
 from . import ressyntax
 from . import mdcsyntax
+from . import wikisyntax
 
 unilexer, uniparser = unisyntax.build_parser()
 reslexer, resparser = ressyntax.build_parser()
 mdclexer, mdcparser = mdcsyntax.build_parser()
+wikilexer, wikiparser = wikisyntax.build_parser()
 
 class Parser:
 	def __init__(self):
@@ -40,3 +42,9 @@ class MdcParser(Parser):
 		super().__init__()
 		self.lexer = mdclexer
 		self.parser = mdcparser
+
+class WikiParser(Parser):
+	def __init__(self):
+		super().__init__()
+		self.lexer = wikilexer
+		self.parser = wikiparser
