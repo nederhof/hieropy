@@ -3,8 +3,7 @@ import importlib.resources as resources
 
 from .uniconstants import INSERTION_PLACES
 
-NAME_POINT_FILE = 'namepointmdc.csv'
-NAME_COMPOSITE_FILE = 'namecompositemdc.csv'
+NAME_FILE = 'namemdc.csv'
 MNEMONIC_NAME_FILE = 'mnemonicnamemdc.csv'
 NAME_ZONE_FILE = 'namezonemdc.csv'
 LIGATURE_FILE = 'ligaturemdc.csv'
@@ -20,11 +19,6 @@ _ligature_to_chars = None
 _name_len_index_to_ligature_schema = None
 _flat_tall = None
 _flat_wide = None
-
-def name_to_char(name):
-	if _name_to_char is None:
-		cache_name_and_char()
-	return _name_to_char.get(name)
 
 def name_to_chars(name):
 	if _name_to_chars is None:
@@ -64,20 +58,10 @@ def is_flat_wide(name):
 def is_flat(name):
 	return is_flat_tall(name) or is_flat_wide(name)
 
-def cache_name_and_char():
-	global _name_to_char
-	_name_to_char = {}
-	with resources.files('hieropy.resources').joinpath(NAME_POINT_FILE).open('r') as f:
-		reader = csv.reader(f)
-		for row in reader:
-			n = row[0]
-			p = chr(int(row[1],16))
-			_name_to_char[n] = p
-
 def cache_name_and_chars():
 	global _name_to_chars
 	_name_to_chars = {}
-	with resources.files('hieropy.resources').joinpath(NAME_COMPOSITE_FILE).open('r', encoding='utf-8') as f:
+	with resources.files('hieropy.resources').joinpath(NAME_FILE).open('r', encoding='utf-8') as f:
 		reader = csv.reader(f)
 		for row in reader:
 			n = row[0]

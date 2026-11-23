@@ -12,13 +12,13 @@ class TestNorm(unittest.TestCase):
 	def setUp(self):
 		self.parser = UniParser()
 
-	def compare_pair(self, test_in, types, test_out):
+	def compare_pair(self, test_in, types, test_out, msg=''):
 		norm = UniNormalizer(types=types,excepts=['\U00013169'])
 		parsed = self.parser.parse(test_in)
 		normalized = str(norm.normalize(parsed))
 		normalized_str = ' '.join(hex(ord(ch)) for ch in list(normalized))
 		test_out_str = ' '.join(hex(ord(ch)) for ch in list(test_out))
-		self.assertEqual(normalized_str, test_out_str)
+		self.assertEqual(normalized_str, test_out_str, msg=msg)
 		return norm.errors
 
 	def test_nil(self):
@@ -28,7 +28,7 @@ class TestNorm(unittest.TestCase):
 
 	def test_rotated(self):
 		test_in = '\U0001339C\ufe01'
-		test_out = '\U0001309D\U00013436\U0001339B'
+		test_out = '\U0001339B\U00013436\U0001309D'
 		errors = self.compare_pair(test_in, ['overlay'], test_out)
 		self.assertEqual(len(errors), 1)
 
@@ -53,8 +53,8 @@ class TestNorm(unittest.TestCase):
 	def test_file(self):
 		with open('tests/resources/normalization.csv', 'r') as f:
 			reader = csv.reader(f)
-			for fragment,types,alt in reader:
-				errors = self.compare_pair(fragment, types.split('/'), alt)
+			for i, (fragment,types,alt) in enumerate(reader, 1):
+				errors = self.compare_pair(fragment, types.split('/'), alt, msg=f'line {i}')
 
 	def get_transform_stats(self, test_in):
 		parsed = self.parser.parse(test_in)

@@ -1090,6 +1090,8 @@ S71,0x1416F
 S78,0x1417E
 # meaningless variant
 S78B,0x1417E
+# database is unclear whether this or S79B was confirmed but seem meaningless variants
+S79A,0x1417D
 # unconfirmed glyph that does not seem worth distinguishing
 S90,0x132DD
 # unconfirmed glyph that does not seem worth distinguishing
@@ -1426,6 +1428,8 @@ M43VARA,0x131ED
 O1VARA,0x13250
 # is variant according to https://jsesh.qenherkhopeshef.org/news/news20240508; seems hardly worth distinguishing
 US22S25A,0x132EE
+# legacy name; see https://jsesh.qenherkhopeshef.org/news/news20240508
+US1V33AEXTU,0x133A5
 # cauldron; see https://jsesh.qenherkhopeshef.org/news/news20240508
 W201,0x14315
 # Old Kingdom form of Aa20; https://jsesh.qenherkhopeshef.org/signdiffs/release-7.9

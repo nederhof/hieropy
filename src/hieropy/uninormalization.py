@@ -1,6 +1,7 @@
 import csv
 import importlib.resources as resources
 
+from .options import Options
 from .uniconstants import num_to_rotate, rotate_to_num, mirror_place, mirror_rotate, quarter_mirror_rotate
 from .uniproperties import circular_chars, lr_symmetric_chars, tb_symmetric_chars
 from .unistructure import *
@@ -223,8 +224,16 @@ class UniNormalizer:
 		return fragment.map(transformation)
 
 	def overlay_reorder(self, lits1, lits2):
-		if len(lits1) == 1 and len(lits2) == 1 and ord(lits2[0].ch) < ord(lits1[0].ch):
-			lits1, lits2 = lits2, lits1
+		if len(lits1) == 1 and len(lits2) == 1:
+			lit1 = lits1[0]
+			lit2 = lits2[0]
+			options = Options()
+			size1 = em_size_of(lit1.ch, options, 1, 1, 0, False)
+			size2 = em_size_of(lit2.ch, options, 1, 1, 0, False)
+			ratio1 = size1[0] / size1[1]
+			ratio2 = size2[0] / size2[1]
+			if ratio1 > ratio2:
+				lits1, lits2 = lits2, lits1
 		return Overlay(lits1, lits2)
 
 	def apply_overlay_reorder(self, fragment):

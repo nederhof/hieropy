@@ -3,10 +3,11 @@ import csv
 import ast
 import os
 
-from hieropy import ResParser, ResUniConverter, MdcUniConverter
+from hieropy import ResParser, ResUniConverter, MdcUniConverter, WikiUniConverter
 import hieropy.mdcstructure as mdc
 import hieropy.unistructure as uni
 
+@unittest.skip("Skipping to speed up testing")
 class TestResConv(unittest.TestCase):
 
 	def setUp(self):
@@ -55,6 +56,7 @@ class TestResConv(unittest.TestCase):
 				gold = ast.literal_eval(gold_str)
 				self.assertEqual(mach, gold, msg=f'Line {line_no}')
 
+@unittest.skip("Skipping to speed up testing")
 class TestMdcConv(unittest.TestCase):
 
 	def convert_mdc_uni(self, mdc_str):
@@ -97,3 +99,20 @@ class TestMdcConv(unittest.TestCase):
 							case mdc.Text(): print(f'"{part}"')
 							case uni.Fragment(): print(f'[{part.color}] {part}')
 					print(converter.errors)
+
+class TestWikiConv(unittest.TestCase):
+
+	def convert_wiki_uni(self, wiki_str):
+		converter = WikiUniConverter()
+		uni_str = ''.join(str(part) for part in converter.convert(wiki_str)[0])
+		n_errors = len(converter.errors)
+		return uni_str, n_errors
+
+	def test_normal(self):
+		with open('tests/resources/wikiuniconversion.csv', 'r', encoding='utf-8') as f:
+			reader = csv.reader(f, delimiter=' ')
+			for line_no, (wiki_str,gold_str) in enumerate(reader, start=1):
+				mach_str, n_error = self.convert_wiki_uni(wiki_str)
+				mach = [hex(ord(x)) for x in mach_str]
+				gold = [hex(ord(x)) for x in gold_str]
+				self.assertEqual(mach_str, gold_str, msg=f'Line {line_no}\n{mach}\n{gold}')

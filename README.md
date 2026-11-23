@@ -127,7 +127,7 @@ Types of normalization:
 | insertion | replace legacy sign by insertion |
 | tabular | replace legacy sign by group with horizontal and/or vertical joiners |
 | rotation | correct rotation with regard to mirroring |
-| order | for overlay of exactly two signs, let first have smaller code point than second |
+| order | for overlay of exactly two signs, let first be tall and second be wide |
 | damage | remove any damage (i.e. shading) |
 | bracket | remove any philological bracket |
 | expand | make any lost sign to be expanding |
@@ -159,7 +159,7 @@ print(converter.errors)
 
 The Manuel de Codage is not so much a single encoding scheme for hieroglyphic text, but rather a family of encoding schemes, implemented by different tools from 1984 onward, many of which added various features, without ever formally documenting their syntax or intended semantics. Moreover, typical MdC implementations allow absolute positioning and scaling, which are beyond the power of Unicode control characters. For these reasons, conversion from arbitrary MdC encodings to Unicode can never be guaranteed to be correctness-preserving. The best one can do is to approximate the intentions of an original encoding, and to report a list of potential problems. In any case, manual checking and correction of output remain necessary.
 
-The conversion implemented here has been tested on a large number of encodings that were created using [JSesh](https://jsesh.qenherkhopeshef.org/), which is the most widely known modern implementation of the MdC, but no doubt one may find other legacy MdC files for which this conversion leaves to be desired.
+The conversion implemented here has been tested on a large number of encodings that were created using [JSesh](https://jsesh.qenherkhopeshef.org/), which is the most widely known modern implementation of the MdC, but no doubt one may find other legacy MdC files for which this conversion leaves to be desired. JSesh versions beyond 7.9 were not considered.
 
 The input to conversion is a string, possibly containing line breaks:
 ```python
@@ -185,6 +185,22 @@ for part in parts:
         case mdc.LineNumber(): print(f'({part}): ')
         case mdc.Text(): print(f'"{part}"')
         case Fragment(): print(f'[{part.color}] {part}')
+```
+
+## Conversion from WikiHiero to Unicode
+
+The conversion takes a [WikiHiero](https://www.mediawiki.org/wiki/Extension:WikiHiero/Syntax) encoding and turns it into a list of lists of elements, where each element is either a Fragment or a string. The outer list is motivated by existence of hard line breaks. An inner list divides a line into normal hieroglyphic encoding and other material such as comments and philological brackets in plain text.
+```python
+from hieropy import WikiUniConverter
+
+converter = WikiUniConverter()
+for line in converter.convert('p:p-i-i![& M23:t-L2:t &]'):
+	print('Start new line')
+	for element in line:
+		if isinstance(element, str):
+			print(element)
+		else:
+			print(str(element))
 ```
 
 ## OCR/HTR
@@ -527,6 +543,11 @@ venv\Scripts\activate
 ```
 
 ## Changelog
+
+### 0.1.11
+
+* Refined MdC-to-Unicode conversion.
+* Added WikiHiero-to-Unicode conversion.
 
 ### 0.1.10
 

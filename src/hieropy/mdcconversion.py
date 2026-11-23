@@ -7,7 +7,7 @@ import hieropy.unistructure as uni
 from .uniconstants import num_to_corners, PLACEHOLDER
 from .unitransform import mirror_group, rotate_group, damage_group
 from .uninormalization import is_group, is_horizontal, make_horizontal, make_vertical
-from .mdcnames import name_to_char, name_to_chars, mnemonic_to_name, name_to_zones, \
+from .mdcnames import name_to_chars, mnemonic_to_name, name_to_zones, \
 	ligature_to_chars, ligature_schema, is_flat_tall, is_flat_wide, is_flat
 from .spatialparsing import GroupAndToken, SpatialParser, ParseParams
 
@@ -35,11 +35,15 @@ def add_close_bracket(group, bracket):
 def make_token_from_mdc(group, x, y, s):
 	return GroupAndToken.from_group_on_surface(group, x, y, s * 10, s * 10)
 
-def name_to_char_var(name):
-	namematch = re.fullmatch(r'US\d+([^\d].*)VAR.*', name)
-	if namematch:
-		name = namematch.group(1)
-	return name_to_char(name)
+def name_to_chars_var(name):
+	if name_to_chars(name):
+		return name_to_chars(name)
+	else:
+		namematch = re.fullmatch(r'US\d+([^\d].*)VAR.*', name)
+		if namematch:
+			return name_to_chars(namematch.group(1))
+		else:
+			return None
 
 class MdcUniConverter:
 	def __init__(self, text=False, numbers=False, colors=False):
@@ -269,13 +273,13 @@ class MdcUniConverter:
 			names_hor = list(filter(is_flat_tall, names))
 			names_ver = list(filter(is_flat_wide, names))
 			if len(names_hor) > 0 and len(names_ver) > 0:
-				lits1 = [uni.Literal(name_to_char(n), 0, False, 0) for n in names_hor]
-				lits2 = [uni.Literal(name_to_char(n), 0, False, 0) for n in names_ver]
+				lits1 = [uni.Literal(name_to_chars(n)[0], 0, False, 0) for n in names_hor]
+				lits2 = [uni.Literal(name_to_chars(n)[0], 0, False, 0) for n in names_ver]
 				return uni.Overlay(lits1, lits2)
 		for i in range(len(names)):
 			schema = ligature_schema(names[i], len(names), i)
 			if schema:
-				core = uni.Literal(name_to_char(names[i]), 0, False, 0)
+				core = uni.Literal(name_to_chars(names[i])[0], 0, False, 0)
 				insertions = {}
 				for j in range(len(names)):
 					if j != i:
@@ -339,25 +343,27 @@ class MdcUniConverter:
 	def convert_sign(self, group):
 		mirror = bool(group.modifiers.get('mirror'))
 		damage = group.shading_num()
-		if name_to_chars(group.name):
-			converted = self.uni_parser.parse(name_to_chars(group.name)).groups[0]
-			rot = group.rotate_coarse()
-			if rot:
-				converted = rotate_group(converted, rot)
-			if mirror:
-				converted = mirror_group(converted)
-			if damage:
-				converted = damage_group(converted, num_to_corners(damage))
-			return converted
-		elif name_to_char_var(group.name):
-			ch = name_to_char_var(group.name)
-			vs = group.rotate_num()
-			return uni.Literal(ch, vs, mirror, damage)
+		if name_to_chars_var(group.name):
+			chars = name_to_chars_var(group.name)
+			if len(chars) == 1:
+				vs = group.rotate_num()
+				return uni.Literal(chars[0], vs, mirror, damage)
+			else:
+				converted = self.uni_parser.parse(chars).groups[0]
+				rot = group.rotate_coarse()
+				if rot:
+					converted = rotate_group(converted, rot)
+				if mirror:
+					converted = mirror_group(converted)
+				if damage:
+					converted = damage_group(converted, num_to_corners(damage))
+				return converted
 		elif mnemonic_to_name(group.name):
 			name = mnemonic_to_name(group.name)
-			if name_to_char(name):
+			chars = name_to_chars(name)
+			if chars and len(chars) == 1:
 				vs = group.rotate_num()
-				ch = name_to_char(name)
+				ch = chars[0]
 				return uni.Literal(ch, vs, mirror, damage)
 			else:
 				self.report(f'Name {name} not found')
@@ -365,6 +371,7 @@ class MdcUniConverter:
 		elif group.name == 'o' or group.name == 'O':
 			return uni.Literal('\U000143F6', 0, mirror, damage)
 		else:
+			self.report(f'Name {group.name} not found')
 			return uni.Literal(PLACEHOLDER, 0, mirror, damage)
 
 	def convert_blank(self, group):
@@ -398,7 +405,7 @@ class MdcUniConverter:
 				self.report("Approximating ' with \u2E23")
 				return uni.BracketClose('\u2E23')
 			case _:
-				self.report(f"Approximating {group.ch[0]} with [")
+				self.report(f"Approximating {group.ch[0]} with ]")
 				return uni.BracketClose(']')
 
 	def convert_enclosure(self, group):
@@ -471,11 +478,11 @@ def match_ligature_schema(names, schema):
 	if len(names) == len(schema):
 		for i in range(len(names)):
 			if names[i] == schema[i]:
-				core = uni.Literal(name_to_char(names[i]), 0, False, 0)
+				core = uni.Literal(name_to_chars(names[i])[0], 0, False, 0)
 				insertions = {}
 				for j in range(len(names)):
 					if j != i:
-						insertions[schema[j]] = uni.Literal(name_to_char(names[j]), 0, False, 0)
+						insertions[schema[j]] = uni.Literal(name_to_chars(names[j])[0], 0, False, 0)
 				return uni.Basic(core, insertions)
 	else:
 		return None

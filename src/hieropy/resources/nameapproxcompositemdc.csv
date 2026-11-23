@@ -7,21 +7,28 @@ B3C,𓆓𓐻𓜹
 D175,𓂓𓐹𓸿
 D201,𓦬𓐹𔃆
 D202,𓦬𓐹𔃈
+D214,𓋹𓐶𓂠
 D222,𓂡𓐺𓌪
 D293,𔎆𓐵𓐷𓂾𓐱𓂾𓐸
 D345,𓂝𓐺𓎼
+D380,𓂸𓐰𓂻
+D385,𓂡𓐰𓂻
 D390,𔃼𓐰𓂸
+D395,𔄗𓐺𓁻
 D396,𓁹𓐰𓐪
 D408,𓂢𓐰𓂻
+E267,𓊾𓐺𓃩
 F37C,𓄧
 F51C,𓄹︀𓑀
 F65,𓮂𓐶𓎡
 F68A,𓭽𓑀𓐶𓌉︀
 F156A,𓄥𓐶𓻽
+F166,𔄗𓐺𓐷𓄊𓐱𓄊𓐸
 # composition according to https://jsesh.qenherkhopeshef.org/news/news20240508
 F200,𓇓𓐰𓄟
 G78,𓰠︀
 G127B,𓲐𓐴𓏤
+G280A,𓅃𓐰𓌨
 I38,𓄥𓐶𓆓
 # as suggested by database
 I94,𓏲𓐱𓵊
@@ -44,6 +51,7 @@ N67B,𓋑𓐶𓇿
 N93,𓈌𓐹𓿬
 N94,𓈌𓐹𓃻
 N98,𓈀𓑀𓐹𓈘
+N118A,𓆑𓐰𓼝
 N131,𓈌𓐹𓆣
 O36E,𔄗𓐺𓽸
 O100,𓽧𓐶𓂝
@@ -76,6 +84,7 @@ O350,𔂸𓐹𓐷𓋋𓐰𓏏𓐱𓆇𓐸
 P7A,𓊡𓐶𓂝
 P61B,𔁴𓑀
 P111,𔀱𓑀
+R115,𓊵𓐰𓂻
 S153,𓌂𓐱𓌂𓐱𓌂
 T24D,𓌤𓑀
 T122,𓌉𓐶𔁣𓑀
@@ -85,6 +94,8 @@ T129,𓌉𓐶𓈙
 U51,𓇓𓐰𓌽
 V47,𔁢𓑀
 U73,𔋅𓐶𓐝
+# assuming the vertical sign is T8, not W14
+U86,𓌐𓐶𓐷𓆑𓐰𓂡𓐸
 V83,𓎛𓐱𓸐
 V2A,𓍬︆
 # uncertain is which rectangle
@@ -97,4 +108,5 @@ W74,𔍪𓑀
 W91,𔍪𓑀
 X4G,𓏒︀
 Y22,𔏐︂
+Z25A,𔄗𓐺𓨳︀
 Aa5D,𔂕𓑀
