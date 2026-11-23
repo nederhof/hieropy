@@ -1480,7 +1480,6 @@
   },
   "0xE524": {
     "type": "overlay",
-    "alt": true,
     "horizontal": [
       {
         "ch": "0x13309",
