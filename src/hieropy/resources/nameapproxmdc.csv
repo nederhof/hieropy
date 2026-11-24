@@ -2,6 +2,7 @@
 # Consulted was n5240-hieroglyphs-DB.pdf (referred to as the database).
 # However, in many cases one cannot be sure that the approximation is
 # accurate, as many codes come without any documentation.
+# Released under LGPLv3.
 
 # cursive form of same sign
 A1B,0x13000

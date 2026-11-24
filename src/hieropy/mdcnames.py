@@ -64,6 +64,8 @@ def cache_name_and_chars():
 	with resources.files('hieropy.resources').joinpath(NAME_FILE).open('r', encoding='utf-8') as f:
 		reader = csv.reader(f)
 		for row in reader:
+			if row[0][0] == '#':
+				continue
 			n = row[0]
 			p = row[1]
 			_name_to_chars[n] = p

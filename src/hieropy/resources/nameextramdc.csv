@@ -1,6 +1,7 @@
 # JSesh 7.9 codes that can reasonably be mapped to Unicode without losing information.
 # The information was checked against n5240-hieroglyphs-DB.pdf (referred to as the database).
 # Glyphs that appear to be incorrect are mapped to closest likely equivalent.
+# Released under LGPLv3.
 
 # redraw
 A1A,0x1359D
